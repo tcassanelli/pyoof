@@ -402,11 +402,6 @@ if True:
 
     A = [aperture(x_grid, y_grid, params, d_z=d_z[0]), aperture(x_grid, y_grid, params, d_z=d_z[1]), aperture(x_grid, y_grid, params, d_z=d_z[2])]
 
-
-
-
-
-
     extent = [-box_size, box_size, -box_size, box_size]
 
     fig, ax = plt.subplots(ncols=3, figsize=(14, 4))
@@ -438,6 +433,3 @@ if True:
     fig.set_tight_layout(True)
 
     plt.show()
-
-
-
