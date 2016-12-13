@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from math import factorial as f
+from scipy.constants import c as light_speed
 
 import matplotlib
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
@@ -235,18 +236,17 @@ def aperture(x, y, params, d_z, n=5):
 
     _phi = phi(t, r_norm, params, n)
     _delta = delta(x_grid, y_grid, d_z)
-    _sum = _phi + _delta
     _shape = antenna_shape(x_grid, y_grid)
     _illum = illum(x_grid, y_grid, c_db=-20)
-
-    N = x.shape[0]
 
     A = _shape * _illum * np.exp((_phi + _delta) * 1j)  # complex correction
 
     return A
 
 
-
+def wavevector_to_degree(x, lam):
+    # Converst angel, radians to degrees
+    return np.degrees(x * lam)
 
 
 # Test Zernike polynomials function
@@ -481,11 +481,56 @@ if True:
 
     d_z = [-25e-3, 0, 25e-3]
 
-    apert = [aperture(x_grid, y_grid, params3, d_z=d_z[0]), aperture(x_grid, y_grid, params3, d_z=d_z[1]), aperture(x_grid, y_grid, params3, d_z=d_z[2])]
+    u0, v0, apert0 = angular_spectrum(x_data, y_data, aperture, params3, d_z=d_z[0])
+    u1, v1, apert1 = angular_spectrum(x_data, y_data, aperture, params3, d_z=d_z[1])
+    u2, v2, apert2 = angular_spectrum(x_data, y_data, aperture, params3, d_z=d_z[2])
 
-    extent = [-box_size, box_size, -box_size, box_size]
+    frequency = 8.55e9
+    wavelength = light_speed / frequency
+    print('wavelength', wavelength)
 
-    fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 4))
+    beam = [np.abs(apert0) ** 2, np.abs(apert1) ** 2, np.abs(apert2) ** 2]
+    log_beam = [np.log10(beam[0] / beam[0].max()), np.log10(beam[1] / beam[1].max()), np.log10(beam[2] / beam[2].max())]
+
+    extent0 = [wavevector_to_degree(u0, wavelength).min(), wavevector_to_degree(u0, wavelength).max(), wavevector_to_degree(v0, wavelength).min(), wavevector_to_degree(v0, wavelength).max()]
+
+    extent1 = [wavevector_to_degree(u1, wavelength).min(), wavevector_to_degree(u1, wavelength).max(), wavevector_to_degree(v1, wavelength).min(), wavevector_to_degree(v1, wavelength).max()]
+
+    extent2 = [wavevector_to_degree(u2, wavelength).min(), wavevector_to_degree(u2, wavelength).max(), wavevector_to_degree(v2, wavelength).min(), wavevector_to_degree(v2, wavelength).max()]
+
+    fig, ax = plt.subplots(ncols=3, figsize=(14, 4))
+
+    im0 = ax[0].imshow(10 * log_beam[0], extent=extent0, cmap='viridis', origin='lower')
+
+    cb0 = fig.colorbar(im0, ax=ax[0], shrink=0.8)
+    ax[0].set_ylabel('$v$ (degrees)', fontsize=11)
+    ax[0].set_xlabel('$u$ (degrees)', fontsize=11)
+    ax[0].set_title('Beam pattern $|F(u,v)|^2$ $d_z=' + str(d_z[0]) + '$', fontsize=11)
+    cb0.ax.set_ylabel('Beam pattern $|F(u,v)|^2$ Amplitude', fontsize=11)
+    ax[0].set_ylim(-1, 1)
+    ax[0].set_xlim(-1, 1)
+
+    im1 = ax[1].imshow(10 * log_beam[1], extent=extent1, cmap='viridis', origin='lower')
+
+    cb1 = fig.colorbar(im1, ax=ax[1], shrink=0.8)
+    ax[1].set_ylabel('$v$ (degrees)', fontsize=11)
+    ax[1].set_xlabel('$u$ (degrees)', fontsize=11)
+    ax[1].set_title('Beam pattern $|F(u,v)|^2$ $d_z=' + str(d_z[1]) + '$', fontsize=11)
+    cb1.ax.set_ylabel('Beam pattern $|F(u,v)|^2$ Amplitude', fontsize=11)
+    ax[1].set_ylim(-1, 1)
+    ax[1].set_xlim(-1, 1)
+
+    im2 = ax[2].imshow(10 * log_beam[2], extent=extent2, cmap='viridis', origin='lower')
+
+    cb2 = fig.colorbar(im2, ax=ax[2], shrink=0.8)
+    ax[2].set_ylabel('$v$ (degrees)', fontsize=11)
+    ax[2].set_xlabel('$u$ (degrees)', fontsize=11)
+    ax[2].set_title('Beam pattern $|F(u,v)|^2$  $d_z=' + str(d_z[2]) + '$', fontsize=11)
+    cb2.ax.set_ylabel('Beam pattern $|F(u,v)|^2$ Amplitude', fontsize=11)
+    ax[2].set_ylim(-1, 1)
+    ax[2].set_xlim(-1, 1)
+
+    fig.set_tight_layout(True)
 
 
     plt.show()
