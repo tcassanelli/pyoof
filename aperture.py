@@ -172,7 +172,7 @@ def phi(theta, rho, params, n=6):
     return phi
 
 
-def angular_spectrum(x, y, apert):
+def angular_spectrum(x, y, apert, params, d_z):
     """
     Angular spectrum function or aperture function FFT.
 
@@ -211,8 +211,10 @@ def angular_spectrum(x, y, apert):
     Nx = len(x)
     Ny = len(y)
 
+    aperture = apert(x_grid, y_grid, params, d_z)
+
     # FFT plus normalization
-    F = np.fft.fft2(apert(x_grid, y_grid), norm='ortho') * 4 / np.sqrt(Nx * Ny)
+    F = np.fft.fft2(aperture, norm='ortho') * 4 / np.sqrt(Nx * Ny)
     F_shift = np.fft.fftshift(F)
 
     u, v = np.meshgrid(np.fft.fftfreq(x.size, dx), np.fft.fftfreq(y.size, dy))
@@ -237,7 +239,9 @@ def aperture(x, y, params, d_z, n=5):
     _shape = antenna_shape(x_grid, y_grid)
     _illum = illum(x_grid, y_grid, c_db=-20)
 
-    A = _shape * _illum * np.exp(_phi + _delta)
+    N = x.shape[0]
+
+    A = _shape * _illum * np.exp((_phi + _delta) * 1j)  # complex correction
 
     return A
 
@@ -319,7 +323,6 @@ if False:
 
 # Test phi and delta functions
 if True:
-    import os
 
     # Generating data to plot
     box_size = 50
@@ -338,10 +341,11 @@ if True:
 
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / 50
+    d_z = 25e-3
 
     _phi = phi(t, r_norm, params=params, n=5) * antenna_shape(x_grid, y_grid)
 
-    _delta = delta(x_grid, y_grid, d_z=25e-3) * antenna_shape(x_grid, y_grid)
+    _delta = delta(x_grid, y_grid, d_z=d_z) * antenna_shape(x_grid, y_grid)
 
     _sum = _phi + _delta
 
@@ -352,11 +356,11 @@ if True:
     print('Max _sum: ', _sum.max())
 
     extent = [-box_size, box_size, -box_size, box_size]
-    fig, ax = plt.subplots(ncols=3, figsize=(12, 4))
+    fig, ax = plt.subplots(ncols=3, figsize=(14, 4))
 
     im0 = ax[0].imshow(_phi, extent=extent, cmap='viridis', origin='lower')
     contours0 = ax[0].contour(x_grid, y_grid, _phi, 10, colors='black')
-    cb0 = fig.colorbar(im0, ax=ax[0], shrink=0.7)
+    cb0 = fig.colorbar(im0, ax=ax[0], shrink=0.8)
     ax[0].set_ylabel('Position y')
     ax[0].set_xlabel('Position x')
     ax[0].set_title('$\phi(x,y)$')
@@ -364,19 +368,19 @@ if True:
 
     im1 = ax[1].imshow(_delta, extent=extent, cmap='viridis', origin='lower')
     contours1 = ax[1].contour(x_grid, y_grid, _delta, 10, colors='black')
-    cb1 = fig.colorbar(im1, ax=ax[1], shrink=0.7)
+    cb1 = fig.colorbar(im1, ax=ax[1], shrink=0.8)
     ax[1].set_ylabel('Position y')
     ax[1].set_xlabel('Position x')
-    ax[1].set_title('$\delta(x,y)$')
-    cb1.ax.set_ylabel('$\delta(x,y)$ Amplitude', fontsize=13)
+    ax[1].set_title('$\delta(x,y,d_z =' + str(d_z) + ')$')
+    cb1.ax.set_ylabel('$\delta(x,y,d_z =' + str(d_z) + ')$ Amplitude', fontsize=10)
 
     im2 = ax[2].imshow(_sum, extent=extent, cmap='viridis', origin='lower')
     contours2 = ax[2].contour(x_grid, y_grid, _sum, 10, colors='black')
-    cb2 = fig.colorbar(im2, ax=ax[2], shrink=0.7)
+    cb2 = fig.colorbar(im2, ax=ax[2], shrink=0.8)
     ax[2].set_ylabel('Position y')
     ax[2].set_xlabel('Position x')
-    ax[2].set_title('$\phi(x,y)+\delta(x,y)$')
-    cb2.ax.set_ylabel('$\phi(x,y)+\delta(x,y)$ Amplitude', fontsize=13)
+    ax[2].set_title('$\phi(x,y)+\delta(x,y,d_z =' + str(d_z) + ')$')
+    cb2.ax.set_ylabel('$\phi(x,y)+\delta(x,y,d_z =' + str(d_z) + ')$ Amplitude', fontsize=10)
 
     fig.set_tight_layout(True)
 
@@ -392,44 +396,96 @@ if True:
 
     x_grid, y_grid = np.meshgrid(x_data, y_data)
 
-    params__ = np.zeros(21)
-    params__[1] = 1
+    # Set of example parameters
+    params1 = np.zeros(21)
+    params1[1] = 1
 
-    params_ = np.random.randn(21)  # rand number from 0-1 for 28 coeff.
-    params = np.array([0, -2.298295e-1, 4.93943e-1, -1.379757e-1, -1.819459e-1, -9.78374e-2, 6.137946e-1, -1.684147e-1, 1.348733e-1, -2.600830e-1, 3.05227e-2, -1.045454e-1, 2.149645e-2, 6.240493e-2, -9.050347e-2, -5.502480e-1, 2.346242e-1, -3.50973e-1, -1.287273e-2, 3.709351e-1, -2.244371e-1])
+    params2 = np.random.randn(21)  # rand number from 0-1 for 28 coeff.
+
+    params3 = np.array([0, -2.298295e-1, 4.93943e-1, -1.379757e-1, -1.819459e-1, -9.78374e-2, 6.137946e-1, -1.684147e-1, 1.348733e-1, -2.600830e-1, 3.05227e-2, -1.045454e-1, 2.149645e-2, 6.240493e-2, -9.050347e-2, -5.502480e-1, 2.346242e-1, -3.50973e-1, -1.287273e-2, 3.709351e-1, -2.244371e-1])
 
     d_z = [-25e-3, 0, 25e-3]
 
-    A = [aperture(x_grid, y_grid, params, d_z=d_z[0]), aperture(x_grid, y_grid, params, d_z=d_z[1]), aperture(x_grid, y_grid, params, d_z=d_z[2])]
+    apert = [aperture(x_grid, y_grid, params3, d_z=d_z[0]), aperture(x_grid, y_grid, params3, d_z=d_z[1]), aperture(x_grid, y_grid, params3, d_z=d_z[2])]
 
     extent = [-box_size, box_size, -box_size, box_size]
 
-    fig, ax = plt.subplots(ncols=3, figsize=(14, 4))
+    fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 8))
 
-    im0 = ax[0].imshow(A[0], extent=extent, cmap='viridis', origin='lower')
-    contours0 = ax[0].contour(x_grid, y_grid, A[0], 10, colors='black')
-    cb0 = fig.colorbar(im0, ax=ax[0])
-    ax[0].set_ylabel('Position y')
-    ax[0].set_xlabel('Position x')
-    ax[0].set_title('Aperture $A(x,y)$ $d_z=' + str(d_z[0]) + '$')
-    cb0.ax.set_ylabel('$A(x,y)$ Amplitude', fontsize=13)
+    im0 = ax[0, 0].imshow(apert[0].real, extent=extent, cmap='viridis', origin='lower')
+    contours0 = ax[0, 0].contour(x_grid, y_grid, apert[0].real, 10, colors='black')
+    cb0 = fig.colorbar(im0, ax=ax[0, 0], shrink=0.8)
+    ax[0, 0].set_ylabel('Position y')
+    ax[0, 0].set_xlabel('Position x')
+    ax[0, 0].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z[0]) + '$')
+    cb0.ax.set_ylabel('$\operatorname{Re}(A(x,y))$ Amplitude', fontsize=13)
 
-    im1 = ax[1].imshow(A[1], extent=extent, cmap='viridis', origin='lower')
-    contours1 = ax[1].contour(x_grid, y_grid, A[1], 10, colors='black')
-    cb1 = fig.colorbar(im1, ax=ax[1])
-    ax[1].set_ylabel('Position y')
-    ax[1].set_xlabel('Position x')
-    ax[1].set_title('Aperture $A(x,y)$ $d_z=' + str(d_z[1]) + '$')
-    cb1.ax.set_ylabel('$A(x,y)$ Amplitude', fontsize=13)
+    im1 = ax[0, 1].imshow(apert[1].real, extent=extent, cmap='viridis', origin='lower')
+    contours1 = ax[0, 1].contour(x_grid, y_grid, apert[1].real, 10, colors='black')
+    cb1 = fig.colorbar(im1, ax=ax[0, 1], shrink=0.8)
+    ax[0, 1].set_ylabel('Position y')
+    ax[0, 1].set_xlabel('Position x')
+    ax[0, 1].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z[1]) + '$')
+    cb1.ax.set_ylabel('$\operatorname{Re}(A(x,y))$ Amplitude', fontsize=13)
 
-    im2 = ax[2].imshow(A[2], extent=extent, cmap='viridis', origin='lower')
-    contours2 = ax[2].contour(x_grid, y_grid, A[2], 10, colors='black')
-    cb2 = fig.colorbar(im2, ax=ax[2])
-    ax[2].set_ylabel('Position y')
-    ax[2].set_xlabel('Position x')
-    ax[2].set_title('Aperture $A(x,y)$ $d_z=' + str(d_z[2]) + '$')
-    cb2.ax.set_ylabel('$A(x,y)$ Amplitude', fontsize=13)
+    im2 = ax[0, 2].imshow(apert[2].real, extent=extent, cmap='viridis', origin='lower')
+    contours2 = ax[0, 2].contour(x_grid, y_grid, apert[2].real, 10, colors='black')
+    cb2 = fig.colorbar(im2, ax=ax[0, 2], shrink=0.8)
+    ax[0, 2].set_ylabel('Position y')
+    ax[0, 2].set_xlabel('Position x')
+    ax[0, 2].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z[2]) + '$')
+    cb2.ax.set_ylabel('$\operatorname{Re}(A(x,y))$ Amplitude', fontsize=13)
+
+    im3 = ax[1, 0].imshow(apert[0].imag, extent=extent, cmap='viridis', origin='lower')
+    contours3 = ax[1, 0].contour(x_grid, y_grid, apert[0].imag, 10, colors='black')
+    cb3 = fig.colorbar(im0, ax=ax[1, 0], shrink=0.8)
+    ax[1, 0].set_ylabel('Position y')
+    ax[1, 0].set_xlabel('Position x')
+    ax[1, 0].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z[0]) + '$')
+    cb3.ax.set_ylabel('$\operatorname{Im}(A(x,y))$ Amplitude', fontsize=13)
+
+    im4 = ax[1, 1].imshow(apert[1].imag, extent=extent, cmap='viridis', origin='lower')
+    contours4 = ax[1, 1].contour(x_grid, y_grid, apert[1].imag, 10, colors='black')
+    cb4 = fig.colorbar(im4, ax=ax[1, 1], shrink=0.8)
+    ax[1, 1].set_ylabel('Position y')
+    ax[1, 1].set_xlabel('Position x')
+    ax[1, 1].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z[1]) + '$')
+    cb4.ax.set_ylabel('$\operatorname{Im}(A(x,y))$ Amplitude', fontsize=13)
+
+    im5 = ax[1, 2].imshow(apert[2].imag, extent=extent, cmap='viridis', origin='lower')
+    contours5 = ax[1, 2].contour(x_grid, y_grid, apert[2].imag, 10, colors='black')
+    cb5 = fig.colorbar(im5, ax=ax[1, 2], shrink=0.8)
+    ax[1, 2].set_ylabel('Position y')
+    ax[1, 2].set_xlabel('Position x')
+    ax[1, 2].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z[2]) + '$')
+    cb5.ax.set_ylabel('$\operatorname{Im}(A(x,y))$ Amplitude', fontsize=13)
 
     fig.set_tight_layout(True)
+
+
+if True:
+        # Generating data to plot
+    box_size = 50
+    y_data = np.linspace(-box_size, box_size, 2 ** 10)
+    x_data = np.linspace(-box_size, box_size, 2 ** 10)
+
+    x_grid, y_grid = np.meshgrid(x_data, y_data)
+
+    # Set of example parameters
+    params1 = np.zeros(21)
+    params1[1] = 1
+
+    params2 = np.random.randn(21)  # rand number from 0-1 for 28 coeff.
+
+    params3 = np.array([0, -2.298295e-1, 4.93943e-1, -1.379757e-1, -1.819459e-1, -9.78374e-2, 6.137946e-1, -1.684147e-1, 1.348733e-1, -2.600830e-1, 3.05227e-2, -1.045454e-1, 2.149645e-2, 6.240493e-2, -9.050347e-2, -5.502480e-1, 2.346242e-1, -3.50973e-1, -1.287273e-2, 3.709351e-1, -2.244371e-1])
+
+    d_z = [-25e-3, 0, 25e-3]
+
+    apert = [aperture(x_grid, y_grid, params3, d_z=d_z[0]), aperture(x_grid, y_grid, params3, d_z=d_z[1]), aperture(x_grid, y_grid, params3, d_z=d_z[2])]
+
+    extent = [-box_size, box_size, -box_size, box_size]
+
+    fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 4))
+
 
     plt.show()
