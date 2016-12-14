@@ -10,7 +10,7 @@ matplotlib.rcParams['font.family'] = 'STIXGeneral'
 # Aperture function for the Effelsber telescope
 
 
-def illum(x, y, c_db=-20):
+def illum(x, y, c_db=-14):
     """
     Illumination function, sometimes called amplitude. Represents the
     distribution of light in the primary reflector.
@@ -56,7 +56,7 @@ def antenna_shape(x, y):
     pr = 50  # Primary reflector radius
     sr = 3.25  # secondary reflector radius
     L = 20  # length support structure
-    a = 2  # thickness support structure
+    a = 1  # half thickness support structure
 
     ant_model = np.zeros(x.shape)  # or y.shape same
     ant_model[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
@@ -240,6 +240,10 @@ def aperture(x, y, params, d_z, n=5):
     _illum = illum(x_grid, y_grid, c_db=-20)
 
     A = _shape * _illum * np.exp((_phi + _delta) * 1j)  # complex correction
+    # _amp = _shape * _illum
+    # _phase = _phi + _delta
+    # A.real = _amp * np.cos(_phase)
+    # A.imag = _amp * np.sin(_phi)
 
     return A
 
@@ -341,7 +345,8 @@ if True:
 
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / 50
-    d_z = 25e-3
+    d_z = 2.5 * 2 * np.pi
+    d_z_print = np.round(d_z, 2)
 
     _phi = phi(t, r_norm, params=params, n=5) * antenna_shape(x_grid, y_grid)
 
@@ -371,16 +376,16 @@ if True:
     cb1 = fig.colorbar(im1, ax=ax[1], shrink=0.8)
     ax[1].set_ylabel('Position y')
     ax[1].set_xlabel('Position x')
-    ax[1].set_title('$\delta(x,y,d_z =' + str(d_z) + ')$')
-    cb1.ax.set_ylabel('$\delta(x,y,d_z =' + str(d_z) + ')$ Amplitude', fontsize=10)
+    ax[1].set_title('$\delta(x,y,d_z =' + str(d_z_print) + ')$')
+    cb1.ax.set_ylabel('$\delta(x,y,d_z =' + str(d_z_print) + ')$ Amplitude', fontsize=10)
 
     im2 = ax[2].imshow(_sum, extent=extent, cmap='viridis', origin='lower')
     contours2 = ax[2].contour(x_grid, y_grid, _sum, 10, colors='black')
     cb2 = fig.colorbar(im2, ax=ax[2], shrink=0.8)
     ax[2].set_ylabel('Position y')
     ax[2].set_xlabel('Position x')
-    ax[2].set_title('$\phi(x,y)+\delta(x,y,d_z =' + str(d_z) + ')$')
-    cb2.ax.set_ylabel('$\phi(x,y)+\delta(x,y,d_z =' + str(d_z) + ')$ Amplitude', fontsize=10)
+    ax[2].set_title('$\phi(x,y)+\delta(x,y,d_z =' + str(d_z_print) + ')$')
+    cb2.ax.set_ylabel('$\phi(x,y)+\delta(x,y,d_z =' + str(d_z_print) + ')$ Amplitude', fontsize=10)
 
     fig.set_tight_layout(True)
 
@@ -404,68 +409,75 @@ if True:
 
     params3 = np.array([0, -2.298295e-1, 4.93943e-1, -1.379757e-1, -1.819459e-1, -9.78374e-2, 6.137946e-1, -1.684147e-1, 1.348733e-1, -2.600830e-1, 3.05227e-2, -1.045454e-1, 2.149645e-2, 6.240493e-2, -9.050347e-2, -5.502480e-1, 2.346242e-1, -3.50973e-1, -1.287273e-2, 3.709351e-1, -2.244371e-1])
 
-    d_z = [-25e-3, 0, 25e-3]
+    d_z = np.array([-2.5, 0, 2.5])
+    d_z *= 2 * np.pi  # convert to radians
+    d_z_print = np.round(d_z, 2)
 
     apert = [aperture(x_grid, y_grid, params3, d_z=d_z[0]), aperture(x_grid, y_grid, params3, d_z=d_z[1]), aperture(x_grid, y_grid, params3, d_z=d_z[2])]
 
     extent = [-box_size, box_size, -box_size, box_size]
+    levels = 5
 
     fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 8))
 
     im0 = ax[0, 0].imshow(apert[0].real, extent=extent, cmap='viridis', origin='lower')
-    contours0 = ax[0, 0].contour(x_grid, y_grid, apert[0].real, 10, colors='black')
+    contours0 = ax[0, 0].contour(x_grid, y_grid, apert[0].real, levels, colors='black')
     cb0 = fig.colorbar(im0, ax=ax[0, 0], shrink=0.8)
     ax[0, 0].set_ylabel('Position y')
     ax[0, 0].set_xlabel('Position x')
-    ax[0, 0].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z[0]) + '$')
+    ax[0, 0].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z_print[0]) + '$')
     cb0.ax.set_ylabel('$\operatorname{Re}(A(x,y))$ Amplitude', fontsize=13)
 
     im1 = ax[0, 1].imshow(apert[1].real, extent=extent, cmap='viridis', origin='lower')
-    contours1 = ax[0, 1].contour(x_grid, y_grid, apert[1].real, 10, colors='black')
+    contours1 = ax[0, 1].contour(x_grid, y_grid, apert[1].real, levels, colors='black')
     cb1 = fig.colorbar(im1, ax=ax[0, 1], shrink=0.8)
     ax[0, 1].set_ylabel('Position y')
     ax[0, 1].set_xlabel('Position x')
-    ax[0, 1].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z[1]) + '$')
+    ax[0, 1].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z_print[1]) + '$')
     cb1.ax.set_ylabel('$\operatorname{Re}(A(x,y))$ Amplitude', fontsize=13)
 
     im2 = ax[0, 2].imshow(apert[2].real, extent=extent, cmap='viridis', origin='lower')
-    contours2 = ax[0, 2].contour(x_grid, y_grid, apert[2].real, 10, colors='black')
+    contours2 = ax[0, 2].contour(x_grid, y_grid, apert[2].real, levels, colors='black')
     cb2 = fig.colorbar(im2, ax=ax[0, 2], shrink=0.8)
     ax[0, 2].set_ylabel('Position y')
     ax[0, 2].set_xlabel('Position x')
-    ax[0, 2].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z[2]) + '$')
+    ax[0, 2].set_title('Aperture $\operatorname{Re}(A(x,y))$ $d_z=' + str(d_z_print[2]) + '$')
     cb2.ax.set_ylabel('$\operatorname{Re}(A(x,y))$ Amplitude', fontsize=13)
 
     im3 = ax[1, 0].imshow(apert[0].imag, extent=extent, cmap='viridis', origin='lower')
-    contours3 = ax[1, 0].contour(x_grid, y_grid, apert[0].imag, 10, colors='black')
+    contours3 = ax[1, 0].contour(x_grid, y_grid, apert[0].imag, levels, colors='black')
     cb3 = fig.colorbar(im0, ax=ax[1, 0], shrink=0.8)
     ax[1, 0].set_ylabel('Position y')
     ax[1, 0].set_xlabel('Position x')
-    ax[1, 0].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z[0]) + '$')
+    ax[1, 0].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z_print[0]) + '$')
     cb3.ax.set_ylabel('$\operatorname{Im}(A(x,y))$ Amplitude', fontsize=13)
 
     im4 = ax[1, 1].imshow(apert[1].imag, extent=extent, cmap='viridis', origin='lower')
-    contours4 = ax[1, 1].contour(x_grid, y_grid, apert[1].imag, 10, colors='black')
+    contours4 = ax[1, 1].contour(x_grid, y_grid, apert[1].imag, levels, colors='black')
     cb4 = fig.colorbar(im4, ax=ax[1, 1], shrink=0.8)
     ax[1, 1].set_ylabel('Position y')
     ax[1, 1].set_xlabel('Position x')
-    ax[1, 1].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z[1]) + '$')
+    ax[1, 1].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z_print[1]) + '$')
     cb4.ax.set_ylabel('$\operatorname{Im}(A(x,y))$ Amplitude', fontsize=13)
 
     im5 = ax[1, 2].imshow(apert[2].imag, extent=extent, cmap='viridis', origin='lower')
-    contours5 = ax[1, 2].contour(x_grid, y_grid, apert[2].imag, 10, colors='black')
+    contours5 = ax[1, 2].contour(x_grid, y_grid, apert[2].imag, levels, colors='black')
     cb5 = fig.colorbar(im5, ax=ax[1, 2], shrink=0.8)
     ax[1, 2].set_ylabel('Position y')
     ax[1, 2].set_xlabel('Position x')
-    ax[1, 2].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z[2]) + '$')
+    ax[1, 2].set_title('Aperture $\operatorname{Im}(A(x,y))$ $d_z=' + str(d_z_print[2]) + '$')
     cb5.ax.set_ylabel('$\operatorname{Im}(A(x,y))$ Amplitude', fontsize=13)
 
     fig.set_tight_layout(True)
 
 
 if True:
-        # Generating data to plot
-    box_size = 50
+
+    frequency = 32e9  # Hz
+    wavelength = light_speed / frequency
+    print('wavelength', wavelength)
+
+    box_size = 500
     y_data = np.linspace(-box_size, box_size, 2 ** 10)
     x_data = np.linspace(-box_size, box_size, 2 ** 10)
 
@@ -479,18 +491,19 @@ if True:
 
     params3 = np.array([0, -2.298295e-1, 4.93943e-1, -1.379757e-1, -1.819459e-1, -9.78374e-2, 6.137946e-1, -1.684147e-1, 1.348733e-1, -2.600830e-1, 3.05227e-2, -1.045454e-1, 2.149645e-2, 6.240493e-2, -9.050347e-2, -5.502480e-1, 2.346242e-1, -3.50973e-1, -1.287273e-2, 3.709351e-1, -2.244371e-1])
 
-    d_z = [-25e-3, 0, 25e-3]
+    #d_z = [-25e-3, 0, 25e-3]
+    # d_z has to be given in units of wavelength
+    d_z = np.array([-2.5, 0., 2.5])  # Unit m/m (m/lamb)
+    d_z *= 2 * np.pi  # convert to radians
 
     u0, v0, apert0 = angular_spectrum(x_data, y_data, aperture, params3, d_z=d_z[0])
     u1, v1, apert1 = angular_spectrum(x_data, y_data, aperture, params3, d_z=d_z[1])
     u2, v2, apert2 = angular_spectrum(x_data, y_data, aperture, params3, d_z=d_z[2])
 
-    frequency = 8.55e9
-    wavelength = light_speed / frequency
-    print('wavelength', wavelength)
-
     beam = [np.abs(apert0) ** 2, np.abs(apert1) ** 2, np.abs(apert2) ** 2]
-    log_beam = [np.log10(beam[0] / beam[0].max()), np.log10(beam[1] / beam[1].max()), np.log10(beam[2] / beam[2].max())]
+    log_beam = 10 * np.array([
+        np.log10(beam[i] / beam[i].max()) for i in range(3)
+        ])
 
     extent0 = [wavevector_to_degree(u0, wavelength).min(), wavevector_to_degree(u0, wavelength).max(), wavevector_to_degree(v0, wavelength).min(), wavevector_to_degree(v0, wavelength).max()]
 
@@ -498,37 +511,55 @@ if True:
 
     extent2 = [wavevector_to_degree(u2, wavelength).min(), wavevector_to_degree(u2, wavelength).max(), wavevector_to_degree(v2, wavelength).min(), wavevector_to_degree(v2, wavelength).max()]
 
+    set_squared = 0.05
+
     fig, ax = plt.subplots(ncols=3, figsize=(14, 4))
 
-    im0 = ax[0].imshow(10 * log_beam[0], extent=extent0, cmap='viridis', origin='lower')
+    # im0 = ax[0].imshow(log_beam[0], extent=extent0, cmap='viridis', origin='lower', vmin=-40, vmax=0.)
+    im0 = ax[0].imshow(beam[0], extent=extent0, cmap='viridis', origin='lower')
+    contours0 = ax[0].contour(wavevector_to_degree(u0, wavelength), wavevector_to_degree(v0, wavelength), beam[0], 10, colors='black')
 
     cb0 = fig.colorbar(im0, ax=ax[0], shrink=0.8)
     ax[0].set_ylabel('$v$ (degrees)', fontsize=11)
     ax[0].set_xlabel('$u$ (degrees)', fontsize=11)
-    ax[0].set_title('Beam pattern $|F(u,v)|^2$ $d_z=' + str(d_z[0]) + '$', fontsize=11)
+    ax[0].set_title('Beam pattern $|F(u,v)|^2$ $d_z=' + str(round(d_z[0], 2)) + '$', fontsize=11)
     cb0.ax.set_ylabel('Beam pattern $|F(u,v)|^2$ Amplitude', fontsize=11)
-    ax[0].set_ylim(-1, 1)
-    ax[0].set_xlim(-1, 1)
+    ax[0].set_ylim(-set_squared, set_squared)
+    ax[0].set_xlim(-set_squared, set_squared)
 
-    im1 = ax[1].imshow(10 * log_beam[1], extent=extent1, cmap='viridis', origin='lower')
+    cb0.formatter.set_powerlimits((0,0))
+    cb0.update_ticks()
 
+
+
+    # im1 = ax[1].imshow(log_beam[1], extent=extent1, cmap='viridis', origin='lower', vmin=-40, vmax=0.)
+    im1 = ax[1].imshow(beam[1], extent=extent1, cmap='viridis', origin='lower')
+    contours1 = ax[1].contour(wavevector_to_degree(u1, wavelength), wavevector_to_degree(v1, wavelength), beam[1], 10, colors='black')
     cb1 = fig.colorbar(im1, ax=ax[1], shrink=0.8)
     ax[1].set_ylabel('$v$ (degrees)', fontsize=11)
     ax[1].set_xlabel('$u$ (degrees)', fontsize=11)
-    ax[1].set_title('Beam pattern $|F(u,v)|^2$ $d_z=' + str(d_z[1]) + '$', fontsize=11)
+    ax[1].set_title('Beam pattern $|F(u,v)|^2$ $d_z=' + str(round(d_z[1], 2)) + '$', fontsize=11)
     cb1.ax.set_ylabel('Beam pattern $|F(u,v)|^2$ Amplitude', fontsize=11)
-    ax[1].set_ylim(-1, 1)
-    ax[1].set_xlim(-1, 1)
+    ax[1].set_ylim(-0.01, 0.01)
+    ax[1].set_xlim(-0.01, 0.01)
 
-    im2 = ax[2].imshow(10 * log_beam[2], extent=extent2, cmap='viridis', origin='lower')
+    cb1.formatter.set_powerlimits((0,0))
+    cb1.update_ticks()
 
+    # im2 = ax[2].imshow(log_beam[2], extent=extent2, cmap='viridis', origin='lower', vmin=-40, vmax=0.)
+
+    im2 = ax[2].imshow(beam[2], extent=extent2, cmap='viridis', origin='lower')
+    contours2 = ax[2].contour(wavevector_to_degree(u2, wavelength), wavevector_to_degree(v2, wavelength), beam[2], 10, colors='black')
     cb2 = fig.colorbar(im2, ax=ax[2], shrink=0.8)
     ax[2].set_ylabel('$v$ (degrees)', fontsize=11)
     ax[2].set_xlabel('$u$ (degrees)', fontsize=11)
-    ax[2].set_title('Beam pattern $|F(u,v)|^2$  $d_z=' + str(d_z[2]) + '$', fontsize=11)
+    ax[2].set_title('Beam pattern $|F(u,v)|^2$  $d_z=' + str(round(d_z[2], 2)) + '$', fontsize=11)
     cb2.ax.set_ylabel('Beam pattern $|F(u,v)|^2$ Amplitude', fontsize=11)
-    ax[2].set_ylim(-1, 1)
-    ax[2].set_xlim(-1, 1)
+    ax[2].set_ylim(-set_squared, set_squared)
+    ax[2].set_xlim(-set_squared, set_squared)
+
+    cb2.formatter.set_powerlimits((0,0))
+    cb2.update_ticks()
 
     fig.set_tight_layout(True)
 
