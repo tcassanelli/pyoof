@@ -4,7 +4,7 @@ from math import factorial as f
 # All mathematical function have been adapted for the Effelsber telescope
 
 
-def illumination(x, y, c_db):
+def illumination_pedestal(x, y, i_coeff):
     """
     Illumination function, sometimes called amplitude. Represents the
     distribution of light in the primary reflector.
@@ -21,8 +21,10 @@ def illumination(x, y, c_db):
     illumination : ndarray
     """
     pr = 50  # Primary reflector radius
-    #c_db = -20  # [dB] Constant for quadratic model illumination
-    # Parabolic tapre on a pedestal
+    # c_db = -20  # [dB] Constant for quadratic model illumination
+    c_db = i_coeff
+
+    # Parabolic taper on a pedestal
     n = 2  # Order quadratic model illumination (Parabolic squared)
 
     c = 10 ** (c_db / 20.)
@@ -30,6 +32,33 @@ def illumination(x, y, c_db):
     illumination = c + (1. - c) * (1. - (r / pr) ** 2) ** n
     return illumination
 
+
+def illumination_gauss(x, y, i_coeff):
+
+    amp = i_coeff[0]
+    sigma_r = i_coeff[1]  # illumination taper
+    # Centre illuminationprimary reflector
+    x0 = i_coeff[2]
+    y0 = i_coeff[3]
+
+    pr = 50  # Primary reflector radius
+
+    illumination = amp * np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma_r * pr) ** 2))
+    return illumination
+
+
+def illumination_nikolic(x, y, i_coeff):
+
+    amp = i_coeff[0]
+    sigma_r = i_coeff[1]  # illumination taper
+    # Centre illuminationprimary reflector
+    x0 = i_coeff[2]
+    y0 = i_coeff[3]
+
+    pr = 50  # Primary reflector radius
+
+    illumination = amp * np.exp(-((x - x0) ** 2 + (y - y0) ** 2) * sigma_r / pr ** 2)
+    return illumination
 
 def antenna_shape(x, y):
     """
@@ -117,8 +146,15 @@ def U(l, n, theta, rho):
         print('U(l, n) can only have positive values for n')
 
     m = abs(l)
-    a = int((n + m) / 2)
-    b = int((n - m) / 2)
+    a = (n + m) // 2
+    b = (n - m) // 2
+
+    # if m == 0:
+    #     delta_m0 = 1
+    # else:
+    #     delta_m0 = 0
+
+    # norm = np.sqrt(2 * (n + 1) / (1 + delta_m0))
 
     R = sum(
     (-1) ** s * f(n - s) * rho ** (n - 2 * s) / (f(s) * f(a - s) * f(b - s))
@@ -126,14 +162,14 @@ def U(l, n, theta, rho):
     )
 
     if l < 0:
-        U = R * np.sin(m * theta)
+        U = R * np.sin(m * theta)  # * norm
     else:
-        U = R * np.cos(m * theta)
+        U = R * np.cos(m * theta)  # * norm
 
     return U
 
 
-def phi(theta, rho, params, n):
+def phi(theta, rho, U_coeff, n):
     """
     Generates a series of Zernike polynomials, the aberration function.
 
@@ -143,7 +179,7 @@ def phi(theta, rho, params, n):
         Values for the angular component. theta = np.arctan(y / x).
     rho : ndarray
         Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2).
-    params : ndarray
+    U_coeff : ndarray
         Constants organized by the ln list, which gives the possible values.
     n : int
         It is n >= 0. Determines the size of the polynomial, see ln.
@@ -160,8 +196,8 @@ def phi(theta, rho, params, n):
     N = np.array(ln)[:, 1]
 
     phi = sum(
-        params[i] * U(L[i], N[i], theta, rho)
-        for i in range(params.size)
+        U_coeff[i] * U(L[i], N[i], theta, rho)
+        for i in range(U_coeff.size)
         )
 
     return phi
@@ -191,23 +227,32 @@ def cart2pol(x, y):
     return rho, theta
 
 
-def aperture(x, y, params, d_z, n, c_db):
+def aperture(x, y, U_coeff, d_z, n, i_coeff, illum):
     """
     Aperture function as expresses in the paper. A multiplication from other functions.
     """
     r, t = cart2pol(x, y)
 
+    pr = 50  # Primary reflector radius
+
     # It needs to be normalized to be orthogonal undet the Zernike polynomials
-    r_norm = r / 50
+    r_norm = r / pr
 
-    _phi = phi(t, r_norm, params, n)
-    _delta = delta(x, y, d_z)
+    _phi = phi(theta=t, rho=r_norm, U_coeff=U_coeff, n=n)
+    _delta = delta(x, y, d_z=d_z)
     _shape = antenna_shape(x, y)
-    _illum = illumination(x, y, c_db)
 
-    A = _shape * _illum * np.exp((_phi + _delta) * 1j)  # complex correction
+    if illum == 'gauss':
+        _illum = illumination_gauss(x, y, i_coeff=i_coeff)
+    if illum == 'pedestal':
+        _illum = illumination_pedestal(x, y, i_coeff=i_coeff)
+    if illum == 'nikolic':
+        _illum = illumination_nikolic(x, y, i_coeff=i_coeff)
 
-    return A
+    E = _shape * _illum * np.exp((_phi + _delta) * 1j)
+    # Aperture: E(x/lam, y/lam)
+
+    return E
 
 
 def wavevector_to_degree(x, lam):
@@ -218,7 +263,7 @@ def wavevector_to_degree(x, lam):
 
 
 
-def angular_spectrum(x, y, params, d_z, n, c_db):
+def angular_spectrum(x, y, U_coeff, d_z, n, i_coeff, illum):
 
     # the input (x,y) must be a linear array, not mesh!
     dx = x[1] - x[0]
@@ -230,7 +275,7 @@ def angular_spectrum(x, y, params, d_z, n, c_db):
     # fft2 doesn't work without a grid
     x_grid, y_grid = np.meshgrid(x, y)
 
-    _aperture = aperture(x_grid, y_grid, params, d_z, n, c_db)
+    _aperture = aperture(x_grid, y_grid, U_coeff=U_coeff, d_z=d_z, n=n, i_coeff=i_coeff, illum=illum)
 
     # FFT plus normalization
     F = np.fft.fft2(_aperture, norm='ortho') * 4 / np.sqrt(Nx * Ny)
