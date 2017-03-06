@@ -7,6 +7,7 @@ from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
 from astropy.table import Table
 
+# Standard parameters plot functions
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
 matplotlib.rcParams['lines.linewidth'] = 0.7
@@ -19,14 +20,8 @@ matplotlib.rcParams['figure.titlesize'] = 15
 
 def plot_beam(params_list, title, x, y, d_z, n, rad, lam, illum):
 
-    if illum == 'gauss' or illum == 'nikolic':
-        i_coeff = params_list[:4]
-        U_coeff = params_list[4:]
-
-    if illum == 'pedestal': # needs correction!
-        amp = params_list[0]
-        i_coeff = params_list[1]
-        U_coeff = params_list[2:]
+    i_coeff = params_list[:4]
+    U_coeff = params_list[4:]
 
     if rad:
         angle_coeff = np.pi / 180
@@ -104,7 +99,6 @@ def plot_beam(params_list, title, x, y, d_z, n, rad, lam, illum):
     return fig
 
 
-# Test to plot the data
 def plot_data(u_b_data, v_b_data, beam_data, title, d_z, rad):
 
     if rad:
