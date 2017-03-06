@@ -20,16 +20,23 @@ def illumination_pedestal(x, y, i_coeff):
     -------
     illumination : ndarray
     """
+
+    amp = i_coeff[0]
+    c_db = i_coeff[1]  # number has to be negative [-8, -20]
+    # Centre illuminationprimary reflector
+    x0 = i_coeff[2]
+    y0 = i_coeff[3]
+
+
     pr = 50  # Primary reflector radius
     # c_db = -20  # [dB] Constant for quadratic model illumination
-    c_db = i_coeff
 
     # Parabolic taper on a pedestal
     n = 2  # Order quadratic model illumination (Parabolic squared)
 
     c = 10 ** (c_db / 20.)
-    r = np.sqrt(x ** 2 + y ** 2)
-    illumination = c + (1. - c) * (1. - (r / pr) ** 2) ** n
+    r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
+    illumination = amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** n)
     return illumination
 
 
