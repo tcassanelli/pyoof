@@ -184,7 +184,8 @@ def fit_beam(path_fits, order, fit_illum_params):
     data_to_save = [params_names, params_solution, params_init]
 
     # Storing files in directory
-    ascii.write(data_to_save, name_to_save, names=['parname', 'parfit', 'parinit'])
+    ascii.write(
+        data_to_save, name_to_save, names=['parname', 'parfit', 'parinit'])
 
     print('####### %s mins #######' % str((time.time() - start_time) / 60))
 
