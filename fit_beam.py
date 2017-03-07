@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.constants import c as light_speed
-from main_functions import aperture, angular_spectrum, wavevector_to_degree
+from main_functions import angular_spectrum, wavevector_to_degree
 from scipy.optimize import least_squares
 from astropy.io import fits
 from scipy.interpolate import RegularGridInterpolator
@@ -16,8 +16,9 @@ def find_name_path(path):
     return tail or ntpath.basename(head)
 
 
-def residual(params, beam_data, u_data, v_data, x, y, d_z, lam, illum,
-    fit_illum_params):
+def residual(
+    params, beam_data, u_data, v_data, x, y, d_z, lam, illum,
+        fit_illum_params):
 
     if fit_illum_params:
         i_coeff = params[:4]
@@ -26,9 +27,12 @@ def residual(params, beam_data, u_data, v_data, x, y, d_z, lam, illum,
         i_coeff = np.array([params[0], 1.0, 0.0, 0.0])
         U_coeff = np.insert(params[1:], 0, 0)
 
-    u0, v0, aspectrum0 = angular_spectrum(x, y, U_coeff=U_coeff, d_z=d_z[0], i_coeff=i_coeff, illum=illum)
-    u1, v1, aspectrum1 = angular_spectrum(x, y, U_coeff=U_coeff, d_z=d_z[1], i_coeff=i_coeff, illum=illum)
-    u2, v2, aspectrum2 = angular_spectrum(x, y, U_coeff=U_coeff, d_z=d_z[2], i_coeff=i_coeff, illum=illum)
+    u0, v0, aspectrum0 = angular_spectrum(
+        x, y, U_coeff=U_coeff, d_z=d_z[0], i_coeff=i_coeff, illum=illum)
+    u1, v1, aspectrum1 = angular_spectrum(
+        x, y, U_coeff=U_coeff, d_z=d_z[1], i_coeff=i_coeff, illum=illum)
+    u2, v2, aspectrum2 = angular_spectrum(
+        x, y, U_coeff=U_coeff, d_z=d_z[2], i_coeff=i_coeff, illum=illum)
 
     aspectrum = np.array([aspectrum0, aspectrum1, aspectrum2])
 
@@ -170,8 +174,8 @@ def fit_beam(path_fits, order, fit_illum_params):
 
     table = Table(
         {'Parameter': params_names, 'Fit': params_solution,
-        'Initial guess': params_init},
-        names=['Parameter', 'Fit', 'Initial guess'])
+            'Initial guess': params_init},
+            names=['Parameter', 'Fit', 'Initial guess'])
     print(table)
     print('\n')
 
