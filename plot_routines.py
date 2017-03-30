@@ -5,9 +5,8 @@ from main_functions import angular_spectrum, wavevector_to_degree, \
     cart2pol, phi, antenna_shape, aperture
 from scipy.constants import c as light_speed
 from matplotlib.mlab import griddata
-from astropy.io import fits
+from astropy.io import fits, ascii
 import ntpath
-from astropy.io import ascii
 import os
 
 import matplotlib
@@ -27,7 +26,7 @@ def find_name_path(path):
     return head, tail
 
 
-def plot_beam(params, title, x, y, d_z_m, lam, illum, rad=False):
+def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
 
     I_coeff = params[:4]
     K_coeff = params[4:]
@@ -41,74 +40,81 @@ def plot_beam(params, title, x, y, d_z_m, lam, illum, rad=False):
 
     d_z = np.array(d_z_m) * 2 * np.pi / lam
 
-    u0, v0, as0 = angular_spectrum(
-        x, y, K_coeff=K_coeff, d_z=d_z[0], I_coeff=I_coeff, illum=illum)
-    u1, v1, as1 = angular_spectrum(
-        x, y, K_coeff=K_coeff, d_z=d_z[1], I_coeff=I_coeff, illum=illum)
-    u2, v2, as2 = angular_spectrum(
-        x, y, K_coeff=K_coeff, d_z=d_z[2], I_coeff=I_coeff, illum=illum)
+    u, v, aspectrum = [], [], []
+    for _d_z in d_z:
 
-    aspectrum = np.array([as0, as1, as2])
+        _u, _v, _aspectrum = angular_spectrum(
+            K_coeff=K_coeff,
+            d_z=_d_z,
+            I_coeff=I_coeff,
+            illum=illum
+            )
+
+        u.append(_u)
+        v.append(_v)
+        aspectrum.append(_aspectrum)
+
     beam = np.abs(aspectrum) ** 2
     beam_norm = np.array([beam[i] / beam[i].max() for i in range(3)])
 
-    u0_deg = wavevector_to_degree(u0, lam) * angle_coeff
-    u1_deg = wavevector_to_degree(u1, lam) * angle_coeff
-    u2_deg = wavevector_to_degree(u2, lam) * angle_coeff
-    v0_deg = wavevector_to_degree(v0, lam) * angle_coeff
-    v1_deg = wavevector_to_degree(v1, lam) * angle_coeff
-    v2_deg = wavevector_to_degree(v2, lam) * angle_coeff
+    # Limits, they need to be transformed to degrees
+    if plim_rad is None:
+        pr = 50  # primary reflector radius
+        b_factor = 2 * pr / lam  # D / lambda
+        plim_u = [-700 / b_factor, 700 / b_factor]
+        plim_v = [-700 / b_factor, 700 / b_factor]
+        figsize = (14, 4.5)
+        shrink = 0.88
 
-    extent0 = [u0_deg.min(), u0_deg.max(), v0_deg.min(), v0_deg.max()]
-    extent1 = [u1_deg.min(), u1_deg.max(), v1_deg.min(), v1_deg.max()]
-    extent2 = [u2_deg.min(), u2_deg.max(), v2_deg.min(), v2_deg.max()]
+    else:
+        plim_deg = plim_rad * 180 / np.pi
+        plim_u, plim_v = plim_deg[:2], plim_deg[2:]
+        figsize = (14, 3.3)
+        shrink = 0.77
 
-    u0_grid, v0_grid = np.meshgrid(u0_deg, v0_deg)
-    u1_grid, v1_grid = np.meshgrid(u1_deg, v1_deg)
-    u2_grid, v2_grid = np.meshgrid(u2_deg, v2_deg)
+    fig, ax = plt.subplots(ncols=3, figsize=figsize)
 
-    fig, ax = plt.subplots(ncols=3, figsize=(14, 4))
+    levels = 10  # number of colour lines
 
-    levels = 8  # number of colour lines
-    shrink = 0.9
+    subtitle = [
+        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
+        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(d_z_m[1]) + '$ m',
+        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m'
+        ]
 
-    im0 = ax[0].imshow(beam_norm[0], extent=extent0)
-    ax[0].contour(u0_grid, v0_grid, beam_norm[0], levels)
-    fig.colorbar(im0, ax=ax[0], shrink=shrink)
-    ax[0].set_title(
-        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(round(d_z_m[0], 3)) +'$ (m)')
+    for i in range(3):
+        u_deg = wavevector_to_degree(u[i], lam) * angle_coeff
+        v_deg = wavevector_to_degree(v[i], lam) * angle_coeff
 
-    im1 = ax[1].imshow(beam_norm[1], extent=extent1)
-    ax[1].contour(u1_grid, v1_grid, beam_norm[1], levels)
-    fig.colorbar(im1, ax=ax[1], shrink=shrink)
-    ax[1].set_title(
-        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(d_z_m[1]) + '$ (m)')
+        u_grid, v_grid = np.meshgrid(u_deg, v_deg)
 
-    im2 = ax[2].imshow(beam_norm[2], extent=extent2)
-    ax[2].contour(u2_grid, v2_grid, beam_norm[2], levels)
-    fig.colorbar(im2, ax=ax[2], shrink=shrink)
-    ax[2].set_title(
-        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(round(d_z_m[2], 3)) + '$ (m)')
+        extent = [u_deg.min(), u_deg.max(), v_deg.min(), v_deg.max()]
 
-    for _ax in ax:
-        _ax.set_ylabel('$v$ (' + uv_title + ')')
-        _ax.set_xlabel('$u$ (' + uv_title + ')')
-        _ax.set_ylim(-0.15 * angle_coeff, 0.15 * angle_coeff)
-        _ax.set_xlim(-0.15 * angle_coeff, 0.15 * angle_coeff)
-        # _ax.set_ylim(-0.05 * angle_coeff, 0.05 * angle_coeff)  # f= 32 GHz
-        # _ax.set_xlim(-0.05 * angle_coeff, 0.05 * angle_coeff)
+        im = ax[i].imshow(beam_norm[i], extent=extent)
+        ax[i].contour(u_grid, v_grid, beam_norm[i], levels)
+        cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
+
+        ax[i].set_title(subtitle[i])
+        ax[i].set_ylabel('$v$ ' + uv_title)
+        ax[i].set_xlabel('$u$ ' + uv_title)
+        ax[i].set_ylim(plim_v[0] * angle_coeff, plim_v[1] * angle_coeff)
+        ax[i].set_xlim(plim_u[0] * angle_coeff, plim_u[1] * angle_coeff)
+
+        cb.formatter.set_powerlimits((0, 0))
+        cb.ax.yaxis.set_offset_position('left')
+        cb.update_ticks()
 
     # fig.set_tight_layout(True)
     fig.suptitle(title)
     fig.subplots_adjust(
-        left=0.09, bottom=0.1, right=0.99,
-        top=0.9, wspace=0.23, hspace=0.2
+        left=0.06, bottom=0.1, right=1,
+        top=0.91, wspace=0.13, hspace=0.2
         )
 
     return fig
 
 
-def plot_data(u_b_data, v_b_data, beam_data, title, d_z_m, rad=False):
+def plot_data(u_data, v_data, beam_data, d_z_m, title, rad, norm=False):
 
     if rad:
         angle_coeff = 1
@@ -117,76 +123,106 @@ def plot_data(u_b_data, v_b_data, beam_data, title, d_z_m, rad=False):
         angle_coeff = 180 / np.pi
         uv_title = 'degrees'
 
-    fig, ax = plt.subplots(ncols=3, figsize=(14, 3.5))
+    fig, ax = plt.subplots(ncols=3, figsize=(14, 3.3))
 
-    levels = 10
+    levels = 10  # number of colour lines
     shrink = 0.77
 
-    xi_minus = np.linspace(
-        u_b_data[0].min(), u_b_data[0].max(), 300) * angle_coeff
-    yi_minus = np.linspace(
-        v_b_data[0].min(), v_b_data[0].max(), 300) * angle_coeff
-    zi_minus = griddata(
-        u_b_data[0] * angle_coeff, v_b_data[0] * angle_coeff,
-        beam_data[0], xi_minus, yi_minus, interp='linear')
+    if norm:
+        vmin = np.min(beam_data)
+        vmax = np.max(beam_data)
+    else:
+        vmin = None
+        vmax = None
 
-    extent0 = [xi_minus.min(), xi_minus.max(), yi_minus.min(), yi_minus.max()]
+    subtitle = [
+        '$|P(u,v)|^2$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
+        '$|P(u,v)|^2$ $d_z=' + str(d_z_m[1]) + '$ m',
+        '$|P(u,v)|^2$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m']
 
-    im0 = ax[0].imshow(zi_minus, extent=extent0)
-    ax[0].contour(xi_minus, yi_minus, zi_minus, levels)
+    for i in range(3):
+        # new grid for beam_data
+        u_ng = np.linspace(u_data[i].min(), u_data[i].max(), 300) * angle_coeff
+        v_ng = np.linspace(v_data[i].min(), v_data[i].max(), 300) * angle_coeff
 
-    cb0 = fig.colorbar(im0, ax=ax[0], shrink=shrink)
-    ax[0].set_title(
-        '$|P(u,v)|^2$ $d_z=' + str(round(d_z_m[0], 3)) + '$ (m)')
+        beam_ng = griddata(
+            u_data[i] * angle_coeff, v_data[i] * angle_coeff,
+            beam_data[i], u_ng, v_ng, interp='linear'
+            )
 
-    xi = np.linspace(u_b_data[1].min(), u_b_data[1].max(), 300) * angle_coeff
-    yi = np.linspace(v_b_data[1].min(), v_b_data[1].max(), 300) * angle_coeff
-    zi = griddata(
-        u_b_data[1] * angle_coeff, v_b_data[1] * angle_coeff,
-        beam_data[1], xi, yi, interp='linear')
+        extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
+        im = ax[i].imshow(beam_ng, extent=extent, vmin=vmin, vmax=vmax)
+        ax[i].contour(u_ng, v_ng, beam_ng, levels, vmin=vmin, vmax=vmax)
+        cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
 
-    extent1 = [xi.min(), xi.max(), yi.min(), yi.max()]
+        ax[i].set_ylabel('$v$ ' + uv_title)
+        ax[i].set_xlabel('$u$ ' + uv_title)
+        ax[i].set_title(subtitle[i])
 
-    im1 = ax[1].imshow(zi, extent=extent1)
-    ax[1].contour(xi, yi, zi, levels)
-    cb1 = fig.colorbar(im1, ax=ax[1], shrink=shrink)
-    ax[1].set_title('$|P(u,v)|^2$ $d_z=' + str(d_z_m[1]) + '$ (m)')
-
-    xi_plus = np.linspace(
-        u_b_data[2].min(), u_b_data[2].max(), 300) * angle_coeff
-    yi_plus = np.linspace(
-        v_b_data[2].min(), v_b_data[2].max(), 300) * angle_coeff
-    zi_plus = griddata(
-        u_b_data[2] * angle_coeff, v_b_data[2] * angle_coeff,
-        beam_data[2], xi_plus, yi_plus, interp='linear')
-
-    extent2 = [xi_plus.min(), xi_plus.max(), yi_plus.min(), yi_plus.max()]
-
-    im2 = ax[2].imshow(zi_plus, extent=extent2)
-    ax[2].contour(xi_plus, yi_plus, zi_plus, levels)
-    cb2 = fig.colorbar(im2, ax=ax[2], shrink=shrink)
-    ax[2].set_title('$|P(u,v)|^2$ $d_z=' + str(round(d_z_m[2], 3)) + '$ (m)')
+        cb.formatter.set_powerlimits((0, 0))
+        cb.ax.yaxis.set_offset_position('left')
+        cb.update_ticks()
 
     fig.suptitle(title)
     fig.subplots_adjust(
-        left=0.05, bottom=0.15, right=1,
+        left=0.06, bottom=0.1, right=1,
         top=0.91, wspace=0.13, hspace=0.2
         )
-
-    for _ax in ax:
-        _ax.set_ylabel('$v$ (' + uv_title + ')')
-        _ax.set_xlabel('$u$ (' + uv_title + ')')
-
-    for _cb in [cb0, cb1, cb2]:
-            _cb.formatter.set_powerlimits((0, 0))
-            _cb.update_ticks()
 
     return fig
 
 
-def plot_data_path(pathfits, save=False, rad=False):
+def plot_phase(params, d_z_m, title, notilt):
 
-    name = find_name_path(pathfits)[1]
+    K_coeff = params[4:]
+
+    if notilt:
+        K_coeff[0] = 0
+        K_coeff[1] = 0
+        subtitle = (
+            '$\phi_\mathrm{no\,tilt}(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) +
+            '$ m'
+            )
+        bartitle = '$\phi_\mathrm{no\,tilt}(x, y)$ amplitude rad'
+    else:
+        subtitle = '$\phi(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) + '$ m'
+        bartitle = '$\phi(x, y)$ amplitude rad'
+
+    pr = 50
+    x = np.linspace(-pr, pr, 1e3)
+    y = np.linspace(-pr, pr, 1e3)
+
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    r, t = cart2pol(x_grid, y_grid)
+    r_norm = r / pr
+
+    extent = [x.min(), x.max(), y.min(), y.max()]
+    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * antenna_shape(
+        x_grid, y_grid)
+
+    fig, ax = plt.subplots()
+
+    levels = np.linspace(-2, 2, 9)
+    # as used in Nikolic software
+
+    shrink = 1
+
+    im = ax.imshow(_phi, extent=extent)
+    ax.contour(x_grid, y_grid, _phi, levels=levels, colors='k', alpha=0.5)
+    cb = fig.colorbar(im, ax=ax, shrink=shrink)
+    ax.set_title(subtitle)
+    ax.set_ylabel('$y$ m')
+    ax.set_xlabel('$x$ m')
+    cb.ax.set_ylabel(bartitle)
+    fig.suptitle(title)
+
+    return fig
+
+
+def plot_data_path(pathfits, save, rad):
+
+    name = find_name_path(pathfits)[1][:-5]
     path = find_name_path(pathfits)[0]
 
     # Opening fits file with astropy
@@ -204,34 +240,38 @@ def plot_data_path(pathfits, save=False, rad=False):
     d_z_m.insert(1, d_z_m.pop(2))
 
     fig_data = plot_data(
-        u_b_data=u_data,
-        v_b_data=v_data,
+        u_data=u_data,
+        v_data=v_data,
         beam_data=beam_data,
         title=name + ' observed beam',
         d_z_m=d_z_m,
-        rad=rad)
+        rad=rad
+        )
 
     if not os.path.exists(path + '/OOF_out'):
         os.makedirs(path + '/OOF_out')
+    if not os.path.exists(path + '/OOF_out/' + name):
+        os.makedirs(path + '/OOF_out/' + name)
 
     if save:
-        fig_data.savefig(path + '/OOF_out/obsbeam.pdf')
+        fig_data.savefig(path + '/OOF_out/' + name +'/obsbeam.pdf')
 
     return fig_data
 
 
-def plot_fit_path(pathoof, order, save=False, rad=False):
+def plot_fit_path(pathoof, order, plim_rad, save, rad):
 
     n = order
     fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')
     fitinfo = ascii.read(pathoof + '/fitinfo_n' + str(n) + '.dat')
 
-    params_solution = np.array(fitpar['parfit'])
+    # Residual
+    res = np.genfromtxt(pathoof + '/res_n' + str(n) + '.csv')
+    u_data = np.genfromtxt(pathoof + '/u_data.csv')
+    v_data = np.genfromtxt(pathoof + '/v_data.csv')
+    beam_data = np.genfromtxt(pathoof + '/beam_data.csv')
 
-    # Grid to plot the data
-    box_size = 500
-    x_cal = np.linspace(-box_size, box_size, 2 ** 10)
-    y_cal = np.linspace(-box_size, box_size, 2 ** 10)
+    params_solution = np.array(fitpar['parfit'])
 
     d_z_m = np.array(
         [fitinfo['d_z-'][0], fitinfo['d_z0'][0], fitinfo['d_z+'][0]])
@@ -240,11 +280,10 @@ def plot_fit_path(pathoof, order, save=False, rad=False):
     fig_beam = plot_beam(
         params=params_solution,
         title=name + ' fitted beam $n=' + str(n) + '$',
-        x=x_cal,
-        y=y_cal,
         d_z_m=d_z_m,
-        lam=fitinfo['wavelength'][0],
+        lam=fitinfo['wavel'][0],
         illum=fitinfo['illum'][0],
+        plim_rad=plim_rad,
         rad=rad
         )
 
@@ -255,14 +294,35 @@ def plot_fit_path(pathoof, order, save=False, rad=False):
         notilt=True
         )
 
+    fig_res = plot_data(
+        u_data=u_data,
+        v_data=v_data,
+        beam_data=res,
+        d_z_m=d_z_m,
+        title=name + ' residual $n=' + str(n) + '$',
+        rad=False,
+        norm=True
+        )
+
+    fig_data = plot_data(
+        u_data=u_data,
+        v_data=v_data,
+        beam_data=beam_data,
+        d_z_m=d_z_m,
+        title=name + ' observed beam',
+        rad=False
+        )
+
     if save:
         fig_beam.savefig(pathoof + '/fitbeam_n' + str(n) + '.pdf')
         fig_phase.savefig(pathoof + '/fitphase_n' + str(n) + '.pdf')
+        fig_res.savefig(pathoof + '/residual_n' + str(n) + '.pdf')
+        fig_data.savefig(pathoof + '/obsbeam.pdf')
 
-    return fig_beam, fig_phase
+    return fig_beam, fig_phase, fig_res, fig_data
 
 
-def plot_fit_nikolic_path(pathoof, order, d_z_m, title, save=False):
+def plot_fit_nikolic_path(pathoof, order, d_z_m, title, plim_rad, rad):
 
     n = order
     path = pathoof + '/z' + str(n)
@@ -271,20 +331,14 @@ def plot_fit_nikolic_path(pathoof, order, d_z_m, title, save=False):
 
     wavelength = fits.open(path + '/aperture-notilt.fits')[0].header['WAVE']
 
-    # Grid to plot the data
-    box_size = 500
-    x_cal = np.linspace(-box_size, box_size, 2 ** 10)
-    y_cal = np.linspace(-box_size, box_size, 2 ** 10)
-
     fig_beam = plot_beam(
         params=params_nikolic,
         title=title + ' phase distribution Nikolic fit $n=' + str(n) + '$',
-        x=x_cal,
-        y=y_cal,
         d_z_m=d_z_m,
-        rad=False,
         lam=wavelength,
-        illum='nikolic'
+        illum='nikolic',
+        plim_rad=plim_rad,
+        rad=rad
         )
 
     fig_phase = plot_phase(
@@ -294,98 +348,30 @@ def plot_fit_nikolic_path(pathoof, order, d_z_m, title, save=False):
         notilt=True
         )
 
-    if save:
-        fig_beam.savefig(
-            '/Users/tomascassanelli/Desktop/nikolic_beam_n' + str(n) + '.pdf')
-        fig_phase.savefig(
-            '/Users/tomascassanelli/Desktop/nikolic_phase_n' + str(n) + '.pdf')
-
     return fig_beam, fig_phase
-
-
-def plot_phase(params, d_z_m, title, notilt=True):
-
-    K_coeff = params[4:]
-
-    if notilt:
-        K_coeff[0] = 0
-        K_coeff[1] = 0
-        subtitle = (
-            '$\phi_\mathrm{no\,tilt}(x, y)$ $d_z=\pm' + str(round(d_z_m, 3)) +
-            '$ (m)')
-        bartitle = '$\phi_\mathrm{no\,tilt}(x, y)$ amplitude (rad)'
-    else:
-        subtitle = '$\phi(x, y)$ $d_z=\pm' + str(round(d_z_m, 3)) + '$ (m)'
-        bartitle = '$\phi(x, y)$ amplitude (rad)'
-
-    pr = 50
-    x = np.linspace(-pr, pr, 1e3)
-    y = np.linspace(-pr, pr, 1e3)
-
-    x_grid, y_grid = np.meshgrid(x, y)
-
-    r, t = cart2pol(x_grid, y_grid)
-    r_norm = r / pr
-
-    extent = [x.min(), x.max(), y.min(), y.max()]
-    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * antenna_shape(x_grid, y_grid)
-
-    fig, ax = plt.subplots()
-
-    levels = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2]
-    # as used in N. software
-
-    # levels = np.linspace(-2, 2, 10)  # number of colour lines
-    shrink = 1
-
-    im = ax.imshow(_phi, extent=extent)
-    ax.contour(x_grid, y_grid, _phi, levels=levels)
-    cb = fig.colorbar(im, ax=ax, shrink=shrink)
-    ax.set_title(subtitle)
-    ax.set_ylabel('$y$ (m)')
-    ax.set_xlabel('$x$ (m)')
-    cb.ax.set_ylabel(bartitle)
-    fig.suptitle(title)
-
-    return fig
 
 
 if __name__ == "__main__":
 
-    # from astropy.table import Table
+    # for n in [1, 2, 3]:
+    #     plot_fit_path(
+    #         pathoof='../test_data/S9mm_0397_3C84/OOF_out/S9mm_0397_3C84_H1_SB',
+    #         order=n,
+    #         plim_rad=None,
+    #         save=True,
+    #         rad=False
+    #         )
+    #     plt.close()
 
-    # # Comparison between parameters
-    # n_z_coeff = params_fitted.size - 4
-    # n = int((np.sqrt(1 + 8 * n_z_coeff) - 3) / 2)
 
-    # ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
-    # L = np.array(ln)[:, 0]
-    # N = np.array(ln)[:, 1]
 
-    # params_name = ['Illum amplitude', 'sigma_r', 'x_0', 'y_0']
-    # for i in range(n_z_coeff):
-    #     params_name.append('U(' + str(L[i]) + ',' + str(N[i]) + ')')
+    # params = fits.open('../test_data/gen_data8/o5n0/oofout/fitpars.fits')[1].data['ParValue']
 
-    # table = Table(
-    #     {'Coefficient': params_name, 'Nikolic': params_nikolic,
-    #     'Fit': params_fitted}, names=['Coefficient', 'Nikolic', 'Fit'])
-    # print(table)
-    path = '/Users/tomascassanelli/ownCloud/OOF/test_data/S28mm_9959_3C84_SB/oofout/S28mm_9959_3C84_SB2-000'
+    # plot_phase(params, 0.025, 'test', notilt=True)
 
-    # d_z_m = np.array([-0.077, 0, 0.077])
-    # title = 'S28mm_9959_3C84_SB2'
-
-    # for order in [5, 6, 7]:
-    #     plot_fit_nikolic_path(
-    #         pathoof=path,
-    #         order=order,
-    #         title=title,
-    #         d_z_m=d_z_m,
-    #         save=True)
-
-    plot_data_path(
-        pathfits='/Users/tomascassanelli/ownCloud/OOF/test_data/gen_data/gendata_o5n1.fits',
-        save=False,
-        rad=False)
+    params = np.array([1, 1, 1, 1, 4, 5, 6])
+    plot_phase(params, 0.025, 'title', notilt=True)
 
     plt.show()
+
+
