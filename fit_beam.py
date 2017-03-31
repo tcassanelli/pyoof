@@ -59,14 +59,12 @@ def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
     return residual
 
 
-def residual(params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, illum, inter):
+def residual(
+    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, illum, inter
+        ):
 
     # params for the true fit
-    params_res = np.array(params_residual(params, idx, N_K_coeff))
-
-    print('params.shape: ', params.shape)
-
-    print('params: ', params)
+    params_res = params_complete(params, idx, N_K_coeff)
 
     res_true = residual_true(
         params=params_res,  # needs to be a numpy array
@@ -82,28 +80,20 @@ def residual(params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, illum,
     return res_true
 
 
-def params_true_fit(params, idx):
-    # extracts the params given idx
-    if idx is None:
-        params_ture = params
-    else:
-        params_ture = [i for j, i in enumerate(params) if j not in idx]
-
-    return params_ture
-
-
-def params_residual(params, idx, N_K_coeff):
-
-    params = list(params)
-
-    if len(params) != (4 + N_K_coeff):
+def params_complete(params, idx, N_K_coeff):
+    # N_K_coeff number of Zernike coeff
+    if params.size != (4 + N_K_coeff):
+        _params = params
         for i in idx:
             if i == 1:
-                params.insert(i, -8.0)  # assigned default value for c_dB
+                _params = np.insert(_params, i, -8.0)
+                # assigned default value for c_dB
             else:
-                params.insert(i, 0.0)
+                _params = np.insert(_params, i, 0.0)
+    else:
+        _params = params
 
-    return params
+    return _params
 
 
 def extract_data_fits(pathfits):
@@ -164,16 +154,18 @@ def fit_beam(pathfits, order, illum):
     n = order  # order polynomial to fit
     N_K_coeff = (n + 1) * (n + 2) // 2  # number of Zernike coeff to fit
 
-    params_init = [0.01, -10, 0, 0, 0] + [0.1] * (N_K_coeff - 1)
+    params_init = np.array([0.01, -10, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
     # amp, sigma_r, x0, y0, K(l,m)
     # Giving an initial value of 0.1 for each coeff
 
-    params_bounds = [[0, 1], [-25, -8]] + [[-1e-4, 1e-4]] * 2 + [[-2.2, 2.2]] * N_K_coeff
+    bounds_min = np.array([0, -25, -1e-4, -1e-4] + [-2.2] * N_K_coeff)
+    bounds_max = np.array([1, -8, 1e-4, 1e-4] + [2.2] * N_K_coeff)
 
     idx = [1, 2, 3, 4]  # exclude params from fit
     # [1, 2, 3, 4] = [c_dB, x0, y0, K(0,0)] or 'None' to include them all
-    params_init_true = params_true_fit(params_init, idx)
-    params_bounds_true = np.array(params_true_fit(params_bounds, idx))
+    params_init_true = np.delete(params_init, idx)
+    bounds_min_true = np.delete(bounds_min, idx)
+    bounds_max_true = np.delete(bounds_max, idx)
 
     print(
         '... Starting fit for ' + str(len(params_init_true)) +
@@ -195,7 +187,7 @@ def fit_beam(pathfits, order, illum):
             illum,
             True  # Grid interpolation
             ),
-        bounds=tuple([params_bounds_true[:, 0], params_bounds_true[:, 1]]),
+        bounds=tuple([bounds_min_true, bounds_max_true]),
         method='trf',
         verbose=2,
         max_nfev=2
@@ -204,7 +196,7 @@ def fit_beam(pathfits, order, illum):
     print('\n')
 
     # Solutions from least squared optimisation
-    params_solution = params_residual(res_lsq.x.tolist(), idx, N_K_coeff)
+    params_solution = params_complete(res_lsq.x, idx, N_K_coeff)
     params_init = params_init
     res_optim = res_lsq.fun.reshape(3, -1)  # Optimum residual from fitting
     jac_optim = res_lsq.jac
@@ -280,10 +272,10 @@ def fit_beam(pathfits, order, illum):
 
 if __name__ == "__main__":
 
-    for n in [4]:
+    for n in [1, 2, 3, 4, 5]:
         # Testing script
         fit_beam(
-            # pathfits='../test_data/gen_data7/gendata7_o3n0.fits',
+            # pathfits='../test_data/gen_data8/gendata8_o5n0.fits',
             pathfits='../test_data/S9mm_0397_3C84/S9mm_0397_3C84_H1_SB.fits',
             order=n,
             illum='pedestal'
