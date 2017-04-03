@@ -122,7 +122,7 @@ def extract_data_fits(pathfits):
 
 
 # Insert path for the fits file with pre-calibration
-def fit_beam(pathfits, order, illum):
+def fit_beam(pathfits, order, illum, fit_previous):
 
     start_time = time.time()
 
@@ -154,9 +154,29 @@ def fit_beam(pathfits, order, illum):
     n = order  # order polynomial to fit
     N_K_coeff = (n + 1) * (n + 2) // 2  # number of Zernike coeff to fit
 
-    params_init = np.array([0.01, -10, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
-    # amp, sigma_r, x0, y0, K(l,m)
-    # Giving an initial value of 0.1 for each coeff
+    # Storing files in OOF_out directory
+    name_dir = find_name_path(pathfits)[0] + '/OOF_out/' + name
+
+    if not os.path.exists(find_name_path(pathfits)[0] + '/OOF_out'):
+        os.makedirs(find_name_path(pathfits)[0] + '/OOF_out')
+    if not os.path.exists(name_dir):
+        os.makedirs(name_dir)
+
+    # Looking for result parameters from lower order to use them
+    if fit_previous and n != 1:
+        N_K_coeff_previous = n * (n + 1) // 2
+        path_params_previous = name_dir + '/fitpar_n' + str(n - 1) + '.dat'
+        params_to_add = N_K_coeff - N_K_coeff_previous
+
+        if os.path.exists(path_params_previous):
+            params_init = np.hstack(
+                (ascii.read(path_params_previous)['parfit'],
+                    np.ones(params_to_add) * 0.1)
+                )
+    else:
+        params_init = np.array([0.01, -10, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
+        # amp, sigma_r, x0, y0, K(l,m)
+        # Giving an initial value of 0.1 for each coeff
 
     bounds_min = np.array([0, -25, -1e-4, -1e-4] + [-2.2] * N_K_coeff)
     bounds_max = np.array([1, -8, 1e-4, 1e-4] + [2.2] * N_K_coeff)
@@ -210,14 +230,6 @@ def fit_beam(pathfits, order, illum):
     params_names = ['illum_amp', 'c_dB', 'x_0', 'y_0']
     for i in range(N_K_coeff):
         params_names.append('K(' + str(L[i]) + ',' + str(N[i]) + ')')
-
-    # Storing files in OOF_out directory
-    name_dir = find_name_path(pathfits)[0] + '/OOF_out/' + name
-
-    if not os.path.exists(find_name_path(pathfits)[0] + '/OOF_out'):
-        os.makedirs(find_name_path(pathfits)[0] + '/OOF_out')
-    if not os.path.exists(name_dir):
-        os.makedirs(name_dir)
 
     params_to_save = [params_names, params_solution, params_init]
     info_to_save = [
@@ -276,7 +288,8 @@ if __name__ == "__main__":
         # Testing script
         fit_beam(
             # pathfits='../test_data/gen_data8/gendata8_o5n0.fits',
-            pathfits='../test_data/S9mm_0397_3C84/S9mm_0397_3C84_H1_SB.fits',
+            pathfits='../test_data/S9mm_0397_3C84/S9mm_0462_3C84_H1_SB.fits',
             order=n,
-            illum='pedestal'
+            illum='pedestal',
+            fit_previous=True
             )
