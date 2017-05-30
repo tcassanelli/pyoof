@@ -1,6 +1,9 @@
 # Author: Tomas Cassanelli
 import numpy as np
 from math import factorial as f
+from astropy.io import fits
+from scipy.constants import c as light_speed
+import ntpath
 
 # All mathematical function have been adapted for the Effelsber telescope
 
@@ -106,7 +109,8 @@ def illumination_nikolic(x, y, I_coeff):
     y0 = I_coeff[3]
 
     illumination = (
-        amp * np.exp(-((x - x0) ** 2 + (y - y0) ** 2) * sigma_r / pr ** 2))
+        amp * np.exp(-((x - x0) ** 2 + (y - y0) ** 2) * sigma_r / pr ** 2)
+        )
 
     return illumination
 
@@ -204,13 +208,6 @@ def U(l, n, theta, rho):
     a = (n + m) // 2
     b = (n - m) // 2
 
-    # if m == 0:
-    #     delta_m0 = 1
-    # else:
-    #     delta_m0 = 0
-
-    # norm = np.sqrt(2 * (n + 1) / (1 + delta_m0))
-
     R = sum(
         (-1) ** s * f(n - s) * rho ** (n - 2 * s) /
         (f(s) * f(a - s) * f(b - s))
@@ -218,9 +215,9 @@ def U(l, n, theta, rho):
         )
 
     if l < 0:
-        U = R * np.sin(m * theta)   #* norm
+        U = R * np.sin(m * theta)
     else:
-        U = R * np.cos(m * theta)   #* norm
+        U = R * np.cos(m * theta)
 
     return U
 
@@ -289,7 +286,8 @@ def cart2pol(x, y):
 
 def aperture(x, y, K_coeff, d_z, I_coeff, illum):
     """
-    Aperture function. Multiplication between the antenna truncation, the illumination function and the aberration.
+    Aperture function. Multiplication between the antenna truncation, the
+    illumination function and the aberration.
     """
     r, t = cart2pol(x, y)
 
@@ -358,3 +356,100 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum):
     u_shift, v_shift = np.fft.fftshift(u), np.fft.fftshift(v)
 
     return u_shift, v_shift, F_shift
+
+
+def find_name_path(path):
+    head, tail = ntpath.split(path)
+    return head, tail
+
+
+def extract_data_fits(pathfits):
+    # Opening fits file with astropy
+    hdulist = fits.open(pathfits)
+
+    # Observation frequency
+    freq = hdulist[0].header['FREQ']  # Hz
+    wavel = light_speed / freq
+
+    # Mean elevation
+    meanel = hdulist[0].header['MEANEL']  # Degrees
+
+    # name of the fit file to fit
+    name = find_name_path(pathfits)[1][:-5]
+
+    beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
+    u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
+    v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
+    d_z_m = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
+
+    # Permuting the position to provide same as main_functions
+    beam_data.insert(1, beam_data.pop(2))
+    u_data.insert(1, u_data.pop(2))
+    v_data.insert(1, v_data.pop(2))
+    d_z_m.insert(1, d_z_m.pop(2))
+
+    # path or directory where the fits file is located
+    pthto = find_name_path(pathfits)[0]
+
+    return name, freq, wavel, d_z_m, meanel, pthto, [beam_data, u_data, v_data]
+
+
+def par_variance(res, jac, n_pars):
+    # Covariance and correlation matrices
+    m = res.size
+    d_free = m - n_pars  # degrees of freedom
+
+    # Covarince matrix
+    cov = np.dot(res.T, res) / d_free * np.linalg.inv(np.dot(jac.T, jac))
+
+    sigmas2 = np.diag(np.diag(cov))
+    D = np.linalg.inv(np.sqrt(sigmas2))  # inv diagonal variance matrix
+
+    # Correlation matrix
+    corr = np.dot(np.dot(D, cov), D)
+
+    return cov, corr
+
+
+def sr_phase(params, notilt):
+    # subreflector phase
+    K_coeff = params[4:]
+
+    if notilt:
+        K_coeff[1] = 0  # For value K(-1, 1) = 0
+        K_coeff[2] = 0  # For value K(1, 1) = 0
+
+    pr = 50
+    x = np.linspace(-pr, pr, 1e3)
+    y = np.linspace(-pr, pr, 1e3)
+
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    r, t = cart2pol(x_grid, y_grid)
+    r_norm = r / pr
+
+    sr_phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * antenna_shape(
+        x_grid, y_grid)
+
+    return sr_phi
+
+
+if __name__ == "__main__":
+
+    from astropy.io import ascii
+    import matplotlib.pyplot as plt
+
+    pathoof = '../data/S9mm/OOF_out/S9mm_0397_3C84_H1_SB'
+    n = 2
+    params = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')['parfit']
+
+    print(params)
+
+    phase = sr_phase(params=params, notilt=True)
+    plt.imshow(phase)
+    plt.show()
+
+
+
+    print('phase: ', phase)
+
