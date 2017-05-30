@@ -1,20 +1,13 @@
 # Author: Tomas Cassanelli
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.constants import c as light_speed
-from main_functions import angular_spectrum, wavevector_to_degree
+from main_functions import angular_spectrum, wavevector_to_degree,extract_data_fits, find_name_path, par_variance, sr_phase
 from scipy.optimize import least_squares
-from astropy.io import fits, ascii
+from astropy.io import ascii
 from scipy.interpolate import RegularGridInterpolator
 from plot_routines import plot_fit_path
 import os
 import time
-import ntpath
-
-
-def find_name_path(path):
-    head, tail = ntpath.split(path)
-    return head, tail
 
 
 def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
@@ -43,10 +36,15 @@ def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
 
             # The calculated beam needs to be transformed!
             # RegularGridInterpolator
-            intrp = RegularGridInterpolator((u_rad, v_rad), beam_norm.T)
+            intrp = RegularGridInterpolator(
+                points=(u_rad, v_rad),  # points defining grid
+                values=beam_norm.T,  # data in grid
+                method='linear'  # linear or nearest
+                )
 
             # input interpolation function is the real beam grid
             beam_model.append(intrp(np.array([u_data[i], v_data[i]]).T))
+
         else:
             beam_model.append(beam_norm)
 
@@ -85,40 +83,19 @@ def params_complete(params, idx, N_K_coeff):
     if params.size != (4 + N_K_coeff):
         _params = params
         for i in idx:
+            if i == 0:
+                _params = np.insert(_params, i, 1.0)
+                # assigned default value for amp
             if i == 1:
                 _params = np.insert(_params, i, -8.0)
                 # assigned default value for c_dB
-            else:
+            if i >= 2:
                 _params = np.insert(_params, i, 0.0)
+                # for x0, y0 and K(l, n) coefficients
     else:
         _params = params
 
     return _params
-
-
-def extract_data_fits(pathfits):
-    # Opening fits file with astropy
-    hdulist = fits.open(pathfits)
-
-    # Observation frequency
-    freq = hdulist[0].header['FREQ']  # Hz
-    wavel = light_speed / freq
-
-    # name of the fit file to fit
-    name = find_name_path(pathfits)[1][:-5]
-
-    beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
-    u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
-    v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
-    d_z_m = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
-
-    # Permuting the position to provide same as main_functions
-    beam_data.insert(1, beam_data.pop(2))
-    u_data.insert(1, u_data.pop(2))
-    v_data.insert(1, v_data.pop(2))
-    d_z_m.insert(1, d_z_m.pop(2))
-
-    return name, freq, wavel, d_z_m, [beam_data, u_data, v_data]
 
 
 # Insert path for the fits file with pre-calibration
@@ -126,10 +103,10 @@ def fit_beam(pathfits, order, illum, fit_previous):
 
     start_time = time.time()
 
-    print('\n ####### OOF FIT BEAM PATTERN ####### \n')
+    print('\n ####### OOF FIT POWER PATTERN ####### \n')
     print('... Reading data ... \n')
 
-    name, freq, wavel, d_z_m, data = extract_data_fits(pathfits)
+    name, freq, wavel, d_z_m, meanel, pthto, data = extract_data_fits(pathfits)
     [beam_data, u_data, v_data] = data
 
     print('File name: ', name)
@@ -138,7 +115,6 @@ def fit_beam(pathfits, order, illum, fit_previous):
     print('d_z (out-of-focus): ', d_z_m, 'm')
     print('Order n to be fitted: ', order)
     print('Illumination to be fitted: ', illum)
-    print('\n')
 
     # Setting limits for plotting fitted beam
     plim_u = [np.min(u_data[0]), np.max(u_data[0])]
@@ -155,10 +131,11 @@ def fit_beam(pathfits, order, illum, fit_previous):
     N_K_coeff = (n + 1) * (n + 2) // 2  # number of Zernike coeff to fit
 
     # Storing files in OOF_out directory
-    name_dir = find_name_path(pathfits)[0] + '/OOF_out/' + name
+    name_dir = pthto + '/OOF_out/' + name
+    # pthto: path or directory where the fits file is located
 
-    if not os.path.exists(find_name_path(pathfits)[0] + '/OOF_out'):
-        os.makedirs(find_name_path(pathfits)[0] + '/OOF_out')
+    if not os.path.exists(pthto + '/OOF_out'):
+        os.makedirs(pthto + '/OOF_out')
     if not os.path.exists(name_dir):
         os.makedirs(name_dir)
 
@@ -173,22 +150,30 @@ def fit_beam(pathfits, order, illum, fit_previous):
                 (ascii.read(path_params_previous)['parfit'],
                     np.ones(params_to_add) * 0.1)
                 )
+            print('Using initial params from n=' + str(n - 1) + ' fit')
+        else:
+            print(
+                '\n ERROR: There is no previous parameters file fitpar_n' +
+                str(n - 1) + '.dat in directory \n'
+                )
     else:
-        params_init = np.array([0.01, -10, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
+        params_init = np.array([0.1, -8, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
+        print('Using standard initial params')
         # amp, sigma_r, x0, y0, K(l,m)
         # Giving an initial value of 0.1 for each coeff
 
-    bounds_min = np.array([0, -25, -1e-4, -1e-4] + [-2.2] * N_K_coeff)
-    bounds_max = np.array([1, -8, 1e-4, 1e-4] + [2.2] * N_K_coeff)
+    bounds_min = np.array([0, -25, -1e-2, -1e-2] + [-5] * N_K_coeff)
+    bounds_max = np.array([np.inf, -8, 1e-2, 1e-2] + [5] * N_K_coeff)
 
-    idx = [1, 2, 3, 4]  # exclude params from fit
-    # [1, 2, 3, 4] = [c_dB, x0, y0, K(0,0)] or 'None' to include them all
+    idx = [0, 1, 2, 3, 4]  # exclude params from fit
+    # [0, 1, 2, 3, 4] = [amp, c_dB, x0, y0, K(0, 0)] or 'None' to include all
+
     params_init_true = np.delete(params_init, idx)
     bounds_min_true = np.delete(bounds_min, idx)
     bounds_max_true = np.delete(bounds_max, idx)
 
     print(
-        '... Starting fit for ' + str(len(params_init_true)) +
+        '\n... Starting fit for ' + str(len(params_init_true)) +
         ' parameters ... \n'
         )
 
@@ -210,7 +195,7 @@ def fit_beam(pathfits, order, illum, fit_previous):
         bounds=tuple([bounds_min_true, bounds_max_true]),
         method='trf',
         verbose=2,
-        max_nfev=2
+        # max_nfev=100
         )
 
     print('\n')
@@ -221,6 +206,14 @@ def fit_beam(pathfits, order, illum, fit_previous):
     res_optim = res_lsq.fun.reshape(3, -1)  # Optimum residual from fitting
     jac_optim = res_lsq.jac
     grad_optim = res_lsq.grad
+
+    cov, corr = par_variance(
+        res=res_lsq.fun,
+        jac=res_lsq.jac,
+        n_pars=params_init_true.size  # num of parameters fitted
+        )
+    cov_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), cov))
+    corr_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), corr))
 
     # Making nice table :)
     ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
@@ -234,7 +227,7 @@ def fit_beam(pathfits, order, illum, fit_previous):
     params_to_save = [params_names, params_solution, params_init]
     info_to_save = [
         [name], [d_z_m[0]], [d_z_m[1]], [d_z_m[2]], [wavel],
-        [freq], [n], [illum]
+        [freq], [illum], [meanel]
         ]
 
     # Storing files in directory
@@ -247,8 +240,10 @@ def fit_beam(pathfits, order, illum, fit_previous):
 
     ascii.write(
         table=info_to_save,
-        output=name_dir + '/fitinfo_n' + str(n) + '.dat',
-        names=['name', 'd_z-', 'd_z0', 'd_z+', 'wavel', 'freq', 'n', 'illum'],
+        output=name_dir + '/fitinfo.dat',
+        names=[
+            'name', 'd_z-', 'd_z0', 'd_z+', 'wavel', 'freq', 'illum', 'meanel'
+            ],
         fast_writer=False
         )
 
@@ -263,11 +258,29 @@ def fit_beam(pathfits, order, illum, fit_previous):
     np.savetxt(name_dir + '/jac_n' + str(n) + '.csv', jac_optim)
     np.savetxt(name_dir + '/grad_n' + str(n) + '.csv', grad_optim)
 
+    # Storing phase for subreflector analysis
+    np.savetxt(
+        fname=name_dir + '/phase_n' + str(n) + '.csv',
+        X=sr_phase(params=params_solution, notilt=True)
+        )
+
+    np.savetxt(
+        fname=name_dir + '/cov_n' + str(n) + '.csv',
+        X=cov_ptrue,
+        header='Cov matrix (first row included elements)',
+        )
+
+    np.savetxt(
+        fname=name_dir + '/corr_n' + str(n) + '.csv',
+        X=corr_ptrue,
+        header='Corr matrix (first row included elements)',
+        )
+
     # Making all relevant plots
     print('... Making plots ... \n')
 
     plot_fit_path(
-        pathoof=name_dir + '/',
+        pathoof=name_dir,
         order=n,
         plim_rad=plim_rad,
         save=True,
@@ -279,16 +292,17 @@ def fit_beam(pathfits, order, illum, fit_previous):
 
     # plt.show()
 
-    plt.close()
+    plt.close('all')
 
 
 if __name__ == "__main__":
 
+    import glob
+    observations = glob.glob('../data/S9mm/*.fits')
+
     for n in [1, 2, 3, 4, 5]:
-        # Testing script
         fit_beam(
-            # pathfits='../test_data/gen_data8/gendata8_o5n0.fits',
-            pathfits='../test_data/S9mm_0397_3C84/S9mm_0462_3C84_H1_SB.fits',
+            pathfits=observations[0],
             order=n,
             illum='pedestal',
             fit_previous=True
