@@ -2,28 +2,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from main_functions import angular_spectrum, wavevector_to_degree, \
-    cart2pol, phi, antenna_shape, aperture
+    cart2pol, phi, antenna_shape, aperture, extract_data_fits, find_name_path
 from scipy.constants import c as light_speed
 from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
-import ntpath
 import os
 
-import matplotlib
-# Standard parameters plot functions
-matplotlib.rcParams['mathtext.fontset'] = 'stix'
-matplotlib.rcParams['font.family'] = 'STIXGeneral'
-matplotlib.rcParams['lines.linewidth'] = 0.7
-matplotlib.rcParams['image.cmap'] = 'viridis'
-matplotlib.rcParams['image.origin'] = 'lower'
-matplotlib.rcParams['axes.labelsize'] = 11
-matplotlib.rcParams['axes.titlesize'] = 11
-matplotlib.rcParams['figure.titlesize'] = 12
-
-
-def find_name_path(path):
-    head, tail = ntpath.split(path)
-    return head, tail
+# Import plot style matplotlib
+plt.style.use('../plot_gen_thesis/master_thesis_sty.mplstyle')
 
 
 def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
@@ -77,9 +63,9 @@ def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
     levels = 10  # number of colour lines
 
     subtitle = [
-        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
-        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(d_z_m[1]) + '$ m',
-        '$|P(u,v)|^2_\mathrm{norm}$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m'
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z_m[1]) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m'
         ]
 
     for i in range(3):
@@ -90,7 +76,7 @@ def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
 
         extent = [u_deg.min(), u_deg.max(), v_deg.min(), v_deg.max()]
 
-        im = ax[i].imshow(beam_norm[i], extent=extent)
+        im = ax[i].imshow(beam_norm[i], extent=extent, vmin=0, vmax=1)
         ax[i].contour(u_grid, v_grid, beam_norm[i], levels)
         cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
 
@@ -99,6 +85,7 @@ def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
         ax[i].set_xlabel('$u$ ' + uv_title)
         ax[i].set_ylim(plim_v[0] * angle_coeff, plim_v[1] * angle_coeff)
         ax[i].set_xlim(plim_u[0] * angle_coeff, plim_u[1] * angle_coeff)
+        ax[i].grid('off')
 
         cb.formatter.set_powerlimits((0, 0))
         cb.ax.yaxis.set_offset_position('left')
@@ -114,7 +101,10 @@ def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
     return fig
 
 
-def plot_data(u_data, v_data, beam_data, d_z_m, title, rad, norm=False):
+def plot_data(u_data, v_data, beam_data, d_z_m, title, rad):
+
+    # Power pattern normalisation
+    beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
 
     if rad:
         angle_coeff = 1
@@ -128,17 +118,13 @@ def plot_data(u_data, v_data, beam_data, d_z_m, title, rad, norm=False):
     levels = 10  # number of colour lines
     shrink = 0.77
 
-    if norm:
-        vmin = np.min(beam_data)
-        vmax = np.max(beam_data)
-    else:
-        vmin = None
-        vmax = None
+    vmin = np.min(beam_data)
+    vmax = np.max(beam_data)
 
     subtitle = [
-        '$|P(u,v)|^2$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
-        '$|P(u,v)|^2$ $d_z=' + str(d_z_m[1]) + '$ m',
-        '$|P(u,v)|^2$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m']
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z_m[1]) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m']
 
     for i in range(3):
         # new grid for beam_data
@@ -152,12 +138,13 @@ def plot_data(u_data, v_data, beam_data, d_z_m, title, rad, norm=False):
 
         extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
         im = ax[i].imshow(beam_ng, extent=extent, vmin=vmin, vmax=vmax)
-        ax[i].contour(u_ng, v_ng, beam_ng, levels, vmin=vmin, vmax=vmax)
+        ax[i].contour(u_ng, v_ng, beam_ng, levels)
         cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
 
         ax[i].set_ylabel('$v$ ' + uv_title)
         ax[i].set_xlabel('$u$ ' + uv_title)
         ax[i].set_title(subtitle[i])
+        ax[i].grid('off')
 
         cb.formatter.set_powerlimits((0, 0))
         cb.ax.yaxis.set_offset_position('left')
@@ -177,8 +164,8 @@ def plot_phase(params, d_z_m, title, notilt):
     K_coeff = params[4:]
 
     if notilt:
-        K_coeff[0] = 0
-        K_coeff[1] = 0
+        K_coeff[1] = 0  # For value K(-1, 1) = 0
+        K_coeff[2] = 0  # For value K(1, 1) = 0
         subtitle = (
             '$\phi_\mathrm{no\,tilt}(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) +
             '$ m'
@@ -208,36 +195,84 @@ def plot_phase(params, d_z_m, title, notilt):
 
     shrink = 1
 
+    # to rotate and sign invert
+    # _phi = -_phi[::-1, ::-1]
+
     im = ax.imshow(_phi, extent=extent)
     ax.contour(x_grid, y_grid, _phi, levels=levels, colors='k', alpha=0.5)
     cb = fig.colorbar(im, ax=ax, shrink=shrink)
     ax.set_title(subtitle)
     ax.set_ylabel('$y$ m')
     ax.set_xlabel('$x$ m')
+    ax.grid('off')
     cb.ax.set_ylabel(bartitle)
     fig.suptitle(title)
 
     return fig
 
 
+def plot_variance(matrix, params_names, title, cbtitle, diag):
+
+    params_used = [int(i) for i in matrix[:1][0]]
+    _matrix = matrix[1:]
+
+    x_ticks, y_ticks = _matrix.shape
+    shrink = 1
+
+    extent = [0, x_ticks, 0, y_ticks]
+
+    if diag:
+        k = -1
+        # idx represents the ignored elements
+        labels_x = params_names[params_used]
+        labels_y = labels_x[::-1]
+    else:
+        k = 0
+        # idx represents the ignored elements
+        labels_x = params_names[params_used][:-1]
+        labels_y = labels_x[::-1][:-1]
+
+    # selecting half covariance
+    mask = np.tri(_matrix.shape[0], k=k)
+    matrix_mask = np.ma.array(_matrix, mask=mask).T  # mask out the lower triangle
+
+    fig, ax = plt.subplots()
+
+    # get rid of the frame
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False)
+
+    im = ax.imshow(
+        X=matrix_mask,
+        extent=extent,
+        vmax=_matrix.max(),
+        vmin=_matrix.min(),
+        cmap=plt.cm.Reds,
+        interpolation='nearest',
+        origin='upper')
+
+    cb = fig.colorbar(im, ax=ax, shrink=shrink)
+    cb.formatter.set_powerlimits((0, 0))
+    cb.ax.yaxis.set_offset_position('left')
+    cb.update_ticks()
+    cb.ax.set_ylabel(cbtitle)
+
+    ax.set_title(title)
+
+    ax.set_xticks(np.arange(x_ticks) + 0.5)
+    ax.set_xticklabels(labels_x, rotation='vertical')
+    ax.set_yticks(np.arange(y_ticks) + 0.5)
+    ax.set_yticklabels(labels_y)
+    ax.grid('off')
+
+    return fig
+
+
+# not sure to keep this function
 def plot_data_path(pathfits, save, rad):
 
-    name = find_name_path(pathfits)[1][:-5]
-    path = find_name_path(pathfits)[0]
-
-    # Opening fits file with astropy
-    hdulist = fits.open(pathfits)
-
-    beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
-    u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
-    v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
-    d_z_m = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
-
-    # Permuting the position to provide same as main_functions
-    beam_data.insert(1, beam_data.pop(2))
-    u_data.insert(1, u_data.pop(2))
-    v_data.insert(1, v_data.pop(2))
-    d_z_m.insert(1, d_z_m.pop(2))
+    name, freq, wavel, d_z_m, meanel, pthto, data = extract_data_fits(pathfits)
+    [beam_data, u_data, v_data] = data
 
     fig_data = plot_data(
         u_data=u_data,
@@ -248,13 +283,13 @@ def plot_data_path(pathfits, save, rad):
         rad=rad
         )
 
-    if not os.path.exists(path + '/OOF_out'):
-        os.makedirs(path + '/OOF_out')
-    if not os.path.exists(path + '/OOF_out/' + name):
-        os.makedirs(path + '/OOF_out/' + name)
+    if not os.path.exists(pthto + '/OOF_out'):
+        os.makedirs(pthto + '/OOF_out')
+    if not os.path.exists(pthto + '/OOF_out/' + name):
+        os.makedirs(pthto + '/OOF_out/' + name)
 
     if save:
-        fig_data.savefig(path + '/OOF_out/' + name +'/obsbeam.pdf')
+        fig_data.savefig(pthto + '/OOF_out/' + name + '/obsbeam.pdf')
 
     return fig_data
 
@@ -263,23 +298,34 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
 
     n = order
     fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')
-    fitinfo = ascii.read(pathoof + '/fitinfo_n' + str(n) + '.dat')
+    fitinfo = ascii.read(pathoof + '/fitinfo.dat')
 
     # Residual
     res = np.genfromtxt(pathoof + '/res_n' + str(n) + '.csv')
+
+    # Data
     u_data = np.genfromtxt(pathoof + '/u_data.csv')
     v_data = np.genfromtxt(pathoof + '/v_data.csv')
     beam_data = np.genfromtxt(pathoof + '/beam_data.csv')
 
-    params_solution = np.array(fitpar['parfit'])
+    # Covariance and Correlation matrix
+    cov = np.genfromtxt(pathoof + '/cov_n' + str(n) + '.csv')
+    corr = np.genfromtxt(pathoof + '/corr_n' + str(n) + '.csv')
 
     d_z_m = np.array(
         [fitinfo['d_z-'][0], fitinfo['d_z0'][0], fitinfo['d_z+'][0]])
     name = fitinfo['name'][0]
 
+    # LaTeX problem with underscore _ -> \_
+    string_list = list(name)
+    for idx, string in enumerate(string_list):
+        if string_list[idx] == '_':
+            string_list[idx] = '\_'
+    name = ''.join(string_list)
+
     fig_beam = plot_beam(
-        params=params_solution,
-        title=name + ' fitted beam $n=' + str(n) + '$',
+        params=np.array(fitpar['parfit']),
+        title=name + ' fitted power pattern  $n=' + str(n) + '$',
         d_z_m=d_z_m,
         lam=fitinfo['wavel'][0],
         illum=fitinfo['illum'][0],
@@ -288,9 +334,9 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
         )
 
     fig_phase = plot_phase(
-        params=params_solution,
+        params=np.array(fitpar['parfit']),
         d_z_m=d_z_m[2],  # only one function for the three beam maps
-        title=name + ' Aperture phase distribution $n=' + str(n) + '$',
+        title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
         notilt=True
         )
 
@@ -299,9 +345,8 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
         v_data=v_data,
         beam_data=res,
         d_z_m=d_z_m,
-        title=name + ' residual $n=' + str(n) + '$',
-        rad=False,
-        norm=True
+        title=name + ' residual  $n=' + str(n) + '$',
+        rad=rad,
         )
 
     fig_data = plot_data(
@@ -309,19 +354,38 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
         v_data=v_data,
         beam_data=beam_data,
         d_z_m=d_z_m,
-        title=name + ' observed beam',
-        rad=False
+        title=name + ' observed power pattern',
+        rad=rad
+        )
+
+    fig_cov = plot_variance(
+        matrix=cov,
+        params_names=fitpar['parname'],
+        title=name + ' Variance-covariance matrix $n=' + str(n) + '$',
+        cbtitle='$\sigma_{ij}^2$',
+        diag=True
+        )
+
+    fig_corr = plot_variance(
+        matrix=corr,
+        params_names=fitpar['parname'],
+        title=name + ' Correlation matrix $n=' + str(n) + '$',
+        cbtitle='$\\rho_{ij}$',
+        diag=True
         )
 
     if save:
         fig_beam.savefig(pathoof + '/fitbeam_n' + str(n) + '.pdf')
         fig_phase.savefig(pathoof + '/fitphase_n' + str(n) + '.pdf')
         fig_res.savefig(pathoof + '/residual_n' + str(n) + '.pdf')
+        fig_cov.savefig(pathoof + '/cov_n' + str(n) + '.pdf')
+        fig_corr.savefig(pathoof + '/corr_n' + str(n) + '.pdf')
         fig_data.savefig(pathoof + '/obsbeam.pdf')
 
-    return fig_beam, fig_phase, fig_res, fig_data
+    return fig_beam, fig_phase, fig_res, fig_data, fig_cov, fig_corr
 
 
+# not sure to keep this function
 def plot_fit_nikolic_path(pathoof, order, d_z_m, title, plim_rad, rad):
 
     n = order
@@ -353,24 +417,35 @@ def plot_fit_nikolic_path(pathoof, order, d_z_m, title, plim_rad, rad):
 
 if __name__ == "__main__":
 
-    # for n in [1, 2, 3]:
+    # for n in [3]:
     #     plot_fit_path(
-    #         pathoof='../test_data/S9mm_0397_3C84/OOF_out/S9mm_0397_3C84_H1_SB',
+    #         pathoof='../test_data/S9mm_0397_3C84/OOF_out/S9mm_0462_3C84_H6_SB/',
     #         order=n,
     #         plim_rad=None,
-    #         save=True,
+    #         save=False,
     #         rad=False
     #         )
-    #     plt.close()
 
+    # plot_fit_nikolic_path(
+    #     pathoof='../test_data/gen_data9/oof_nikolic',
+    #     order=5,
+    #     d_z_m=[-.025, 0, .025],
+    #     title='B. Nikolic software',
+    #     plim_rad=None,
+    #     rad=False)
 
+    plot_fit_path(
+        pathoof='../test_data/9mm/OOF_out/S9mm_0562_3C84_H1_SB',
+        order=5,
+        plim_rad=None,
+        save=False,
+        rad=False
+        )
 
-    # params = fits.open('../test_data/gen_data8/o5n0/oofout/fitpars.fits')[1].data['ParValue']
-
-    # plot_phase(params, 0.025, 'test', notilt=True)
-
-    params = np.array([1, 1, 1, 1, 4, 5, 6])
-    plot_phase(params, 0.025, 'title', notilt=True)
+    # plot_data_path(
+    #     pathfits='../test_data/9mm/S9mm_0562_3C84_H1_SB.fits',
+    #     save=False,
+    #     rad=False)
 
     plt.show()
 
