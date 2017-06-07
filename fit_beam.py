@@ -1,13 +1,15 @@
 # Author: Tomas Cassanelli
 import numpy as np
 import matplotlib.pyplot as plt
-from main_functions import angular_spectrum, wavevector_to_degree,extract_data_fits, find_name_path, par_variance, sr_phase
-from scipy.optimize import least_squares
 from astropy.io import ascii
-from scipy.interpolate import RegularGridInterpolator
+from scipy import interpolate, optimize
 from plot_routines import plot_fit_path
 import os
 import time
+from main_functions import (
+    angular_spectrum, wavevector_to_degree, par_variance, sr_phase
+    )
+from aux_functions import extract_data_fits
 
 
 def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
@@ -36,7 +38,7 @@ def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
 
             # The calculated beam needs to be transformed!
             # RegularGridInterpolator
-            intrp = RegularGridInterpolator(
+            intrp = interpolate.RegularGridInterpolator(
                 points=(u_rad, v_rad),  # points defining grid
                 values=beam_norm.T,  # data in grid
                 method='linear'  # linear or nearest
@@ -178,7 +180,7 @@ def fit_beam(pathfits, order, illum, fit_previous):
         )
 
     # Running non-linear least-squared optimization
-    res_lsq = least_squares(
+    res_lsq = optimize.least_squares(
         fun=residual,
         x0=params_init_true,
         args=(
@@ -298,11 +300,11 @@ def fit_beam(pathfits, order, illum, fit_previous):
 if __name__ == "__main__":
 
     import glob
-    observations = glob.glob('../data/S9mm/*.fits')
+    observations = glob.glob('../data/S9mm/*.fits')  # len = 8
 
-    for n in [1, 2, 3, 4, 5]:
+    for n in [6]:
         fit_beam(
-            pathfits=observations[0],
+            pathfits=observations[7],
             order=n,
             illum='pedestal',
             fit_previous=True
