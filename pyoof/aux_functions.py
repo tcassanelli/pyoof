@@ -1,12 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
 from scipy.constants import c as light_speed
 from astropy.io import fits
-import ntpath
+
 
 # Auxiliar functions to handle files, strings and data
 
 
+__all__ = [
+    'extract_data_fits', 'str2LaTeX',
+    ]
+
+
 def find_name_path(path):
-    head, tail = ntpath.split(path)
+    head, tail = os.path.split(path)
     return head, tail
 
 
