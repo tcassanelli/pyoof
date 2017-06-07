@@ -139,28 +139,40 @@ def ant_blockage(x, y):
     block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
     block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
 
-    # # testing new block
-    # # make diagram in thesis for these distances
-    # alpha = np.radians(10)
-    # csc2 = np.sin(alpha) ** (-2)
+    # testing new block
+    # make diagram in thesis for these distances
+    alpha = np.radians(10)
+    csc2 = np.sin(alpha) ** (-2)
 
-    # d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
+    d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
 
-    # A = sr + L
-    # B = a
-    # C = d / np.tan(alpha)
-    # D = a + d
+    A = sr + L
+    B = a
+    C = d / np.tan(alpha)
+    D = a + d
 
-    # y1 = line_func((A, B), (C, D), x)
-    # y2 = line_func((A, -B), (C, -D), x)
+    y1 = line_func((A, B), (C, D), x)
+    y2 = line_func((A, -B), (C, -D), x)
+    x3 = line_func((-A, B), (-C, D), y)
+    x4 = line_func((-A, -B), (-C, -D), y)
+    y5 = line_func((-A, -B), (-C, -D), x)
+    y6 = line_func((-A, B), (-C, D), x)
+    x7 = line_func((A, -B), (C, -D), y)
+    x8 = line_func((A, B), (C, D), y)
 
-    # y5 = line_func((-A, -B), (-C, -D), x)
-    # y6 = line_func((-A, B), (-C, D), x)
+    circ = lambda s: np.sqrt(np.abs(pr ** 2 - s ** 2))
 
-    # circ = np.sqrt(np.abs(pr ** 2 - x ** 2))
+    block[(A < x) & (C > x) & (y1 > y) & (y2 < y)] = 0
+    block[(pr > x) & (C < x) & (circ(x) > y) & (-circ(x) < y)] = 0
 
-    # block[(C > x) & (A < x) & (y1 > y) & (y2 < y)] = 0
-    # block[(pr > x) & (C < x) & (circ > y) & (-circ < y)] = 0
+    block[(-A > y) & (-C < y) & (x4 < x) & (x3 > x)] = 0
+    block[(-pr < y) & (-C > y) & (circ(y) > x) & (-circ(y) < x)] = 0
+
+    block[(-A > x) & (-C < x) & (y5 < y) & (y6 > y)] = 0
+    block[(-pr < x) & (-C > x) & (circ(x) > y) & (-circ(x) < y)] = 0
+
+    block[(A < y) & (C > y) & (x7 < x) & (x8 > x)] = 0
+    block[(pr > y) & (C < y) & (circ(x) > y) & (-circ(x) < y)] = 0
 
     return block
 
@@ -429,8 +441,7 @@ def sr_phase(params, notilt):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    sr_phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * ant_blockage(
-        x_grid, y_grid)
+    sr_phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
 
     return sr_phi
 
