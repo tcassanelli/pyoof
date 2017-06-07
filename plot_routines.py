@@ -186,8 +186,9 @@ def plot_phase(params, d_z_m, title, notilt):
     r_norm = r / pr
 
     extent = [x.min(), x.max(), y.min(), y.max()]
-    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * ant_blockage(
-        x_grid, y_grid)
+    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    # Not sure if to add the blockage
+    # * ant_blockage(x_grid, y_grid)
 
     fig, ax = plt.subplots()
 

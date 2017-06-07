@@ -162,7 +162,11 @@ def ant_blockage(x, y):
     x7 = line_func((A, -B), (C, -D), y)
     x8 = line_func((A, B), (C, D), y)
 
-    circ = lambda s: np.sqrt(np.abs(pr ** 2 - s ** 2))
+
+    def circ(s):
+
+        return np.sqrt(np.abs(pr ** 2 - s ** 2))
+
 
     block[(A < x) & (C > x) & (y1 > y) & (y2 < y)] = 0
     block[(pr > x) & (C < x) & (circ(x) > y) & (-circ(x) < y)] = 0
