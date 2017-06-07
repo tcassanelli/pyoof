@@ -141,11 +141,13 @@ def ant_blockage(x, y):
 
     # testing new block
     # make diagram in thesis for these distances
-    alpha = np.radians(10)
+    alpha = np.radians(10)  # angle of the triangle
     csc2 = np.sin(alpha) ** (-2)
 
+    # base of the triangle
     d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
 
+    # points for the triangle coordinates
     A = sr + L
     B = a
     C = d / np.tan(alpha)
