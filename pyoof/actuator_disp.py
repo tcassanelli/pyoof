@@ -1,12 +1,20 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Author: Tomas Cassanelli
 import numpy as np
 import matplotlib.pyplot as plt
-from aux_functions import str2LaTeX
 from astropy.io import ascii
 from scipy import interpolate
+from .aux_functions import str2LaTeX
 
 # Import plot style matplotlib, change to same directory in future
-plt.style.use('../plot_gen_thesis/master_thesis_sty.mplstyle')
+# plt.style.use('../plot_gen_thesis/master_thesis_sty.mplstyle')
+
+
+__all__ = [
+    'actuator_displacement', 'plot_actuator',
+    ]
 
 
 def actuator_displacement(pathoof, order, save):

@@ -1,15 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Author: Tomas Cassanelli
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
 from scipy import interpolate, optimize
-from plot_routines import plot_fit_path
 import os
 import time
-from main_functions import (
-    angular_spectrum, wavevector_to_degree, par_variance, sr_phase
-    )
-from aux_functions import extract_data_fits
+from .aperture import angular_spectrum, sr_phase
+from .math_functions import wavevector_to_degree, par_variance
+from .aux_functions import extract_data_fits
+from .plot_routines import plot_fit_path
+
+
+__all__ = [
+    'residual_true', 'residual', 'params_complete', 'fit_beam',
+    ]
 
 
 def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):

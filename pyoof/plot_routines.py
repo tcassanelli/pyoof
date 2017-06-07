@@ -1,16 +1,28 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Author: Tomas Cassanelli
-import matplotlib.pyplot as plt
+import os
 import numpy as np
-from main_functions import (
-    angular_spectrum, wavevector_to_degree, cart2pol, phi, ant_blockage
-    )
-from aux_functions import extract_data_fits, str2LaTeX
+import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
-import os
+from .aperture import (
+    angular_spectrum, phi, ant_blockage
+    )
+from .math_functions import (
+    wavevector_to_degree, cart2pol,
+    )
+from .aux_functions import extract_data_fits, str2LaTeX
 
 # Import plot style matplotlib, change to same directory in future
-plt.style.use('../plot_gen_thesis/master_thesis_sty.mplstyle')
+# plt.style.use('../plot_gen_thesis/master_thesis_sty.mplstyle')
+
+
+__all__ = [
+    'plot_beam', 'plot_data', 'plot_phase', 'plot_variance',
+    'plot_data_path', 'plot_fit_path', 'plot_fit_nikolic_path',
+    ]
 
 
 def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
