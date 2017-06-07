@@ -1,9 +1,7 @@
 # Author: Tomas Cassanelli
 import numpy as np
 from math import factorial as f
-from astropy.io import fits
-from scipy.constants import c as light_speed
-import ntpath
+from aux_functions import line_func
 
 # All mathematical function have been adapted for the Effelsber telescope
 
@@ -115,7 +113,7 @@ def illumination_nikolic(x, y, I_coeff):
     return illumination
 
 
-def antenna_shape(x, y):
+def ant_blockage(x, y):
     """
     Truncation in the aperture function, given by the hole generated for the
     secondary reflector and the supporting structure.
@@ -126,23 +124,45 @@ def antenna_shape(x, y):
         Grid value for the x variable, same as the contour plot.
     y : ndarray
         Grid value for the x variable, same as the contour plot.
-
     Returns
     -------
-    a_shape : ndarray
+    block : ndarray
     """
 
     pr = 50  # Primary reflector radius
     sr = 3.25  # secondary reflector radius
-    L = 20  # length support structure
+    L = 20   # length support structure (from the edge of the sr)
     a = 1  # half thickness support structure
 
-    a_shape = np.zeros(x.shape)  # or y.shape same
-    a_shape[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
-    a_shape[(-L < x) & (x < L) & (-a < y) & (y < a)] = 0
-    a_shape[(-L < y) & (y < L) & (-a < x) & (x < a)] = 0
+    block = np.zeros(x.shape)  # or y.shape same
+    block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+    block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
+    block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
 
-    return a_shape
+    # # testing new block
+    # # make diagram in thesis for these distances
+    # alpha = np.radians(10)
+    # csc2 = np.sin(alpha) ** (-2)
+
+    # d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
+
+    # A = sr + L
+    # B = a
+    # C = d / np.tan(alpha)
+    # D = a + d
+
+    # y1 = line_func((A, B), (C, D), x)
+    # y2 = line_func((A, -B), (C, -D), x)
+
+    # y5 = line_func((-A, -B), (-C, -D), x)
+    # y6 = line_func((-A, B), (-C, D), x)
+
+    # circ = np.sqrt(np.abs(pr ** 2 - x ** 2))
+
+    # block[(C > x) & (A < x) & (y1 > y) & (y2 < y)] = 0
+    # block[(pr > x) & (C < x) & (circ > y) & (-circ < y)] = 0
+
+    return block
 
 
 def delta(x, y, d_z):
@@ -288,7 +308,27 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum):
     """
     Aperture function. Multiplication between the antenna truncation, the
     illumination function and the aberration.
+
+    Parameters
+    ----------
+    x : ndarray
+        Grid value for the x variable, same as the contour plot.
+    y : ndarray
+        Grid value for the x variable, same as the contour plot.
+    K_coeff : ndarray
+        Phase coefficients in increasing order.
+    d_z : float
+        Distance between the secondary and primary refelctor measured in rad.
+    I_coeff : ndarray
+        Illumination coefficients for pedestal function.
+    illum : str
+        Illumination function type, gauss, pedestal or nikolic.
+    Returns
+    -------
+    E : ndarray
+        Grid value that contains general expression for aperture.
     """
+
     r, t = cart2pol(x, y)
 
     pr = 50  # Primary reflector radius
@@ -298,7 +338,7 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum):
 
     _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
     _delta = delta(x, y, d_z=d_z)
-    _shape = antenna_shape(x, y)
+    _shape = ant_blockage(x, y)
 
     # Wavefront aberration distribution (rad)
     wavefront = (_phi + _delta)
@@ -311,16 +351,30 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum):
         _illum = illumination_nikolic(x, y, I_coeff=I_coeff)
 
     E = _shape * _illum * np.exp(wavefront * 1j)
-    # Aperture: E(x/lam, y/lam)
+    # Aperture: E(x / wavel, y / wavel)
 
     return E
 
 
-def wavevector_to_degree(x, lam):
+def wavevector_to_degree(x, wavel):
     """
-    Converst wave vector [1/m] to degrees.
+    Converst wave-vector 1/m to degrees.
+
+    Parameters
+    ----------
+    x : ndarray
+        Wave-vector, result from FFT2.
+    wavel : ndarray
+        Wavelength.
+    Returns
+    -------
+    wave_vector_degrees : ndarray
+        Wave-vector in degrees.
     """
-    return np.degrees(x * lam)
+
+    wave_vector_degrees = np.degrees(x * wavel)
+
+    return wave_vector_degrees
 
 
 def angular_spectrum(K_coeff, I_coeff, d_z, illum):
@@ -358,59 +412,6 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum):
     return u_shift, v_shift, F_shift
 
 
-def find_name_path(path):
-    head, tail = ntpath.split(path)
-    return head, tail
-
-
-def extract_data_fits(pathfits):
-    # Opening fits file with astropy
-    hdulist = fits.open(pathfits)
-
-    # Observation frequency
-    freq = hdulist[0].header['FREQ']  # Hz
-    wavel = light_speed / freq
-
-    # Mean elevation
-    meanel = hdulist[0].header['MEANEL']  # Degrees
-
-    # name of the fit file to fit
-    name = find_name_path(pathfits)[1][:-5]
-
-    beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
-    u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
-    v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
-    d_z_m = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
-
-    # Permuting the position to provide same as main_functions
-    beam_data.insert(1, beam_data.pop(2))
-    u_data.insert(1, u_data.pop(2))
-    v_data.insert(1, v_data.pop(2))
-    d_z_m.insert(1, d_z_m.pop(2))
-
-    # path or directory where the fits file is located
-    pthto = find_name_path(pathfits)[0]
-
-    return name, freq, wavel, d_z_m, meanel, pthto, [beam_data, u_data, v_data]
-
-
-def par_variance(res, jac, n_pars):
-    # Covariance and correlation matrices
-    m = res.size
-    d_free = m - n_pars  # degrees of freedom
-
-    # Covarince matrix
-    cov = np.dot(res.T, res) / d_free * np.linalg.inv(np.dot(jac.T, jac))
-
-    sigmas2 = np.diag(np.diag(cov))
-    D = np.linalg.inv(np.sqrt(sigmas2))  # inv diagonal variance matrix
-
-    # Correlation matrix
-    corr = np.dot(np.dot(D, cov), D)
-
-    return cov, corr
-
-
 def sr_phase(params, notilt):
     # subreflector phase
     K_coeff = params[4:]
@@ -428,28 +429,41 @@ def sr_phase(params, notilt):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    sr_phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * antenna_shape(
+    sr_phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * ant_blockage(
         x_grid, y_grid)
 
     return sr_phi
 
 
+def par_variance(res, jac, n_pars):
+    # Covariance and correlation matrices
+    m = res.size
+    d_free = m - n_pars  # degrees of freedom
+
+    # Covarince matrix
+    cov = np.dot(res.T, res) / d_free * np.linalg.inv(np.dot(jac.T, jac))
+
+    sigmas2 = np.diag(np.diag(cov))  # sigma ** 2
+    D = np.linalg.inv(np.sqrt(sigmas2))  # inv diagonal variance matrix
+
+    # Correlation matrix
+    corr = np.dot(np.dot(D, cov), D)
+
+    return cov, corr
+
+
 if __name__ == "__main__":
 
-    from astropy.io import ascii
     import matplotlib.pyplot as plt
 
-    pathoof = '../data/S9mm/OOF_out/S9mm_0397_3C84_H1_SB'
-    n = 2
-    params = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')['parfit']
+    # Testing the blockage
+    x = np.linspace(-60, 60, 1e3)
+    y = x
+    xg, yg = np.meshgrid(x, y)
 
-    print(params)
+    blockage = ant_blockage(xg, yg)
 
-    phase = sr_phase(params=params, notilt=True)
-    plt.imshow(phase)
+    plt.imshow(blockage, origin='lower')
+
     plt.show()
-
-
-
-    print('phase: ', phase)
 
