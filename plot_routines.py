@@ -1,14 +1,15 @@
 # Author: Tomas Cassanelli
 import matplotlib.pyplot as plt
 import numpy as np
-from main_functions import angular_spectrum, wavevector_to_degree, \
-    cart2pol, phi, antenna_shape, aperture, extract_data_fits, find_name_path
-from scipy.constants import c as light_speed
+from main_functions import (
+    angular_spectrum, wavevector_to_degree, cart2pol, phi, ant_blockage
+    )
+from aux_functions import extract_data_fits, str2LaTeX
 from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
 import os
 
-# Import plot style matplotlib
+# Import plot style matplotlib, change to same directory in future
 plt.style.use('../plot_gen_thesis/master_thesis_sty.mplstyle')
 
 
@@ -185,7 +186,7 @@ def plot_phase(params, d_z_m, title, notilt):
     r_norm = r / pr
 
     extent = [x.min(), x.max(), y.min(), y.max()]
-    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * antenna_shape(
+    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff) * ant_blockage(
         x_grid, y_grid)
 
     fig, ax = plt.subplots()
@@ -234,7 +235,8 @@ def plot_variance(matrix, params_names, title, cbtitle, diag):
 
     # selecting half covariance
     mask = np.tri(_matrix.shape[0], k=k)
-    matrix_mask = np.ma.array(_matrix, mask=mask).T  # mask out the lower triangle
+    matrix_mask = np.ma.array(_matrix, mask=mask).T
+    # mask out the lower triangle
 
     fig, ax = plt.subplots()
 
@@ -317,11 +319,7 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
     name = fitinfo['name'][0]
 
     # LaTeX problem with underscore _ -> \_
-    string_list = list(name)
-    for idx, string in enumerate(string_list):
-        if string_list[idx] == '_':
-            string_list[idx] = '\_'
-    name = ''.join(string_list)
+    name = str2LaTeX(name)
 
     fig_beam = plot_beam(
         params=np.array(fitpar['parfit']),
@@ -376,7 +374,10 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
 
     if save:
         fig_beam.savefig(pathoof + '/fitbeam_n' + str(n) + '.pdf')
-        fig_phase.savefig(pathoof + '/fitphase_n' + str(n) + '.pdf')
+        fig_phase.savefig(
+            filename=pathoof + '/fitphase_n' + str(n) + '.pdf',
+            bbox_inches='tight'
+            )
         fig_res.savefig(pathoof + '/residual_n' + str(n) + '.pdf')
         fig_cov.savefig(pathoof + '/cov_n' + str(n) + '.pdf')
         fig_corr.savefig(pathoof + '/corr_n' + str(n) + '.pdf')
@@ -448,5 +449,3 @@ if __name__ == "__main__":
     #     rad=False)
 
     plt.show()
-
-
