@@ -7,16 +7,56 @@ from math import factorial as f
 
 
 __all__ = [
-    'U'
+    'U', 'R'
     ]
+
+
+def R(m, n, rho):
+    """
+    Radial Zernike polynomials generator (R from Born & Wolf definition).
+    The m, n are integers, n >= 0 and n - m even. Only used to compute the
+    general expresion for the Zernike circle polynomials, U.
+
+    Parameters
+    ----------
+    m : int
+        Positive number, relative to the angle component.
+    n : int
+        It is n >= 0. Order of the radial component.
+    rho : ndarray
+        Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2).
+
+    Returns
+    -------
+    radial : ndarray
+        Radial Zernike polynomial already evaluated.
+    """
+
+    if type(m) == float or type(n) == float:
+        print('WARNING: l and n can only be integer numbers')
+
+    if n < 0:
+        print('WARNING: n can only have integer positive values')
+
+    a = (n + m) // 2
+    b = (n - m) // 2
+
+    radial = sum(
+        (-1) ** s * f(n - s) * rho ** (n - 2 * s) /
+        (f(s) * f(a - s) * f(b - s))
+        for s in range(0, b + 1)
+        )
+
+    return radial
 
 
 def U(l, n, theta, rho):
     """
-    Zernike polynomial generator. l, n are intergers, n >= 0 and n - |l| even.
+    Zernike circle polynomials generator (U from Born & Wolf definition).
+    The l, n are integers, n >= 0 and n - |l| even.
     Expansion of a complete set of orthonormal polynomials in a unitary circle,
     for the aberration function.
-    The n value determines the total amount of polynomials 0.5(n+1)(n+2).
+    The n value determines the number of polynomials (n + 1) * (n + 2) / 2.
 
     Parameters
     ----------
@@ -25,32 +65,30 @@ def U(l, n, theta, rho):
     n : int
         It is n >= 0. Relative to radial component.
     theta : ndarray
-        Values for the angular component. theta = np.arctan(y / x).
+        Values for the angular component. For a rectangular grid x and y are
+        evaluated as theta = np.arctan(y / x).
     rho : ndarray
         Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2).
 
     Returns
     -------
-    U : ndarray
-        Zernile polynomail already evaluated.
+    zernike_circle : ndarray
+        Zernike circle polynomial already evaluated.
     """
 
+    if type(l) == float or type(n) == float:
+        print('WARNING: l and n can only be integer numbers')
+
     if n < 0:
-        print('WARNING: U(l, n) can only have positive values for n')
+        print('WARNING: n can only have integer positive values')
 
     m = abs(l)
-    a = (n + m) // 2
-    b = (n - m) // 2
 
-    R = sum(
-        (-1) ** s * f(n - s) * rho ** (n - 2 * s) /
-        (f(s) * f(a - s) * f(b - s))
-        for s in range(0, b + 1)
-        )
+    radial = R(m, n, rho)
 
     if l < 0:
-        U = R * np.sin(m * theta)
+        zernike_circle = radial * np.sin(m * theta)
     else:
-        U = R * np.cos(m * theta)
+        zernike_circle = radial * np.cos(m * theta)
 
-    return U
+    return zernike_circle

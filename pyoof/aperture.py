@@ -3,9 +3,7 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
-from math import factorial as f
-from .aux_functions import line_func
-from .math_functions import cart2pol
+from .math_functions import linear_equation, cart2pol
 from .zernike import U
 
 
@@ -32,6 +30,7 @@ def illumination_pedestal(x, y, I_coeff):
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
+
     Returns
     -------
     illumination : ndarray
@@ -68,6 +67,7 @@ def illumination_gauss(x, y, I_coeff):
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
+
     Returns
     -------
     illumination : ndarray
@@ -103,6 +103,7 @@ def illumination_nikolic(x, y, I_coeff):
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
+
     Returns
     -------
     illumination : ndarray
@@ -136,6 +137,7 @@ def ant_blockage(x, y):
         Grid value for the x variable, same as the contour plot.
     y : ndarray
         Grid value for the x variable, same as the contour plot.
+
     Returns
     -------
     block : ndarray
@@ -165,20 +167,17 @@ def ant_blockage(x, y):
     C = d / np.tan(alpha)
     D = a + d
 
-    y1 = line_func((A, B), (C, D), x)
-    y2 = line_func((A, -B), (C, -D), x)
-    x3 = line_func((-A, B), (-C, D), y)
-    x4 = line_func((-A, -B), (-C, -D), y)
-    y5 = line_func((-A, -B), (-C, -D), x)
-    y6 = line_func((-A, B), (-C, D), x)
-    x7 = line_func((A, -B), (C, -D), y)
-    x8 = line_func((A, B), (C, D), y)
-
+    y1 = linear_equation((A, B), (C, D), x)
+    y2 = linear_equation((A, -B), (C, -D), x)
+    x3 = linear_equation((-A, B), (-C, D), y)
+    x4 = linear_equation((-A, -B), (-C, -D), y)
+    y5 = linear_equation((-A, -B), (-C, -D), x)
+    y6 = linear_equation((-A, B), (-C, D), x)
+    x7 = linear_equation((A, -B), (C, -D), y)
+    x8 = linear_equation((A, B), (C, D), y)
 
     def circ(s):
-
         return np.sqrt(np.abs(pr ** 2 - s ** 2))
-
 
     block[(A < x) & (C > x) & (y1 > y) & (y2 < y)] = 0
     block[(pr > x) & (C < x) & (circ(x) > y) & (-circ(x) < y)] = 0
@@ -209,6 +208,7 @@ def delta(x, y, d_z):
         Grid value for the x variable, same as the contour plot.
     d_z : float
         Distance between the secondary and primary refelctor measured in rad.
+
     Returns
     -------
     delta : ndarray
@@ -246,6 +246,7 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum):
         Illumination coefficients for pedestal function.
     illum : str
         Illumination function type, gauss, pedestal or nikolic.
+
     Returns
     -------
     E : ndarray
@@ -293,6 +294,7 @@ def phi(theta, rho, K_coeff):
         Constants organized by the ln list, which gives the possible values.
     n : int
         It is n >= 0. Determines the size of the polynomial, see ln.
+
     Returns
     -------
     phi : ndarray
@@ -367,9 +369,10 @@ def sr_phase(params, notilt):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    sr_phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    phase = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
-    return sr_phi
+    return phase
 
 
 if __name__ == "__main__":
@@ -386,4 +389,3 @@ if __name__ == "__main__":
     plt.imshow(blockage, origin='lower')
 
     plt.show()
-

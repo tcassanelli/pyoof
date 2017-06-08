@@ -9,8 +9,7 @@ from scipy import interpolate, optimize
 import os
 import time
 from .aperture import angular_spectrum, sr_phase
-from .math_functions import wavevector_to_degree, par_variance
-from .aux_functions import extract_data_fits
+from .math_functions import wavevector2degree, co_matrices
 from .plot_routines import plot_fit_path
 
 
@@ -40,8 +39,8 @@ def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
         if inter:
 
             # Generated beam u and v: wavevectors -> degrees -> radians
-            u_rad = wavevector_to_degree(u, lam) * np.pi / 180
-            v_rad = wavevector_to_degree(v, lam) * np.pi / 180
+            u_rad = wavevector2degree(u, lam) * np.pi / 180
+            v_rad = wavevector2degree(v, lam) * np.pi / 180
 
             # The calculated beam needs to be transformed!
             # RegularGridInterpolator
@@ -108,15 +107,17 @@ def params_complete(params, idx, N_K_coeff):
 
 
 # Insert path for the fits file with pre-calibration
-def fit_beam(pathfits, order, illum, fit_previous):
+def fit_beam(data, order, illum, fit_previous):
 
     start_time = time.time()
 
     print('\n ####### OOF FIT POWER PATTERN ####### \n')
     print('... Reading data ... \n')
 
-    name, freq, wavel, d_z_m, meanel, pthto, data = extract_data_fits(pathfits)
-    [beam_data, u_data, v_data] = data
+    # All observed data needed to fit the beam
+    data_info, data_obs = data
+    [name, pthto, freq, wavel, d_z_m, meanel] = data_info
+    [beam_data, u_data, v_data] = data_obs
 
     print('File name: ', name)
     print('Observed frequency: ', freq, 'Hz')
@@ -216,7 +217,7 @@ def fit_beam(pathfits, order, illum, fit_previous):
     jac_optim = res_lsq.jac
     grad_optim = res_lsq.grad
 
-    cov, corr = par_variance(
+    cov, corr = co_matrices(
         res=res_lsq.fun,
         jac=res_lsq.jac,
         n_pars=params_init_true.size  # num of parameters fitted
@@ -299,20 +300,4 @@ def fit_beam(pathfits, order, illum, fit_previous):
     print(' ###### %s mins ######' % str((time.time() - start_time) / 60))
     print('\n')
 
-    # plt.show()
-
     plt.close('all')
-
-
-if __name__ == "__main__":
-
-    import glob
-    observations = glob.glob('../data/S9mm/*.fits')  # len = 8
-
-    for n in [6]:
-        fit_beam(
-            pathfits=observations[7],
-            order=n,
-            illum='pedestal',
-            fit_previous=True
-            )

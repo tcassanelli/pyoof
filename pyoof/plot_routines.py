@@ -7,21 +7,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
-from .aperture import (
-    angular_spectrum, phi, ant_blockage
-    )
-from .math_functions import (
-    wavevector_to_degree, cart2pol,
-    )
-from .aux_functions import extract_data_fits, str2LaTeX
+from .aperture import angular_spectrum, phi
+from .math_functions import wavevector2degree, cart2pol
+from .aux_functions import extract_data_effelsberg, str2LaTeX
 
 # Import plot style matplotlib, change to same directory in future
-# plt.style.use('../plot_gen_thesis/master_thesis_sty.mplstyle')
+plt.style.use('../../plot_gen_thesis/master_thesis_sty.mplstyle')
 
 
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance',
-    'plot_data_path', 'plot_fit_path', 'plot_fit_nikolic_path',
+    'plot_data_effelsberg', 'plot_fit_path', 'plot_fit_nikolic',
     ]
 
 
@@ -82,8 +78,8 @@ def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
         ]
 
     for i in range(3):
-        u_deg = wavevector_to_degree(u[i], lam) * angle_coeff
-        v_deg = wavevector_to_degree(v[i], lam) * angle_coeff
+        u_deg = wavevector2degree(u[i], lam) * angle_coeff
+        v_deg = wavevector2degree(v[i], lam) * angle_coeff
 
         u_grid, v_grid = np.meshgrid(u_deg, v_deg)
 
@@ -190,7 +186,7 @@ def plot_phase(params, d_z_m, title, notilt):
 
     pr = 50
     x = np.linspace(-pr, pr, 1e3)
-    y = np.linspace(-pr, pr, 1e3)
+    y = x
 
     x_grid, y_grid = np.meshgrid(x, y)
 
@@ -199,6 +195,7 @@ def plot_phase(params, d_z_m, title, notilt):
 
     extent = [x.min(), x.max(), y.min(), y.max()]
     _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    _phi[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
     # Not sure if to add the blockage
     # * ant_blockage(x_grid, y_grid)
 
@@ -284,10 +281,15 @@ def plot_variance(matrix, params_names, title, cbtitle, diag):
 
 
 # not sure to keep this function
-def plot_data_path(pathfits, save, rad):
+def plot_data_effelsberg(pathfits, save, rad):
+    """
+    Plot all data from an OOF Effelsberg observation given the path.
+    """
 
-    name, freq, wavel, d_z_m, meanel, pthto, data = extract_data_fits(pathfits)
-    [beam_data, u_data, v_data] = data
+    data_info, data_obs = extract_data_effelsberg(pathfits)
+    [name, _, _, d_z_m, _, pthto] = data_info
+    [beam_data, u_data, v_data] = data_obs
+
 
     fig_data = plot_data(
         u_data=u_data,
@@ -399,8 +401,10 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
     return fig_beam, fig_phase, fig_res, fig_data, fig_cov, fig_corr
 
 
-# not sure to keep this function
-def plot_fit_nikolic_path(pathoof, order, d_z_m, title, plim_rad, rad):
+def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, rad):
+    """
+    Designed to plot Bojan Nikolic solutions given a path to its oof output.
+    """
 
     n = order
     path = pathoof + '/z' + str(n)
@@ -427,38 +431,3 @@ def plot_fit_nikolic_path(pathoof, order, d_z_m, title, plim_rad, rad):
         )
 
     return fig_beam, fig_phase
-
-
-if __name__ == "__main__":
-
-    # for n in [3]:
-    #     plot_fit_path(
-    #         pathoof='../test_data/S9mm_0397_3C84/OOF_out/S9mm_0462_3C84_H6_SB/',
-    #         order=n,
-    #         plim_rad=None,
-    #         save=False,
-    #         rad=False
-    #         )
-
-    # plot_fit_nikolic_path(
-    #     pathoof='../test_data/gen_data9/oof_nikolic',
-    #     order=5,
-    #     d_z_m=[-.025, 0, .025],
-    #     title='B. Nikolic software',
-    #     plim_rad=None,
-    #     rad=False)
-
-    plot_fit_path(
-        pathoof='../test_data/9mm/OOF_out/S9mm_0562_3C84_H1_SB',
-        order=5,
-        plim_rad=None,
-        save=False,
-        rad=False
-        )
-
-    # plot_data_path(
-    #     pathfits='../test_data/9mm/S9mm_0562_3C84_H1_SB.fits',
-    #     save=False,
-    #     rad=False)
-
-    plt.show()
