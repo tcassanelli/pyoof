@@ -18,7 +18,7 @@ __all__ = [
 
 
 def residual_true(
-    params, beam_data, u_data, v_data, d_z, lam, illum, inter, telescope
+    params, beam_data, u_data, v_data, d_z, lam, illum, telescope, inter
         ):
 
     I_coeff = params[:4]
@@ -68,7 +68,8 @@ def residual_true(
 
 
 def residual(
-    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, illum, inter
+    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, illum,
+    telescope, inter
         ):
 
     # params for the true fit
@@ -82,6 +83,7 @@ def residual(
         d_z=d_z,
         lam=lam,
         illum=illum,
+        telescope=telescope,
         inter=inter
         )
 
@@ -193,6 +195,7 @@ def fit_beam(data, order, illum, telescope, fit_previous):
     res_lsq = optimize.least_squares(
         fun=residual,
         x0=params_init_true,
+        # conserve the same order of the arguments as the residual func
         args=(
             idx,
             N_K_coeff,
@@ -202,6 +205,7 @@ def fit_beam(data, order, illum, telescope, fit_previous):
             d_z,
             wavel,
             illum,
+            telescope,
             True  # Grid interpolation
             ),
         bounds=tuple([bounds_min_true, bounds_max_true]),

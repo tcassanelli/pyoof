@@ -1,34 +1,56 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Author: Tomas Cassanelli
 import numpy as np
+from functools import partial
 from .math_functions import linear_equation
 
 __all__ = [
-    'telescope_geo', 'blockage_generic', 'blockage_effelsberg'
+    'telescope_geo', 'blockage_manual', 'blockage_effelsberg'
     ]
 
 
-def telescope_geo(x, y, telescope, pr=50):
+def telescope_geo(telescope):
+    """
+    Telescope geometry selection and possible manual setting of a particular
+    radio telescope radius
+    """
 
-    if telescope == 'Effelsberg':
-        blockage = blockage_effelsberg(x, y)
+    if telescope == 'effelsberg':
+        blockage = blockage_effelsberg
         pr = 50  # Primary reflector radius
 
-    if telescope is None:
-        blockage = blockage_generic(x, y, pr)
-        pr = pr
+    if type(telescope) == tuple:
+        (pr, sr) = telescope
+        if pr <= sr:
+            print('Primary radius cannot be smaller than secondary raidus!')
+        blockage = partial(blockage_manual, (pr, sr))
+
+    if (type(telescope) != tuple) and (telescope != 'effelsberg'):
+        print(
+            'Select an existing telescope geometry: `effelsberg` or a primary',
+            'and secondary disc radius (pr, sr). The radii must be an integer'
+            )
+        raise SystemExit
 
     return blockage, pr
 
 
-def blockage_generic(x, y, pr):
+def blockage_manual(geo, x, y):
+
+    (pr, sr) = geo
     block = np.zeros(x.shape)  # or y.shape same
-    block[(x ** 2 + y ** 2 < pr ** 2)] = 1
+    block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+
     return block
 
 
 def blockage_effelsberg(x, y):
     """
     Truncation in the aperture function, given by the hole generated for the
-    secondary reflector, the supporting structure and shade efects.
+    secondary reflector, the supporting structure and shade efects in the
+    Effelsberg telescope.
 
     Parameters
     ----------
@@ -60,7 +82,7 @@ def blockage_effelsberg(x, y):
     block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
     block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
 
-    csc2 = np.sin(alpha) ** (-2)
+    csc2 = np.sin(alpha) ** (-2)  # cosecant squared
 
     # base of the triangle
     d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2

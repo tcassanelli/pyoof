@@ -10,9 +10,10 @@ from astropy.io import fits, ascii
 from .aperture import angular_spectrum, phi
 from .math_functions import wavevector2degree, cart2pol
 from .aux_functions import extract_data_effelsberg, str2LaTeX
+from .telgeometry import telescope_geo
 
 # pyoof default plotting style
-plt.style.use('pyoof.mplstyle')
+# plt.style.use('pyoof.mplstyle')
 
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance',
@@ -54,7 +55,7 @@ def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
 
     # Limits, they need to be transformed to degrees
     if plim_rad is None:
-        pr = 50  # primary reflector radius
+        pr = telescope_geo(telescope)[1]  # primary reflector radius
         b_factor = 2 * pr / lam  # D / lambda
         plim_u = [-700 / b_factor, 700 / b_factor]
         plim_v = [-700 / b_factor, 700 / b_factor]
@@ -81,12 +82,11 @@ def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
         u_deg = wavevector2degree(u[i], lam) * angle_coeff
         v_deg = wavevector2degree(v[i], lam) * angle_coeff
 
-        u_grid, v_grid = np.meshgrid(u_deg, v_deg)
-
         extent = [u_deg.min(), u_deg.max(), v_deg.min(), v_deg.max()]
 
+        # make sure it is set to origin='lower', see plot style
         im = ax[i].imshow(beam_norm[i], extent=extent, vmin=0, vmax=1)
-        ax[i].contour(u_grid, v_grid, beam_norm[i], levels)
+        ax[i].contour(u_deg, v_deg, beam_norm[i], levels)
         cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
 
         ax[i].set_title(subtitle[i])
@@ -168,7 +168,7 @@ def plot_data(u_data, v_data, beam_data, d_z_m, title, rad):
     return fig
 
 
-def plot_phase(params, d_z_m, title, notilt):
+def plot_phase(params, d_z_m, title, notilt, telescope):
 
     K_coeff = params[4:]
 
@@ -184,7 +184,7 @@ def plot_phase(params, d_z_m, title, notilt):
         subtitle = '$\phi(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) + '$ m'
         bartitle = '$\phi(x, y)$ amplitude rad'
 
-    pr = 50
+    pr = telescope_geo(telescope)[1]
     x = np.linspace(-pr, pr, 1e3)
     y = x
 
@@ -194,8 +194,8 @@ def plot_phase(params, d_z_m, title, notilt):
     r_norm = r / pr
 
     extent = [x.min(), x.max(), y.min(), y.max()]
-    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
-    _phi[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
+    phase = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
     fig, ax = plt.subplots()
 
@@ -205,10 +205,10 @@ def plot_phase(params, d_z_m, title, notilt):
     shrink = 1
 
     # to rotate and sign invert
-    # _phi = -_phi[::-1, ::-1]
+    # phase = -phase[::-1, ::-1]
 
-    im = ax.imshow(_phi, extent=extent)
-    ax.contour(x_grid, y_grid, _phi, levels=levels, colors='k', alpha=0.5)
+    im = ax.imshow(phase, extent=extent)
+    ax.contour(x_grid, y_grid, phase, levels=levels, colors='k', alpha=0.5)
     cb = fig.colorbar(im, ax=ax, shrink=shrink)
     ax.set_title(subtitle)
     ax.set_ylabel('$y$ m')
@@ -349,7 +349,8 @@ def plot_fit_path(pathoof, order, telescope, plim_rad, save, rad):
         params=np.array(fitpar['parfit']),
         d_z_m=d_z_m[2],  # only one function for the three beam maps
         title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
-        notilt=True
+        notilt=True,
+        telescope=telescope
         )
 
     fig_res = plot_data(

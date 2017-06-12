@@ -12,12 +12,12 @@ from .telgeometry import telescope_geo
 
 
 __all__ = [
-    'illumination_pedestal', 'illumination_gauss', 'illumination_nikolic',
-    'delta', 'aperture'
+    'illumination_pedestal', 'illumination_gauss', 'delta', 'aperture',
+    'phase', 'phi'
     ]
 
 
-def illumination_pedestal(x, y, I_coeff):
+def illumination_pedestal(x, y, I_coeff, pr):
     """
     Illumination function parabolic taper on a pedestal, sometimes called
     amplitude. Represents the distribution of light in the primary reflector.
@@ -31,6 +31,8 @@ def illumination_pedestal(x, y, I_coeff):
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
+    pr : int
+        Primary reflector radius.
 
     Returns
     -------
@@ -43,8 +45,6 @@ def illumination_pedestal(x, y, I_coeff):
     x0 = I_coeff[2]  # Centre illumination primary reflector
     y0 = I_coeff[3]
 
-    pr = 50  # Primary reflector radius
-
     # Parabolic taper on a pedestal
     n = 2  # Order quadratic model illumination (Parabolic squared)
 
@@ -55,7 +55,7 @@ def illumination_pedestal(x, y, I_coeff):
     return illumination
 
 
-def illumination_gauss(x, y, I_coeff):
+def illumination_gauss(x, y, I_coeff, pr):
     """
     Illumination function gaussian.
 
@@ -68,6 +68,8 @@ def illumination_gauss(x, y, I_coeff):
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
+    pr : int
+        Primary reflector radius.
 
     Returns
     -------
@@ -81,47 +83,9 @@ def illumination_gauss(x, y, I_coeff):
     x0 = I_coeff[2]
     y0 = I_coeff[3]
 
-    pr = 50  # Primary reflector radius
-
     illumination = (
         amp *
         np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma_r * pr) ** 2))
-        )
-
-    return illumination
-
-
-def illumination_nikolic(x, y, I_coeff):
-    """
-    Illumination function used by Bojan Nikolic in his OOF software.
-
-    Parameters
-    ----------
-    x : ndarray
-        Grid value for the x variable, same as the contour plot.
-    y : ndarray
-        Grid value for the x variable, same as the contour plot.
-    I_coeff : ndarray
-        List which contains 4 parameters, the illumination amplitude, the
-        illumination taper and the two coordinate offset.
-
-    Returns
-    -------
-    illumination : ndarray
-    """
-
-    pr = 50  # Primary reflector radius
-    amp = I_coeff[0]
-
-    # illumination taper, different value from gauss illumination
-    sigma_r = I_coeff[1]
-
-    # Centre illuminationprimary reflector
-    x0 = I_coeff[2]
-    y0 = I_coeff[3]
-
-    illumination = (
-        amp * np.exp(-((x - x0) ** 2 + (y - y0) ** 2) * sigma_r / pr ** 2)
         )
 
     return illumination
@@ -189,24 +153,22 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum, telescope):
     r, t = cart2pol(x, y)
 
     blockage, pr = telescope_geo(telescope=telescope)
-    _blockage = blockage(x, y)
+    _blockage = blockage(x=x, y=y)
     # pr = Primary reflector radius
 
     # It needs to be normalized to be orthogonal undet the Zernike polynomials
     r_norm = r / pr
 
     _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
-    _delta = delta(x, y, d_z=d_z)
+    _delta = delta(x=x, y=y, d_z=d_z)
 
     # Wavefront aberration distribution (rad)
     wavefront = (_phi + _delta)
 
     if illum == 'gauss':
-        _illum = illumination_gauss(x, y, I_coeff=I_coeff)
+        _illum = illumination_gauss(x=x, y=y, I_coeff=I_coeff, pr=pr)
     if illum == 'pedestal':
-        _illum = illumination_pedestal(x, y, I_coeff=I_coeff)
-    if illum == 'nikolic':
-        _illum = illumination_nikolic(x, y, I_coeff=I_coeff)
+        _illum = illumination_pedestal(x=x, y=y, I_coeff=I_coeff, pr=pr)
 
     E = _blockage * _illum * np.exp(wavefront * 1j)
 
@@ -222,7 +184,8 @@ def phi(theta, rho, K_coeff):
     theta : ndarray
         Values for the angular component. theta = np.arctan(y / x).
     rho : ndarray
-        Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2).
+        Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2)
+        normalised.
     K_coeff : ndarray
         Constants organized by the ln list, which gives the possible values.
     n : int
@@ -286,7 +249,7 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope):
     return u_shift, v_shift, F_shift
 
 
-def sr_phase(params, notilt, telescope):
+def phase(params, notilt, telescope):
     # subreflector phase
     K_coeff = params[4:]
 
@@ -294,10 +257,9 @@ def sr_phase(params, notilt, telescope):
         K_coeff[1] = 0  # For value K(-1, 1) = 0
         K_coeff[2] = 0  # For value K(1, 1) = 0
 
-    # Selecting the radious from the telescope geometry
+    # Selecting the radius from the telescope geometry
     pr = telescope_geo(telescope)[1]
 
-    pr = 50
     x = np.linspace(-pr, pr, 1e3)
     y = np.linspace(-pr, pr, 1e3)
 
