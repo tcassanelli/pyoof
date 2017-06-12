@@ -3,8 +3,9 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
-from .math_functions import linear_equation, cart2pol
+from .math_functions import cart2pol
 from .zernike import U
+from .telgeometry import telescope_geo
 
 
 # All mathematical function have been adapted for the Effelsberg telescope
@@ -12,7 +13,7 @@ from .zernike import U
 
 __all__ = [
     'illumination_pedestal', 'illumination_gauss', 'illumination_nikolic',
-    'ant_blockage', 'delta', 'aperture'
+    'delta', 'aperture'
     ]
 
 
@@ -126,74 +127,6 @@ def illumination_nikolic(x, y, I_coeff):
     return illumination
 
 
-def ant_blockage(x, y):
-    """
-    Truncation in the aperture function, given by the hole generated for the
-    secondary reflector and the supporting structure.
-
-    Parameters
-    ----------
-    x : ndarray
-        Grid value for the x variable, same as the contour plot.
-    y : ndarray
-        Grid value for the x variable, same as the contour plot.
-
-    Returns
-    -------
-    block : ndarray
-    """
-
-    pr = 50  # Primary reflector radius
-    sr = 3.25  # secondary reflector radius
-    L = 20   # length support structure (from the edge of the sr)
-    a = 1  # half thickness support structure
-
-    block = np.zeros(x.shape)  # or y.shape same
-    block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
-    block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
-    block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
-
-    # testing new block
-    # make diagram in thesis for these distances
-    alpha = np.radians(10)  # angle of the triangle
-    csc2 = np.sin(alpha) ** (-2)
-
-    # base of the triangle
-    d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
-
-    # points for the triangle coordinates
-    A = sr + L
-    B = a
-    C = d / np.tan(alpha)
-    D = a + d
-
-    y1 = linear_equation((A, B), (C, D), x)
-    y2 = linear_equation((A, -B), (C, -D), x)
-    x3 = linear_equation((-A, B), (-C, D), y)
-    x4 = linear_equation((-A, -B), (-C, -D), y)
-    y5 = linear_equation((-A, -B), (-C, -D), x)
-    y6 = linear_equation((-A, B), (-C, D), x)
-    x7 = linear_equation((A, -B), (C, -D), y)
-    x8 = linear_equation((A, B), (C, D), y)
-
-    def circ(s):
-        return np.sqrt(np.abs(pr ** 2 - s ** 2))
-
-    block[(A < x) & (C > x) & (y1 > y) & (y2 < y)] = 0
-    block[(pr > x) & (C < x) & (circ(x) > y) & (-circ(x) < y)] = 0
-
-    block[(-A > y) & (-C < y) & (x4 < x) & (x3 > x)] = 0
-    block[(-pr < y) & (-C > y) & (circ(y) > x) & (-circ(y) < x)] = 0
-
-    block[(-A > x) & (-C < x) & (y5 < y) & (y6 > y)] = 0
-    block[(-pr < x) & (-C > x) & (circ(x) > y) & (-circ(x) < y)] = 0
-
-    block[(A < y) & (C > y) & (x7 < x) & (x8 > x)] = 0
-    block[(pr > y) & (C < y) & (circ(x) > y) & (-circ(x) < y)] = 0
-
-    return block
-
-
 def delta(x, y, d_z):
     """
     Delta or phase change due to defocus function. Given by geometry of
@@ -227,7 +160,7 @@ def delta(x, y, d_z):
     return delta
 
 
-def aperture(x, y, K_coeff, d_z, I_coeff, illum):
+def aperture(x, y, K_coeff, d_z, I_coeff, illum, telescope):
     """
     Aperture function. Multiplication between the antenna truncation, the
     illumination function and the aberration.
@@ -255,14 +188,15 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum):
 
     r, t = cart2pol(x, y)
 
-    pr = 50  # Primary reflector radius
+    blockage, pr = telescope_geo(telescope=telescope)
+    _blockage = blockage(x, y)
+    # pr = Primary reflector radius
 
     # It needs to be normalized to be orthogonal undet the Zernike polynomials
     r_norm = r / pr
 
     _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
     _delta = delta(x, y, d_z=d_z)
-    _shape = ant_blockage(x, y)
 
     # Wavefront aberration distribution (rad)
     wavefront = (_phi + _delta)
@@ -274,8 +208,7 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum):
     if illum == 'nikolic':
         _illum = illumination_nikolic(x, y, I_coeff=I_coeff)
 
-    E = _shape * _illum * np.exp(wavefront * 1j)
-    # Aperture: E(x / wavel, y / wavel)
+    E = _blockage * _illum * np.exp(wavefront * 1j)
 
     return E
 
@@ -317,7 +250,7 @@ def phi(theta, rho, K_coeff):
     return phi
 
 
-def angular_spectrum(K_coeff, I_coeff, d_z, illum):
+def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope):
 
     # Arrays to generate angular spectrum model
     box_size = 500
@@ -339,7 +272,8 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum):
         K_coeff=K_coeff,
         d_z=d_z,
         I_coeff=I_coeff,
-        illum=illum
+        illum=illum,
+        telescope=telescope
         )
 
     # FFT, normalisation not needed, comparing normalised beam
@@ -352,13 +286,16 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum):
     return u_shift, v_shift, F_shift
 
 
-def sr_phase(params, notilt):
+def sr_phase(params, notilt, telescope):
     # subreflector phase
     K_coeff = params[4:]
 
     if notilt:
         K_coeff[1] = 0  # For value K(-1, 1) = 0
         K_coeff[2] = 0  # For value K(1, 1) = 0
+
+    # Selecting the radious from the telescope geometry
+    pr = telescope_geo(telescope)[1]
 
     pr = 50
     x = np.linspace(-pr, pr, 1e3)
@@ -373,19 +310,3 @@ def sr_phase(params, notilt):
     phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
     return phase
-
-
-if __name__ == "__main__":
-
-    import matplotlib.pyplot as plt
-
-    # Testing the blockage
-    x = np.linspace(-60, 60, 1e3)
-    y = x
-    xg, yg = np.meshgrid(x, y)
-
-    blockage = ant_blockage(xg, yg)
-
-    plt.imshow(blockage, origin='lower')
-
-    plt.show()

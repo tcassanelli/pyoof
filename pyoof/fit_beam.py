@@ -8,17 +8,18 @@ from astropy.io import ascii
 from scipy import interpolate, optimize
 import os
 import time
-from .aperture import angular_spectrum, sr_phase
+from .aperture import angular_spectrum, phase
 from .math_functions import wavevector2degree, co_matrices
 from .plot_routines import plot_fit_path
-
 
 __all__ = [
     'residual_true', 'residual', 'params_complete', 'fit_beam',
     ]
 
 
-def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
+def residual_true(
+    params, beam_data, u_data, v_data, d_z, lam, illum, inter, telescope
+        ):
 
     I_coeff = params[:4]
     K_coeff = params[4:]
@@ -30,7 +31,8 @@ def residual_true(params, beam_data, u_data, v_data, d_z, lam, illum, inter):
             K_coeff=K_coeff,
             d_z=d_z[i],
             I_coeff=I_coeff,
-            illum=illum
+            illum=illum,
+            telescope=telescope
             )
 
         beam = np.abs(aspectrum) ** 2
@@ -107,7 +109,7 @@ def params_complete(params, idx, N_K_coeff):
 
 
 # Insert path for the fits file with pre-calibration
-def fit_beam(data, order, illum, fit_previous):
+def fit_beam(data, order, illum, telescope, fit_previous):
 
     start_time = time.time()
 
@@ -271,7 +273,7 @@ def fit_beam(data, order, illum, fit_previous):
     # Storing phase for subreflector analysis
     np.savetxt(
         fname=name_dir + '/phase_n' + str(n) + '.csv',
-        X=sr_phase(params=params_solution, notilt=True)
+        X=phase(params=params_solution, notilt=True, telescope=telescope)
         )
 
     np.savetxt(
@@ -292,6 +294,7 @@ def fit_beam(data, order, illum, fit_previous):
     plot_fit_path(
         pathoof=name_dir,
         order=n,
+        telescope=telescope,
         plim_rad=plim_rad,
         save=True,
         rad=False

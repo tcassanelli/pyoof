@@ -11,9 +11,8 @@ from .aperture import angular_spectrum, phi
 from .math_functions import wavevector2degree, cart2pol
 from .aux_functions import extract_data_effelsberg, str2LaTeX
 
-# Import plot style matplotlib, change to same directory in future
-plt.style.use('../../plot_gen_thesis/master_thesis_sty.mplstyle')
-
+# pyoof default plotting style
+plt.style.use('pyoof.mplstyle')
 
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance',
@@ -21,7 +20,7 @@ __all__ = [
     ]
 
 
-def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
+def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
 
     I_coeff = params[:4]
     K_coeff = params[4:]
@@ -42,7 +41,8 @@ def plot_beam(params, d_z_m, lam, illum, plim_rad, title, rad):
             K_coeff=K_coeff,
             d_z=_d_z,
             I_coeff=I_coeff,
-            illum=illum
+            illum=illum,
+            telescope=telescope
             )
 
         u.append(_u)
@@ -196,8 +196,6 @@ def plot_phase(params, d_z_m, title, notilt):
     extent = [x.min(), x.max(), y.min(), y.max()]
     _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
     _phi[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
-    # Not sure if to add the blockage
-    # * ant_blockage(x_grid, y_grid)
 
     fig, ax = plt.subplots()
 
@@ -261,7 +259,8 @@ def plot_variance(matrix, params_names, title, cbtitle, diag):
         vmin=_matrix.min(),
         cmap=plt.cm.Reds,
         interpolation='nearest',
-        origin='upper')
+        origin='upper'
+        )
 
     cb = fig.colorbar(im, ax=ax, shrink=shrink)
     cb.formatter.set_powerlimits((0, 0))
@@ -290,7 +289,6 @@ def plot_data_effelsberg(pathfits, save, rad):
     [name, _, _, d_z_m, _, pthto] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-
     fig_data = plot_data(
         u_data=u_data,
         v_data=v_data,
@@ -311,7 +309,7 @@ def plot_data_effelsberg(pathfits, save, rad):
     return fig_data
 
 
-def plot_fit_path(pathoof, order, plim_rad, save, rad):
+def plot_fit_path(pathoof, order, telescope, plim_rad, save, rad):
 
     n = order
     fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')
@@ -342,6 +340,7 @@ def plot_fit_path(pathoof, order, plim_rad, save, rad):
         d_z_m=d_z_m,
         lam=fitinfo['wavel'][0],
         illum=fitinfo['illum'][0],
+        telescope=telescope,
         plim_rad=plim_rad,
         rad=rad
         )
