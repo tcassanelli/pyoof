@@ -21,16 +21,17 @@ def telescope_geo(telescope):
         blockage = blockage_effelsberg
         pr = 50  # Primary reflector radius
 
-    if type(telescope) == tuple:
+    elif type(telescope) == tuple:
         (pr, sr) = telescope
         if pr <= sr:
-            print('Primary radius cannot be smaller than secondary raidus!')
+            print('Primary radius cannot be smaller than secondary raidus! \n')
         blockage = partial(blockage_manual, (pr, sr))
 
-    if (type(telescope) != tuple) and (telescope != 'effelsberg'):
+    else:
         print(
             'Select an existing telescope geometry: `effelsberg` or a primary',
-            'and secondary disc radius (pr, sr). The radii must be an integer'
+            'and secondary disc radius (pr, sr). The radii must be an integer',
+            '\n'
             )
         raise SystemExit
 
