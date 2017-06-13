@@ -4,9 +4,11 @@
 import os
 from scipy.constants import c as light_speed
 from astropy.io import fits
+import numpy as np
+from astropy.io import ascii
 
 __all__ = [
-    'extract_data_effelsberg', 'str2LaTeX',
+    'extract_data_effelsberg', 'str2LaTeX', 'store_csv', 'store_ascii'
     ]
 
 
@@ -74,3 +76,53 @@ def str2LaTeX(python_string):
     LaTeX_string = ''.join(string_list)
 
     return LaTeX_string
+
+
+def store_csv(name, n, name_dir, save_to_csv):
+
+    # It must be in this order
+    # save_to_csv = [
+    # beam_data, u_data, v_data, res_optim, jac_optim, grad_optim, phase,
+    # cov_ptrue, corr_ptrue
+    # ]
+
+    headers = [
+        'Normalised beam', 'u vector radians', 'v vector radians', 'Residual',
+        'Jacobian', 'Gradient', 'Phase primary reflector radians',
+        'Variance-Covariance matrix (first row fitted parameters idx)',
+        'Correlation matrix (first row fitted parameters idx)'
+        ]
+
+    fnames = [
+        '/beam_data.csv', '/u_data.csv', '/v_data.csv',
+        '/res_n' + str(n) + '.csv', '/jac_n' + str(n) + '.csv',
+        '/grad_n' + str(n) + '.csv', '/phase_n' + str(n) + '.csv',
+        '/cov_n' + str(n) + '.csv', '/corr_n' + str(n) + '.csv'
+        ]
+
+    for fname, header, file in zip(fnames, headers, save_to_csv):
+        np.savetxt(
+            fname=name_dir + fname,
+            X=file,
+            header=header + ' ' + name
+            )
+
+
+def store_ascii(name, n, name_dir, params_to_save, info_to_save):
+
+    ascii.write(
+        table=params_to_save,
+        output=name_dir + '/fitpar_n' + str(n) + '.dat',
+        names=['parname', 'parfit', 'parinit'],
+        comment='Fitted parameters ' + name
+        )
+
+    ascii.write(
+        table=info_to_save,
+        output=name_dir + '/fitinfo.dat',
+        names=[
+            'name', 'd_z-', 'd_z0', 'd_z+', 'wavel', 'freq', 'illum', 'meanel',
+            'fft_resolution'
+            ],
+        comment='Fit information ' + name
+        )
