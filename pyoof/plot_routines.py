@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
 from .aperture import angular_spectrum, phi
-from .math_functions import wavevector2degree, cart2pol
+from .math_functions import cart2pol, angle_selection
 from .aux_functions import extract_data_effelsberg, str2LaTeX
 from .telgeometry import telescope_geo
 
@@ -21,17 +21,15 @@ __all__ = [
     ]
 
 
-def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
+def plot_beam(
+    params, d_z_m, lam, illum, telescope, resolution, plim_rad, title, angle
+        ):
 
     I_coeff = params[:4]
     K_coeff = params[4:]
 
-    if rad:
-        angle_coeff = np.pi / 180
-        uv_title = 'radians'
-    else:
-        angle_coeff = 1
-        uv_title = 'degrees'
+    # Selection between radians or degrees plotting
+    wavevector_change, uv_title = angle_selection(angle)
 
     d_z = np.array(d_z_m) * 2 * np.pi / lam
 
@@ -43,7 +41,8 @@ def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
             d_z=_d_z,
             I_coeff=I_coeff,
             illum=illum,
-            telescope=telescope
+            telescope=telescope,
+            resolution=resolution
             )
 
         u.append(_u)
@@ -63,8 +62,11 @@ def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
         shrink = 0.88
 
     else:
-        plim_deg = plim_rad * 180 / np.pi
-        plim_u, plim_v = plim_deg[:2], plim_deg[2:]
+        if angle == 'degrees':
+            plim_angle = np.degrees(plim_rad)
+        else:
+            plim_angle = plim_rad
+        plim_u, plim_v = plim_angle[:2], plim_angle[2:]
         figsize = (14, 3.3)
         shrink = 0.77
 
@@ -79,21 +81,21 @@ def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
         ]
 
     for i in range(3):
-        u_deg = wavevector2degree(u[i], lam) * angle_coeff
-        v_deg = wavevector2degree(v[i], lam) * angle_coeff
+        u_angle = wavevector_change(u[i], lam)
+        v_angle = wavevector_change(v[i], lam)
 
-        extent = [u_deg.min(), u_deg.max(), v_deg.min(), v_deg.max()]
+        extent = [u_angle.min(), u_angle.max(), v_angle.min(), v_angle.max()]
 
         # make sure it is set to origin='lower', see plot style
         im = ax[i].imshow(beam_norm[i], extent=extent, vmin=0, vmax=1)
-        ax[i].contour(u_deg, v_deg, beam_norm[i], levels)
+        ax[i].contour(u_angle, v_angle, beam_norm[i], levels)
         cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
 
         ax[i].set_title(subtitle[i])
         ax[i].set_ylabel('$v$ ' + uv_title)
         ax[i].set_xlabel('$u$ ' + uv_title)
-        ax[i].set_ylim(plim_v[0] * angle_coeff, plim_v[1] * angle_coeff)
-        ax[i].set_xlim(plim_u[0] * angle_coeff, plim_u[1] * angle_coeff)
+        ax[i].set_ylim(plim_v[0], plim_v[1])
+        ax[i].set_xlim(plim_u[0], plim_u[1])
         ax[i].grid('off')
 
         cb.formatter.set_powerlimits((0, 0))
@@ -110,17 +112,16 @@ def plot_beam(params, d_z_m, lam, illum, telescope, plim_rad, title, rad):
     return fig
 
 
-def plot_data(u_data, v_data, beam_data, d_z_m, title, rad):
+def plot_data(u_data, v_data, beam_data, d_z_m, title, angle):
 
     # Power pattern normalisation
     beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
+    # input u and v are in radians
 
-    if rad:
-        angle_coeff = 1
-        uv_title = 'radians'
-    else:
-        angle_coeff = 180 / np.pi
-        uv_title = 'degrees'
+    uv_title = angle
+
+    if angle == 'degrees':
+        u_data, v_data = np.degrees(u_data), np.degrees(v_data)
 
     fig, ax = plt.subplots(ncols=3, figsize=(14, 3.3))
 
@@ -137,12 +138,18 @@ def plot_data(u_data, v_data, beam_data, d_z_m, title, rad):
 
     for i in range(3):
         # new grid for beam_data
-        u_ng = np.linspace(u_data[i].min(), u_data[i].max(), 300) * angle_coeff
-        v_ng = np.linspace(v_data[i].min(), v_data[i].max(), 300) * angle_coeff
+        u_ng = np.linspace(u_data[i].min(), u_data[i].max(), 300)
+        v_ng = np.linspace(v_data[i].min(), v_data[i].max(), 300)
 
         beam_ng = griddata(
-            u_data[i] * angle_coeff, v_data[i] * angle_coeff,
-            beam_data[i], u_ng, v_ng, interp='linear'
+            # coordinates of grid points to interpolate from.
+            x=u_data[i],
+            y=v_data[i],
+            z=beam_data[i],
+            # coordinates of grid points to interpolate to.
+            xi=u_ng,
+            yi=v_ng,
+            interp='linear'
             )
 
         extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
@@ -280,7 +287,7 @@ def plot_variance(matrix, params_names, title, cbtitle, diag):
 
 
 # not sure to keep this function
-def plot_data_effelsberg(pathfits, save, rad):
+def plot_data_effelsberg(pathfits, save, angle):
     """
     Plot all data from an OOF Effelsberg observation given the path.
     """
@@ -295,7 +302,7 @@ def plot_data_effelsberg(pathfits, save, rad):
         beam_data=beam_data,
         title=name + ' observed beam',
         d_z_m=d_z_m,
-        rad=rad
+        angle=angle
         )
 
     if not os.path.exists(pthto + '/OOF_out'):
@@ -309,7 +316,9 @@ def plot_data_effelsberg(pathfits, save, rad):
     return fig_data
 
 
-def plot_fit_path(pathoof, order, telescope, plim_rad, save, rad):
+def plot_fit_path(
+    pathoof, order, telescope, plim_rad, save, angle, resolution
+        ):
 
     n = order
     fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')
@@ -342,7 +351,8 @@ def plot_fit_path(pathoof, order, telescope, plim_rad, save, rad):
         illum=fitinfo['illum'][0],
         telescope=telescope,
         plim_rad=plim_rad,
-        rad=rad
+        angle=angle,
+        resolution=resolution
         )
 
     fig_phase = plot_phase(
@@ -359,7 +369,7 @@ def plot_fit_path(pathoof, order, telescope, plim_rad, save, rad):
         beam_data=res,
         d_z_m=d_z_m,
         title=name + ' residual  $n=' + str(n) + '$',
-        rad=rad,
+        angle=angle,
         )
 
     fig_data = plot_data(
@@ -368,7 +378,7 @@ def plot_fit_path(pathoof, order, telescope, plim_rad, save, rad):
         beam_data=beam_data,
         d_z_m=d_z_m,
         title=name + ' observed power pattern',
-        rad=rad
+        angle=angle
         )
 
     fig_cov = plot_variance(
@@ -401,7 +411,7 @@ def plot_fit_path(pathoof, order, telescope, plim_rad, save, rad):
     return fig_beam, fig_phase, fig_res, fig_data, fig_cov, fig_corr
 
 
-def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, rad):
+def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, angle):
     """
     Designed to plot Bojan Nikolic solutions given a path to its oof output.
     """
@@ -420,7 +430,7 @@ def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, rad):
         lam=wavelength,
         illum='nikolic',
         plim_rad=plim_rad,
-        rad=rad
+        angle=angle
         )
 
     fig_phase = plot_phase(
