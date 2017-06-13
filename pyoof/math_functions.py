@@ -5,8 +5,24 @@
 import numpy as np
 
 __all__ = [
-    'cart2pol', 'wavevector2degree', 'co_matrices', 'linear_equation'
+    'cart2pol', 'wavevector2degrees', 'wavevector2radians', 'co_matrices',
+    'linear_equation', 'angle_selection'
     ]
+
+
+def angle_selection(angle):
+
+    if angle == 'degrees':
+        wavevector_change = wavevector2degrees
+
+    elif angle == 'radians':
+        wavevector_change = wavevector2radians
+
+    else:
+        print('Select `radians` or `degrees` \n')
+        raise SystemExit
+
+    return wavevector_change, angle
 
 
 def cart2pol(x, y):
@@ -35,7 +51,7 @@ def cart2pol(x, y):
     return rho, theta
 
 
-def wavevector2degree(x, wavel):
+def wavevector2degrees(x, wavel):
     """
     Converst wave-vector 1/m to degrees.
 
@@ -55,6 +71,13 @@ def wavevector2degree(x, wavel):
     wave_vector_degrees = np.degrees(x * wavel)
 
     return wave_vector_degrees
+
+
+def wavevector2radians(x, wavel):
+
+    wave_vector_radians = wavevector2degrees(x, wavel) * np.pi / 180
+
+    return wave_vector_radians
 
 
 def co_matrices(res, jac, n_pars):
