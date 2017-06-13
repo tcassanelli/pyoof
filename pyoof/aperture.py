@@ -13,7 +13,7 @@ from .telgeometry import telescope_geo
 
 __all__ = [
     'illumination_pedestal', 'illumination_gauss', 'delta', 'aperture',
-    'phase', 'phi'
+    'phase', 'phi', 'illum_choice'
     ]
 
 
@@ -77,7 +77,8 @@ def illumination_gauss(x, y, I_coeff, pr):
     """
 
     amp = I_coeff[0]
-    sigma_r = I_coeff[1]  # illumination taper
+    sigma_dB = I_coeff[1]  # illumination taper
+    sigma = 10 ** (sigma_dB / 20)  # -15 to -20 dB
 
     # Centre illuminationprimary reflector
     x0 = I_coeff[2]
@@ -85,10 +86,27 @@ def illumination_gauss(x, y, I_coeff, pr):
 
     illumination = (
         amp *
-        np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma_r * pr) ** 2))
+        np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma * pr) ** 2))
         )
 
     return illumination
+
+
+def illum_choice(illum):
+
+    if illum == 'gauss':
+        _illumination = illumination_gauss
+        illum_taper = 'sigma_dB'
+
+    elif illum == 'pedestal':
+        _illumination = illumination_pedestal
+        illum_taper = 'c_dB'
+
+    else:
+        print('Select a valid illumination function: `gauss` or `pedestal`')
+        raise SystemExit
+
+    return _illumination, illum_taper
 
 
 def delta(x, y, d_z):
@@ -165,12 +183,10 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum, telescope):
     # Wavefront aberration distribution (rad)
     wavefront = (_phi + _delta)
 
-    if illum == 'gauss':
-        _illum = illumination_gauss(x=x, y=y, I_coeff=I_coeff, pr=pr)
-    if illum == 'pedestal':
-        _illum = illumination_pedestal(x=x, y=y, I_coeff=I_coeff, pr=pr)
+    # Selection of the illumination function
+    illumination = illum_choice(illum)[0](x=x, y=y, I_coeff=I_coeff, pr=pr)
 
-    E = _blockage * _illum * np.exp(wavefront * 1j)
+    E = _blockage * illumination * np.exp(wavefront * 1j)
 
     return E
 
@@ -213,12 +229,14 @@ def phi(theta, rho, K_coeff):
     return phi
 
 
-def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope):
+def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope, resolution):
 
     # Arrays to generate angular spectrum model
-    box_size = 500
-    x = np.linspace(-box_size, box_size, 2 ** 10)
-    y = np.linspace(-box_size, box_size, 2 ** 10)
+    box_size = 500  # Effelsberg pr=50, 1/5 of the length
+
+    # default resolution 2 ** 10
+    x = np.linspace(-box_size, box_size, resolution)
+    y = x
 
     dx = x[1] - x[0]
     dy = y[1] - y[0]
@@ -249,9 +267,7 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope):
     return u_shift, v_shift, F_shift
 
 
-def phase(params, notilt, telescope):
-    # subreflector phase
-    K_coeff = params[4:]
+def phase(K_coeff, notilt, telescope):
 
     if notilt:
         K_coeff[1] = 0  # For value K(-1, 1) = 0
@@ -268,7 +284,7 @@ def phase(params, notilt, telescope):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    phase = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
-    phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
+    _phase = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    _phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
-    return phase
+    return _phase

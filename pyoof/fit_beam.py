@@ -8,9 +8,10 @@ from astropy.io import ascii
 from scipy import interpolate, optimize
 import os
 import time
-from .aperture import angular_spectrum, phase
-from .math_functions import wavevector2degree, co_matrices
+from .aperture import angular_spectrum, phase, illum_choice
+from .math_functions import wavevector2radians, co_matrices
 from .plot_routines import plot_fit_path
+from .aux_functions import store_csv, store_ascii
 
 __all__ = [
     'residual_true', 'residual', 'params_complete', 'fit_beam',
@@ -18,7 +19,8 @@ __all__ = [
 
 
 def residual_true(
-    params, beam_data, u_data, v_data, d_z, lam, illum, telescope, inter
+    params, beam_data, u_data, v_data, d_z, lam, illum, telescope, inter,
+    resolution
         ):
 
     I_coeff = params[:4]
@@ -32,7 +34,8 @@ def residual_true(
             d_z=d_z[i],
             I_coeff=I_coeff,
             illum=illum,
-            telescope=telescope
+            telescope=telescope,
+            resolution=resolution
             )
 
         beam = np.abs(aspectrum) ** 2
@@ -41,8 +44,8 @@ def residual_true(
         if inter:
 
             # Generated beam u and v: wavevectors -> degrees -> radians
-            u_rad = wavevector2degree(u, lam) * np.pi / 180
-            v_rad = wavevector2degree(v, lam) * np.pi / 180
+            u_rad = wavevector2radians(u, lam)
+            v_rad = wavevector2radians(v, lam)
 
             # The calculated beam needs to be transformed!
             # RegularGridInterpolator
@@ -68,8 +71,8 @@ def residual_true(
 
 
 def residual(
-    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, illum,
-    telescope, inter
+    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, resolution,
+    illum, telescope, inter
         ):
 
     # params for the true fit
@@ -82,9 +85,10 @@ def residual(
         v_data=v_data,
         d_z=d_z,
         lam=lam,
+        resolution=resolution,
         illum=illum,
         telescope=telescope,
-        inter=inter
+        inter=inter,
         )
 
     return res_true
@@ -98,10 +102,10 @@ def params_complete(params, idx, N_K_coeff):
             if i == 0:
                 _params = np.insert(_params, i, 1.0)
                 # assigned default value for amp
-            if i == 1:
+            elif i == 1:
                 _params = np.insert(_params, i, -8.0)
                 # assigned default value for c_dB
-            if i >= 2:
+            elif i >= 2:
                 _params = np.insert(_params, i, 0.0)
                 # for x0, y0 and K(l, n) coefficients
     else:
@@ -111,7 +115,7 @@ def params_complete(params, idx, N_K_coeff):
 
 
 # Insert path for the fits file with pre-calibration
-def fit_beam(data, order, illum, telescope, fit_previous):
+def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
 
     start_time = time.time()
 
@@ -131,7 +135,7 @@ def fit_beam(data, order, illum, telescope, fit_previous):
     print('Illumination to be fitted: ', illum)
 
     # Setting limits for plotting fitted beam
-    plim_u = [np.min(u_data[0]), np.max(u_data[0])]
+    plim_u = [np.min(u_data[0]), np.max(u_data[0])]  # input data in radians
     plim_v = [np.min(v_data[0]), np.max(v_data[0])]
     plim_rad = np.array(plim_u + plim_v)
 
@@ -153,7 +157,7 @@ def fit_beam(data, order, illum, telescope, fit_previous):
     if not os.path.exists(name_dir):
         os.makedirs(name_dir)
 
-    # Looking for result parameters from lower order to use them
+    # Looking for result parameters lower order
     if fit_previous and n != 1:
         N_K_coeff_previous = n * (n + 1) // 2
         path_params_previous = name_dir + '/fitpar_n' + str(n - 1) + '.dat'
@@ -204,6 +208,7 @@ def fit_beam(data, order, illum, telescope, fit_previous):
             v_data,
             d_z,
             wavel,
+            resolution,
             illum,
             telescope,
             True  # Grid interpolation
@@ -231,66 +236,48 @@ def fit_beam(data, order, illum, telescope, fit_previous):
     cov_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), cov))
     corr_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), corr))
 
+    # Final phase from fit in the telescope's primary reflector
+    K_coeff_solution = params_complete(res_lsq.x, idx, N_K_coeff)[4:]
+    _phase = phase(
+        K_coeff=K_coeff_solution,
+        notilt=True,
+        telescope=telescope
+        )
+
     # Making nice table :)
     ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
-    params_names = ['illum_amp', 'c_dB', 'x_0', 'y_0']
+    # string with the illumination taper name
+    illum_taper = illum_choice(illum)[1]
+
+    params_names = ['illum_amp', illum_taper, 'x_0', 'y_0']
     for i in range(N_K_coeff):
         params_names.append('K(' + str(L[i]) + ',' + str(N[i]) + ')')
 
     params_to_save = [params_names, params_solution, params_init]
     info_to_save = [
         [name], [d_z_m[0]], [d_z_m[1]], [d_z_m[2]], [wavel],
-        [freq], [illum], [meanel]
+        [freq], [illum], [meanel], [resolution]
         ]
 
     # Storing files in directory
-    path_params = name_dir + '/fitpar_n' + str(n) + '.dat'
-    ascii.write(
-        table=params_to_save,
-        output=path_params,
-        names=['parname', 'parfit', 'parinit']
-        )
+    print('... Saving data ... \n')
 
-    ascii.write(
-        table=info_to_save,
-        output=name_dir + '/fitinfo.dat',
-        names=[
-            'name', 'd_z-', 'd_z0', 'd_z+', 'wavel', 'freq', 'illum', 'meanel'
-            ],
-        fast_writer=False
-        )
+    # To store fit information and found parameters in ascii file
+    store_ascii(name, n, name_dir, params_to_save, info_to_save)
+
+    # To store large files in csv format
+    save_to_csv = [
+        beam_data, u_data, v_data, res_optim, jac_optim, grad_optim, _phase,
+        cov_ptrue, corr_ptrue
+        ]
+    store_csv(name, n, name_dir, save_to_csv)
 
     # Printing the results from saved ascii file
-    print(ascii.read(path_params))
+    print(ascii.read(name_dir + '/fitpar_n' + str(n) + '.dat'))
     print('\n')
-
-    np.savetxt(name_dir + '/beam_data.csv', beam_data)
-    np.savetxt(name_dir + '/u_data.csv', u_data)
-    np.savetxt(name_dir + '/v_data.csv', v_data)
-    np.savetxt(name_dir + '/res_n' + str(n) + '.csv', res_optim)
-    np.savetxt(name_dir + '/jac_n' + str(n) + '.csv', jac_optim)
-    np.savetxt(name_dir + '/grad_n' + str(n) + '.csv', grad_optim)
-
-    # Storing phase for subreflector analysis
-    np.savetxt(
-        fname=name_dir + '/phase_n' + str(n) + '.csv',
-        X=phase(params=params_solution, notilt=True, telescope=telescope)
-        )
-
-    np.savetxt(
-        fname=name_dir + '/cov_n' + str(n) + '.csv',
-        X=cov_ptrue,
-        header='Cov matrix (first row included elements)',
-        )
-
-    np.savetxt(
-        fname=name_dir + '/corr_n' + str(n) + '.csv',
-        X=corr_ptrue,
-        header='Corr matrix (first row included elements)',
-        )
 
     # Making all relevant plots
     print('... Making plots ... \n')
@@ -301,10 +288,11 @@ def fit_beam(data, order, illum, telescope, fit_previous):
         telescope=telescope,
         plim_rad=plim_rad,
         save=True,
-        rad=False
+        angle=angle,
+        resolution=resolution
         )
+
+    plt.close('all')
 
     print(' ###### %s mins ######' % str((time.time() - start_time) / 60))
     print('\n')
-
-    plt.close('all')
