@@ -22,6 +22,7 @@ setup(
         'pyoof': 'pyoof',
         'pyoof.zernike': 'pyoof/zernike',
         },
+    package_data={'': ['pyoof.mplstyle']},
     long_description='''
     pyoof ... out-of-focus holography package
     '''

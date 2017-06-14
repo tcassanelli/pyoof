@@ -105,7 +105,7 @@ def params_complete(params, idx, N_K_coeff):
             elif i == 1:
                 _params = np.insert(_params, i, -8.0)
                 # assigned default value for c_dB
-            elif i >= 2:
+            else:
                 _params = np.insert(_params, i, 0.0)
                 # for x0, y0 and K(l, n) coefficients
     else:
@@ -175,7 +175,7 @@ def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
                 str(n - 1) + '.dat in directory \n'
                 )
     else:
-        params_init = np.array([0.1, -8, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
+        params_init = np.array([0.1, -15, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
         print('Using standard initial params')
         # amp, sigma_r, x0, y0, K(l,m)
         # Giving an initial value of 0.1 for each coeff
@@ -237,9 +237,8 @@ def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
     corr_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), corr))
 
     # Final phase from fit in the telescope's primary reflector
-    K_coeff_solution = params_complete(res_lsq.x, idx, N_K_coeff)[4:]
     _phase = phase(
-        K_coeff=K_coeff_solution,
+        K_coeff=params_solution[4:],
         notilt=True,
         telescope=telescope
         )

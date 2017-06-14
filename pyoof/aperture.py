@@ -17,7 +17,7 @@ __all__ = [
     ]
 
 
-def illumination_pedestal(x, y, I_coeff, pr):
+def illumination_pedestal(x, y, I_coeff, pr, order=2):
     """
     Illumination function parabolic taper on a pedestal, sometimes called
     amplitude. Represents the distribution of light in the primary reflector.
@@ -46,7 +46,7 @@ def illumination_pedestal(x, y, I_coeff, pr):
     y0 = I_coeff[3]
 
     # Parabolic taper on a pedestal
-    n = 2  # Order quadratic model illumination (Parabolic squared)
+    n = order  # Order quadratic model illumination (Parabolic squared)
 
     c = 10 ** (c_dB / 20.)
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
@@ -269,9 +269,11 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope, resolution):
 
 def phase(K_coeff, notilt, telescope):
 
+    _K_coeff = K_coeff.copy()
+
     if notilt:
-        K_coeff[1] = 0  # For value K(-1, 1) = 0
-        K_coeff[2] = 0  # For value K(1, 1) = 0
+        _K_coeff[1] = 0  # For value K(-1, 1) = 0
+        _K_coeff[2] = 0  # For value K(1, 1) = 0
 
     # Selecting the radius from the telescope geometry
     pr = telescope_geo(telescope)[1]
@@ -284,7 +286,7 @@ def phase(K_coeff, notilt, telescope):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    _phase = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    _phase = phi(theta=t, rho=r_norm, K_coeff=_K_coeff)
     _phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
     return _phase

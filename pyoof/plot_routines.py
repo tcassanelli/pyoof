@@ -12,13 +12,14 @@ from .math_functions import cart2pol, angle_selection
 from .aux_functions import extract_data_effelsberg, str2LaTeX
 from .telgeometry import telescope_geo
 
-# pyoof default plotting style
-# plt.style.use('pyoof.mplstyle')
-
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance',
     'plot_data_effelsberg', 'plot_fit_path', 'plot_fit_nikolic',
     ]
+
+# Plot style added from relative path
+plotstyle_dir = os.path.dirname(__file__)
+plt.style.use(os.path.join(plotstyle_dir, 'pyoof.mplstyle'))
 
 
 def plot_beam(
@@ -175,13 +176,13 @@ def plot_data(u_data, v_data, beam_data, d_z_m, title, angle):
     return fig
 
 
-def plot_phase(params, d_z_m, title, notilt, telescope):
+def plot_phase(K_coeff, d_z_m, title, notilt, telescope):
 
-    K_coeff = params[4:]
+    _K_coeff = K_coeff.copy()
 
     if notilt:
-        K_coeff[1] = 0  # For value K(-1, 1) = 0
-        K_coeff[2] = 0  # For value K(1, 1) = 0
+        _K_coeff[1] = 0  # For value K(-1, 1) = 0
+        _K_coeff[2] = 0  # For value K(1, 1) = 0
         subtitle = (
             '$\phi_\mathrm{no\,tilt}(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) +
             '$ m'
@@ -201,7 +202,7 @@ def plot_phase(params, d_z_m, title, notilt, telescope):
     r_norm = r / pr
 
     extent = [x.min(), x.max(), y.min(), y.max()]
-    phase = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    phase = phi(theta=t, rho=r_norm, K_coeff=_K_coeff)
     phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
     fig, ax = plt.subplots()
@@ -309,7 +310,6 @@ def plot_data_effelsberg(pathfits, save, angle):
         os.makedirs(pthto + '/OOF_out')
     if not os.path.exists(pthto + '/OOF_out/' + name):
         os.makedirs(pthto + '/OOF_out/' + name)
-
     if save:
         fig_data.savefig(pthto + '/OOF_out/' + name + '/obsbeam.pdf')
 
@@ -356,7 +356,7 @@ def plot_fit_path(
         )
 
     fig_phase = plot_phase(
-        params=np.array(fitpar['parfit']),
+        K_coeff=np.array(fitpar['parfit'])[4:],
         d_z_m=d_z_m[2],  # only one function for the three beam maps
         title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
         notilt=True,
