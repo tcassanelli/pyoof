@@ -9,6 +9,7 @@ __all__ = [
     'linear_equation'
     ]
 
+
 def cart2pol(x, y):
     """
     Transformation for the cartesian coord. to polars. It is needed for the

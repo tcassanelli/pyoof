@@ -35,7 +35,7 @@ def illumination_pedestal(x, y, I_coeff, pr, order=2):
     illumination : ndarray
     """
 
-    amp = I_coeff[0]
+    i_amp = I_coeff[0]
     c_dB = I_coeff[1]  # [dB] Illumination taper it is defined by the feedhorn
     # Number has to be negative, bounds given [-8, -25], see fit
     x0 = I_coeff[2]  # Centre illumination primary reflector
@@ -46,7 +46,7 @@ def illumination_pedestal(x, y, I_coeff, pr, order=2):
 
     c = 10 ** (c_dB / 20.)
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
-    illumination = amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** n)
+    illumination = i_amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** n)
 
     return illumination
 
@@ -72,7 +72,7 @@ def illumination_gauss(x, y, I_coeff, pr):
     illumination : ndarray
     """
 
-    amp = I_coeff[0]
+    i_amp = I_coeff[0]
     sigma_dB = I_coeff[1]  # illumination taper
     sigma = 10 ** (sigma_dB / 20)  # -15 to -20 dB
 
@@ -81,7 +81,7 @@ def illumination_gauss(x, y, I_coeff, pr):
     y0 = I_coeff[3]
 
     illumination = (
-        amp *
+        i_amp *
         np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma * pr) ** 2))
         )
 

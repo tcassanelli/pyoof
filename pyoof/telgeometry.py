@@ -12,12 +12,12 @@ __all__ = [
 
 def blockage_manual(pr, sr):
 
-    def blockage(x, y):
-        block = np.zeros(x.shape)  # or y.shape same
-        block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
-        return block
+    def block(x, y):
+        _block = np.zeros(x.shape)  # or y.shape same
+        _block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+        return _block
 
-    return blockage
+    return block
 
 
 def blockage_effelsberg(x, y):

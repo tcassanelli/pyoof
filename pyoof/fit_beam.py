@@ -8,6 +8,7 @@ from astropy.io import ascii
 from scipy import interpolate, optimize
 import os
 import time
+import yaml
 from .aperture import angular_spectrum, phase
 from .math_functions import wavevector2radians, co_matrices
 from .plot_routines import plot_fit_path
@@ -16,6 +17,13 @@ from .aux_functions import store_csv, store_ascii
 __all__ = [
     'residual_true', 'residual', 'params_complete', 'fit_beam',
     ]
+
+# Calling configuration file
+config_params_dir = os.path.dirname(__file__)
+config_params_pth = os.path.join(config_params_dir, 'config_params.yaml')
+
+with open(config_params_pth, 'r') as stream:
+    config_params = yaml.load(stream)
 
 
 def residual_true(
@@ -95,19 +103,28 @@ def residual(
 
 
 def params_complete(params, idx, N_K_coeff):
+
+    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_params['params_fixed']
+
     # N_K_coeff number of Zernike coeff
     if params.size != (4 + N_K_coeff):
         _params = params
         for i in idx:
             if i == 0:
-                _params = np.insert(_params, i, 1.0)
-                # assigned default value for amp
+                _params = np.insert(_params, i, i_amp_f)
+                # assigned value for i_amp
             elif i == 1:
-                _params = np.insert(_params, i, -8.0)
-                # assigned default value for c_dB
+                _params = np.insert(_params, i, taper_dB_f)
+                # assigned value for c_dB
+            elif i == 2:
+                _params = np.insert(_params, i, x0_f)
+                # assigned value for x0
+            elif i == 3:
+                _params = np.insert(_params, i, y0_f)
+                # assigned value for y0
             else:
-                _params = np.insert(_params, i, 0.0)
-                # for x0, y0 and K(l, n) coefficients
+                _params = np.insert(_params, i, K_f)
+                # assigned value for any other
     else:
         _params = params
 
@@ -182,16 +199,22 @@ def fit_beam(
                 str(n - 1) + '.dat in directory \n'
                 )
     else:
-        params_init = np.array([0.1, -15, 0, 0, 0] + [0.1] * (N_K_coeff - 1))
+        params_init = np.array(
+            config_params['params_init'] + [0.1] * (N_K_coeff - 1)
+            )
         print('Using standard initial params')
-        # amp, sigma_r, x0, y0, K(l,m)
+        # i_amp, sigma_r, x0, y0, K(l,m)
         # Giving an initial value of 0.1 for each coeff
 
-    bounds_min = np.array([0, -25, -1e-2, -1e-2] + [-5] * N_K_coeff)
-    bounds_max = np.array([np.inf, -8, 1e-2, 1e-2] + [5] * N_K_coeff)
+    bounds_min = np.array(
+        config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
+        )
+    bounds_max = np.array(
+        config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
+        )
 
-    idx = [0, 1, 2, 3, 4]  # exclude params from fit
-    # [0, 1, 2, 3, 4] = [amp, c_dB, x0, y0, K(0, 0)] or 'None' to include all
+    idx = config_params['params_excluded']  # exclude params from fit
+    # [0, 1, 2, 3, 4] = [i_amp, c_dB, x0, y0, K(0, 0)] or 'None' to include all
 
     params_init_true = np.delete(params_init, idx)
     bounds_min_true = np.delete(bounds_min, idx)
@@ -223,7 +246,7 @@ def fit_beam(
         bounds=tuple([bounds_min_true, bounds_max_true]),
         method='trf',
         verbose=2,
-        # max_nfev=100
+        max_nfev=None
         )
 
     print('\n')
@@ -255,7 +278,7 @@ def fit_beam(
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
-    params_names = ['illum_amp', taper_name, 'x_0', 'y_0']
+    params_names = ['i_amp', taper_name, 'x_0', 'y_0']
     for i in range(N_K_coeff):
         params_names.append('K(' + str(L[i]) + ',' + str(N[i]) + ')')
 
