@@ -5,15 +5,11 @@
 import numpy as np
 from .math_functions import cart2pol
 from .zernike import U
-from .telgeometry import telescope_geo
-
 
 # All mathematical function have been adapted for the Effelsberg telescope
-
-
 __all__ = [
     'illumination_pedestal', 'illumination_gauss', 'delta', 'aperture',
-    'phase', 'phi', 'illum_choice'
+    'phase', 'phi'
     ]
 
 
@@ -92,23 +88,6 @@ def illumination_gauss(x, y, I_coeff, pr):
     return illumination
 
 
-def illum_choice(illum):
-
-    if illum == 'gauss':
-        _illumination = illumination_gauss
-        illum_taper = 'sigma_dB'
-
-    elif illum == 'pedestal':
-        _illumination = illumination_pedestal
-        illum_taper = 'c_dB'
-
-    else:
-        print('Select a valid illumination function: `gauss` or `pedestal`')
-        raise SystemExit
-
-    return _illumination, illum_taper
-
-
 def delta(x, y, d_z):
     """
     Delta or phase change due to defocus function. Given by geometry of
@@ -142,7 +121,7 @@ def delta(x, y, d_z):
     return delta
 
 
-def aperture(x, y, K_coeff, d_z, I_coeff, illum, telescope):
+def aperture(x, y, K_coeff, d_z, I_coeff, illum_func, telgeo):
     """
     Aperture function. Multiplication between the antenna truncation, the
     illumination function and the aberration.
@@ -170,7 +149,7 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum, telescope):
 
     r, t = cart2pol(x, y)
 
-    blockage, pr = telescope_geo(telescope=telescope)
+    [blockage, pr] = telgeo
     _blockage = blockage(x=x, y=y)
     # pr = Primary reflector radius
 
@@ -184,9 +163,9 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum, telescope):
     wavefront = (_phi + _delta)
 
     # Selection of the illumination function
-    illumination = illum_choice(illum)[0](x=x, y=y, I_coeff=I_coeff, pr=pr)
+    _illumination = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)
 
-    E = _blockage * illumination * np.exp(wavefront * 1j)
+    E = _blockage * _illumination * np.exp(wavefront * 1j)
 
     return E
 
@@ -229,7 +208,7 @@ def phi(theta, rho, K_coeff):
     return phi
 
 
-def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope, resolution):
+def angular_spectrum(K_coeff, I_coeff, d_z, illum_func, telgeo, resolution):
 
     # Arrays to generate angular spectrum model
     box_size = 500  # Effelsberg pr=50, 1/5 of the length
@@ -253,8 +232,8 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope, resolution):
         K_coeff=K_coeff,
         d_z=d_z,
         I_coeff=I_coeff,
-        illum=illum,
-        telescope=telescope
+        illum_func=illum_func,
+        telgeo=telgeo
         )
 
     # FFT, normalisation not needed, comparing normalised beam
@@ -267,16 +246,13 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum, telescope, resolution):
     return u_shift, v_shift, F_shift
 
 
-def phase(K_coeff, notilt, telescope):
+def phase(K_coeff, notilt, pr):
 
     _K_coeff = K_coeff.copy()
 
     if notilt:
         _K_coeff[1] = 0  # For value K(-1, 1) = 0
         _K_coeff[2] = 0  # For value K(1, 1) = 0
-
-    # Selecting the radius from the telescope geometry
-    pr = telescope_geo(telescope)[1]
 
     x = np.linspace(-pr, pr, 1e3)
     y = np.linspace(-pr, pr, 1e3)

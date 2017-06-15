@@ -6,24 +6,8 @@ import numpy as np
 
 __all__ = [
     'cart2pol', 'wavevector2degrees', 'wavevector2radians', 'co_matrices',
-    'linear_equation', 'angle_selection'
+    'linear_equation'
     ]
-
-
-def angle_selection(angle):
-
-    if angle == 'degrees':
-        wavevector_change = wavevector2degrees
-
-    elif angle == 'radians':
-        wavevector_change = wavevector2radians
-
-    else:
-        print('Select `radians` or `degrees` \n')
-        raise SystemExit
-
-    return wavevector_change, angle
-
 
 def cart2pol(x, y):
     """

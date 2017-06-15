@@ -8,9 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
 from .aperture import angular_spectrum, phi
-from .math_functions import cart2pol, angle_selection
+from .math_functions import cart2pol, wavevector2degrees, wavevector2radians
 from .aux_functions import extract_data_effelsberg, str2LaTeX
-from .telgeometry import telescope_geo
 
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance',
@@ -23,14 +22,19 @@ plt.style.use(os.path.join(plotstyle_dir, 'pyoof.mplstyle'))
 
 
 def plot_beam(
-    params, d_z_m, lam, illum, telescope, resolution, plim_rad, title, angle
+    params, d_z_m, lam, illum_func, telgeo, resolution, plim_rad, title,
+    angle
         ):
 
     I_coeff = params[:4]
     K_coeff = params[4:]
 
     # Selection between radians or degrees plotting
-    wavevector_change, uv_title = angle_selection(angle)
+    uv_title = angle
+    if angle == 'degrees':
+        wavevector_change = wavevector2degrees
+    else:
+        wavevector_change = wavevector2radians
 
     d_z = np.array(d_z_m) * 2 * np.pi / lam
 
@@ -41,8 +45,8 @@ def plot_beam(
             K_coeff=K_coeff,
             d_z=_d_z,
             I_coeff=I_coeff,
-            illum=illum,
-            telescope=telescope,
+            illum_func=illum_func,
+            telgeo=telgeo,
             resolution=resolution
             )
 
@@ -55,7 +59,7 @@ def plot_beam(
 
     # Limits, they need to be transformed to degrees
     if plim_rad is None:
-        pr = telescope_geo(telescope)[1]  # primary reflector radius
+        pr = telgeo[1]  # primary reflector radius
         b_factor = 2 * pr / lam  # D / lambda
         plim_u = [-700 / b_factor, 700 / b_factor]
         plim_v = [-700 / b_factor, 700 / b_factor]
@@ -176,7 +180,7 @@ def plot_data(u_data, v_data, beam_data, d_z_m, title, angle):
     return fig
 
 
-def plot_phase(K_coeff, d_z_m, title, notilt, telescope):
+def plot_phase(K_coeff, d_z_m, title, notilt, pr):
 
     _K_coeff = K_coeff.copy()
 
@@ -192,7 +196,6 @@ def plot_phase(K_coeff, d_z_m, title, notilt, telescope):
         subtitle = '$\phi(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) + '$ m'
         bartitle = '$\phi(x, y)$ amplitude rad'
 
-    pr = telescope_geo(telescope)[1]
     x = np.linspace(-pr, pr, 1e3)
     y = x
 
@@ -317,7 +320,7 @@ def plot_data_effelsberg(pathfits, save, angle):
 
 
 def plot_fit_path(
-    pathoof, order, telescope, plim_rad, save, angle, resolution
+    pathoof, order, telgeo, illum_func, plim_rad, save, angle, resolution
         ):
 
     n = order
@@ -348,8 +351,8 @@ def plot_fit_path(
         title=name + ' fitted power pattern  $n=' + str(n) + '$',
         d_z_m=d_z_m,
         lam=fitinfo['wavel'][0],
-        illum=fitinfo['illum'][0],
-        telescope=telescope,
+        illum_func=illum_func,
+        telgeo=telgeo,
         plim_rad=plim_rad,
         angle=angle,
         resolution=resolution
@@ -360,7 +363,7 @@ def plot_fit_path(
         d_z_m=d_z_m[2],  # only one function for the three beam maps
         title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
         notilt=True,
-        telescope=telescope
+        pr=telgeo[1]
         )
 
     fig_res = plot_data(

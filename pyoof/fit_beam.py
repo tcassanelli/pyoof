@@ -8,7 +8,7 @@ from astropy.io import ascii
 from scipy import interpolate, optimize
 import os
 import time
-from .aperture import angular_spectrum, phase, illum_choice
+from .aperture import angular_spectrum, phase
 from .math_functions import wavevector2radians, co_matrices
 from .plot_routines import plot_fit_path
 from .aux_functions import store_csv, store_ascii
@@ -19,8 +19,8 @@ __all__ = [
 
 
 def residual_true(
-    params, beam_data, u_data, v_data, d_z, lam, illum, telescope, inter,
-    resolution
+    params, beam_data, u_data, v_data, d_z, lam, illum_func, telgeo,
+    inter, resolution
         ):
 
     I_coeff = params[:4]
@@ -33,8 +33,8 @@ def residual_true(
             K_coeff=K_coeff,
             d_z=d_z[i],
             I_coeff=I_coeff,
-            illum=illum,
-            telescope=telescope,
+            illum_func=illum_func,
+            telgeo=telgeo,
             resolution=resolution
             )
 
@@ -72,7 +72,7 @@ def residual_true(
 
 def residual(
     params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, resolution,
-    illum, telescope, inter
+    illum_func, telgeo, inter
         ):
 
     # params for the true fit
@@ -86,8 +86,8 @@ def residual(
         d_z=d_z,
         lam=lam,
         resolution=resolution,
-        illum=illum,
-        telescope=telescope,
+        illum_func=illum_func,
+        telgeo=telgeo,
         inter=inter,
         )
 
@@ -115,7 +115,9 @@ def params_complete(params, idx, N_K_coeff):
 
 
 # Insert path for the fits file with pre-calibration
-def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
+def fit_beam(
+    data, order, illumination, telescope, fit_previous, resolution, angle
+        ):
 
     start_time = time.time()
 
@@ -127,12 +129,17 @@ def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
     [name, pthto, freq, wavel, d_z_m, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
+    [illum_func, illum_name, taper_name] = illumination
+    [blockage, pr, tel_name] = telescope
+    telgeo = [blockage, pr]
+
+    print('Telescope name: ', tel_name)
     print('File name: ', name)
     print('Observed frequency: ', freq, 'Hz')
     print('Wavelenght : ', wavel, 'm')
     print('d_z (out-of-focus): ', d_z_m, 'm')
     print('Order n to be fitted: ', order)
-    print('Illumination to be fitted: ', illum)
+    print('Illumination to be fitted: ', illum_name)
 
     # Setting limits for plotting fitted beam
     plim_u = [np.min(u_data[0]), np.max(u_data[0])]  # input data in radians
@@ -209,8 +216,8 @@ def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
             d_z,
             wavel,
             resolution,
-            illum,
-            telescope,
+            illum_func,
+            telgeo,
             True  # Grid interpolation
             ),
         bounds=tuple([bounds_min_true, bounds_max_true]),
@@ -240,7 +247,7 @@ def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
     _phase = phase(
         K_coeff=params_solution[4:],
         notilt=True,
-        telescope=telescope
+        pr=pr
         )
 
     # Making nice table :)
@@ -248,17 +255,14 @@ def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
-    # string with the illumination taper name
-    illum_taper = illum_choice(illum)[1]
-
-    params_names = ['illum_amp', illum_taper, 'x_0', 'y_0']
+    params_names = ['illum_amp', taper_name, 'x_0', 'y_0']
     for i in range(N_K_coeff):
         params_names.append('K(' + str(L[i]) + ',' + str(N[i]) + ')')
 
     params_to_save = [params_names, params_solution, params_init]
     info_to_save = [
-        [name], [d_z_m[0]], [d_z_m[1]], [d_z_m[2]], [wavel],
-        [freq], [illum], [meanel], [resolution]
+        [tel_name], [name], [d_z_m[0]], [d_z_m[1]], [d_z_m[2]], [wavel],
+        [freq], [illum_name], [meanel], [resolution]
         ]
 
     # Storing files in directory
@@ -284,7 +288,8 @@ def fit_beam(data, order, illum, telescope, fit_previous, resolution, angle):
     plot_fit_path(
         pathoof=name_dir,
         order=n,
-        telescope=telescope,
+        telgeo=telgeo,
+        illum_func=illum_func,
         plim_rad=plim_rad,
         save=True,
         angle=angle,

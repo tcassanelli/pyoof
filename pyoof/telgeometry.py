@@ -3,48 +3,21 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
-from functools import partial
 from .math_functions import linear_equation
 
 __all__ = [
-    'telescope_geo', 'blockage_manual', 'blockage_effelsberg'
+    'blockage_manual', 'blockage_effelsberg'
     ]
 
 
-def telescope_geo(telescope):
-    """
-    Telescope geometry selection and possible manual setting of a particular
-    radio telescope radius
-    """
+def blockage_manual(pr, sr):
 
-    if telescope == 'effelsberg':
-        blockage = blockage_effelsberg
-        pr = 50  # Primary reflector radius
+    def blockage(x, y):
+        block = np.zeros(x.shape)  # or y.shape same
+        block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+        return block
 
-    elif type(telescope) == tuple:
-        (pr, sr) = telescope
-        if pr <= sr:
-            print('Primary radius cannot be smaller than secondary raidus! \n')
-        blockage = partial(blockage_manual, (pr, sr))
-
-    else:
-        print(
-            'Select an existing telescope geometry: `effelsberg` or a primary',
-            'and secondary disc radius (pr, sr). The radii must be an integer',
-            '\n'
-            )
-        raise SystemExit
-
-    return blockage, pr
-
-
-def blockage_manual(geo, x, y):
-
-    (pr, sr) = geo
-    block = np.zeros(x.shape)  # or y.shape same
-    block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
-
-    return block
+    return blockage
 
 
 def blockage_effelsberg(x, y):

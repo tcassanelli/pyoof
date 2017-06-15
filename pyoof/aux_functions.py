@@ -121,8 +121,8 @@ def store_ascii(name, n, name_dir, params_to_save, info_to_save):
         table=info_to_save,
         output=name_dir + '/fitinfo.dat',
         names=[
-            'name', 'd_z-', 'd_z0', 'd_z+', 'wavel', 'freq', 'illum', 'meanel',
-            'fft_resolution'
+            'telescope', 'name', 'd_z-', 'd_z0', 'd_z+', 'wavel', 'freq',
+            'illumination', 'meanel', 'fft_resolution'
             ],
         comment='Fit information ' + name
         )
