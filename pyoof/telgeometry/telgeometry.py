@@ -10,11 +10,34 @@ __all__ = [
     ]
 
 
-def blockage_manual(pr, sr):
+def blockage_manual(pr, sr, a, L):
+    """
+    Truncation for the aperture function, manual set up for the primary radius
+    (pr), secondary radius (sr), hald thickness of a support leg (a) and
+    length of the support leg (L) measured from the edge of the sr. It has been
+    considered 4 support legs. To omit sr, a and L set them to zero.
+
+    Parameters
+    ----------
+    pr : float
+        Primary reflector radius.
+    sr : float
+        Seconday reflector radius.
+    a : float
+        Half thickness of a support leg.
+    L : float
+        Length of a support leg, measured from the edge of the sr to its end.
+
+    Returns
+    -------
+    block : ndarray
+    """
 
     def block(x, y):
         _block = np.zeros(x.shape)  # or y.shape same
         _block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+        _block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
+        _block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
         return _block
 
     return block
@@ -29,12 +52,9 @@ def blockage_effelsberg(x, y):
     Parameters
     ----------
     x : ndarray
-        Grid value for the x variable, same as the contour plot.
+        Grid value for the x variable.
     y : ndarray
-        Grid value for the x variable, same as the contour plot.
-    geometry : list
-        Characteristic geometry for the Effelsberg telescope,
-        [pr, sr, L, a, alpha].
+        Grid value for the x variable.
 
     Returns
     -------

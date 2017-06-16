@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Author: Tomas Cassanelli
 import os
 from scipy.constants import c as light_speed
 from astropy.io import fits
@@ -14,8 +15,24 @@ __all__ = [
 
 def extract_data_effelsberg(pathfits):
     """
-    Extracts the necessary data for the pyoof package. Change in the future to
-    a more general and not only speficif to Effelsberg data.
+    Extracts the necessary data for the pyoof package, for Effelsberg
+    telescope data only.
+
+    Parameters
+    ----------
+    pathfits : str
+        Path to the fits file that contains the three beam maps precalibrated,
+        plus some other important parameter for the fit.
+
+    Returns
+    -------
+    data_info : list
+        It contains all extra data besides the beam map.
+        data_info = [name, pthto, freq, wavel, d_z_m, meanel]
+
+    data_obs : list
+        It contains the main data for the leat squares optimisation.
+        data_obs = [beam_data, u_data, v_data]
     """
 
     # Opening fits file with astropy
@@ -54,7 +71,7 @@ def extract_data_effelsberg(pathfits):
 def str2LaTeX(python_string):
     """
     Function that solves the underscore problem in a python string to LaTeX
-    it changes it from _ -> \_ symbol.
+    it changes it from _ -> \_ symbol. Useful in matplotlib plots.
 
     Parameters
     ----------
@@ -79,12 +96,26 @@ def str2LaTeX(python_string):
 
 
 def store_csv(name, n, name_dir, save_to_csv):
+    """
+    Function that stores all important information in a CSVs files after the
+    least squares optimisation has finished. It will be saved in the
+    `OOF_out/name` directory
 
-    # It must be in this order
-    # save_to_csv = [
-    # beam_data, u_data, v_data, res_optim, jac_optim, grad_optim, phase,
-    # cov_ptrue, corr_ptrue
-    # ]
+    Parameters
+    ----------
+    name : str
+        File name of the fits file to be optimised.
+    n : int
+        Order of the fit or opmisation done to the fits maps
+    name_dir : str
+        Directory of the fits file.
+    save_to_csv : list
+        It contains all data that will be stored.
+        save_to_csv = [
+        beam_data, u_data, v_data, res_optim, jac_optim, grad_optim, phase,
+        cov_ptrue, corr_ptrue
+            ]
+    """
 
     headers = [
         'Normalised beam', 'u vector radians', 'v vector radians', 'Residual',
@@ -109,6 +140,28 @@ def store_csv(name, n, name_dir, save_to_csv):
 
 
 def store_ascii(name, n, name_dir, params_to_save, info_to_save):
+    """
+    Function that stores all information in a ascii files after the
+    least squares optimisation has finished. It will be saved in the
+    `OOF_out/name` directory
+
+    Parameters
+    ----------
+    name : str
+        File name of the fits file to be optimised.
+    n : int
+        Order of the fit or opmisation done to the fits maps
+    name_dir : str
+        Directory of the fits file.
+    params_to_save : list
+        Stores the parameters found after the optimisation. The keywords for
+        the fitpar_n#.dat ascii file are ['parname', 'parfit', 'parinit'].
+    info_to_save : list
+        Stores string and some other important information from the
+        observations and optimisation. The keywords for the fitinfo.dat ascii
+        file are ['telescope', 'name', 'd_z-', 'd_z0', 'd_z+', 'wavel',
+        'freq', 'illumination', 'meanel', 'fft_resolution'].
+    """
 
     ascii.write(
         table=params_to_save,
