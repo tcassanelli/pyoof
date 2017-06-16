@@ -17,15 +17,19 @@ setup(
         'astropy>=1.1',
         'matplotlib>=2.0',
     ],
-    packages=['pyoof', 'pyoof.zernike'],
+    packages=['pyoof', 'pyoof.zernike', 'pyoof/telgeometry', 'pyoof/aperture'],
     package_dir={
         'pyoof': 'pyoof',
         'pyoof.zernike': 'pyoof/zernike',
+        'pyoof.telgeometry': 'pyoof/telgeometry',
+        'pyoof.aperture': 'pyoof/aperture'
         },
     package_data={
         '': ['pyoof.mplstyle'],
         '': ['config_params.yaml']},
     long_description='''
-    pyoof ... out-of-focus holography package
+        pyoof is a Python pacakge that contains all needed tools to perform
+        out-of-focus (OOF) holography on astronomical beam maps for single
+        dish radio telescopes.
     '''
     )
