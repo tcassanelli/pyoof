@@ -3,7 +3,7 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
-from .math_functions import linear_equation
+from ..math_functions import linear_equation
 
 __all__ = [
     'blockage_manual', 'blockage_effelsberg'

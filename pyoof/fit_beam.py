@@ -21,7 +21,6 @@ __all__ = [
 # Calling configuration file
 config_params_dir = os.path.dirname(__file__)
 config_params_pth = os.path.join(config_params_dir, 'config_params.yaml')
-
 with open(config_params_pth, 'r') as stream:
     config_params = yaml.load(stream)
 
@@ -103,7 +102,7 @@ def residual(
 
 
 def params_complete(params, idx, N_K_coeff):
-
+    # Fixed values for parameters, in case they're excluded, see idx
     [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_params['params_fixed']
 
     # N_K_coeff number of Zernike coeff

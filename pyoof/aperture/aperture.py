@@ -3,13 +3,13 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
-from .math_functions import cart2pol
-from .zernike import U
+from ..math_functions import cart2pol
+from ..zernike import U
 
 # All mathematical function have been adapted for the Effelsberg telescope
 __all__ = [
     'illumination_pedestal', 'illumination_gauss', 'delta', 'aperture',
-    'phase', 'phi'
+    'phase', 'phi', 'angular_spectrum'
     ]
 
 
@@ -121,6 +121,66 @@ def delta(x, y, d_z):
     return delta
 
 
+def phi(theta, rho, K_coeff):
+    """
+    Generates a series of Zernike polynomials, the aberration function.
+
+    Parameters
+    ----------
+    theta : ndarray
+        Values for the angular component. theta = np.arctan(y / x).
+    rho : ndarray
+        Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2)
+        normalised.
+    K_coeff : ndarray
+        Constants organized by the ln list, which gives the possible values.
+    n : int
+        It is n >= 0. Determines the size of the polynomial, see ln.
+
+    Returns
+    -------
+    phi : ndarray
+        Zernile polynomail already evaluated and multiplied by its parameter
+        or constant.
+    """
+
+    # List which contains the allowed values for the U function.
+    n = int((np.sqrt(1 + 8 * K_coeff.size) - 3) / 2)
+    ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
+    L = np.array(ln)[:, 0]
+    N = np.array(ln)[:, 1]
+
+    # Aperture phase distribution function in radians
+    phi = sum(
+        K_coeff[i] * U(L[i], N[i], theta, rho)
+        for i in range(K_coeff.size)
+        ) * 2 * np.pi
+
+    return phi
+
+
+def phase(K_coeff, notilt, pr):
+
+    _K_coeff = K_coeff.copy()
+
+    if notilt:
+        _K_coeff[1] = 0  # For value K(-1, 1) = 0
+        _K_coeff[2] = 0  # For value K(1, 1) = 0
+
+    x = np.linspace(-pr, pr, 1e3)
+    y = np.linspace(-pr, pr, 1e3)
+
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    r, t = cart2pol(x_grid, y_grid)
+    r_norm = r / pr
+
+    _phase = phi(theta=t, rho=r_norm, K_coeff=_K_coeff)
+    _phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
+
+    return _phase
+
+
 def aperture(x, y, K_coeff, d_z, I_coeff, illum_func, telgeo):
     """
     Aperture function. Multiplication between the antenna truncation, the
@@ -170,44 +230,6 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum_func, telgeo):
     return E
 
 
-def phi(theta, rho, K_coeff):
-    """
-    Generates a series of Zernike polynomials, the aberration function.
-
-    Parameters
-    ----------
-    theta : ndarray
-        Values for the angular component. theta = np.arctan(y / x).
-    rho : ndarray
-        Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2)
-        normalised.
-    K_coeff : ndarray
-        Constants organized by the ln list, which gives the possible values.
-    n : int
-        It is n >= 0. Determines the size of the polynomial, see ln.
-
-    Returns
-    -------
-    phi : ndarray
-        Zernile polynomail already evaluated and multiplied by its parameter
-        or constant.
-    """
-
-    # List which contains the allowed values for the U function.
-    n = int((np.sqrt(1 + 8 * K_coeff.size) - 3) / 2)
-    ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
-    L = np.array(ln)[:, 0]
-    N = np.array(ln)[:, 1]
-
-    # Aperture phase distribution function in radians
-    phi = sum(
-        K_coeff[i] * U(L[i], N[i], theta, rho)
-        for i in range(K_coeff.size)
-        ) * 2 * np.pi
-
-    return phi
-
-
 def angular_spectrum(K_coeff, I_coeff, d_z, illum_func, telgeo, resolution):
 
     # Arrays to generate angular spectrum model
@@ -244,25 +266,3 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum_func, telgeo, resolution):
     u_shift, v_shift = np.fft.fftshift(u), np.fft.fftshift(v)
 
     return u_shift, v_shift, F_shift
-
-
-def phase(K_coeff, notilt, pr):
-
-    _K_coeff = K_coeff.copy()
-
-    if notilt:
-        _K_coeff[1] = 0  # For value K(-1, 1) = 0
-        _K_coeff[2] = 0  # For value K(1, 1) = 0
-
-    x = np.linspace(-pr, pr, 1e3)
-    y = np.linspace(-pr, pr, 1e3)
-
-    x_grid, y_grid = np.meshgrid(x, y)
-
-    r, t = cart2pol(x_grid, y_grid)
-    r_norm = r / pr
-
-    _phase = phi(theta=t, rho=r_norm, K_coeff=_K_coeff)
-    _phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
-
-    return _phase
