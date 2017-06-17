@@ -148,8 +148,6 @@ def phi(theta, rho, K_coeff):
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
         circle polynomial.
-    n : int
-        It is n >= 0. Determines the size of the polynomial, see ln.
 
     Returns
     -------

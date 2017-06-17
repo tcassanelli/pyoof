@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Author: Tomas Cassanelli
 from setuptools import setup
 
 

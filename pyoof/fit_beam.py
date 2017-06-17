@@ -26,7 +26,7 @@ with open(config_params_pth, 'r') as stream:
 
 
 def residual_true(
-    params, beam_data, u_data, v_data, d_z, lam, illum_func, telgeo,
+    params, beam_data, u_data, v_data, d_z, wavel, illum_func, telgeo,
     inter, resolution
         ):
 
@@ -51,8 +51,8 @@ def residual_true(
         if inter:
 
             # Generated beam u and v: wavevectors -> degrees -> radians
-            u_rad = wavevector2radians(u, lam)
-            v_rad = wavevector2radians(v, lam)
+            u_rad = wavevector2radians(u, wavel)
+            v_rad = wavevector2radians(v, wavel)
 
             # The calculated beam needs to be transformed!
             # RegularGridInterpolator
@@ -78,7 +78,7 @@ def residual_true(
 
 
 def residual(
-    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, lam, resolution,
+    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, wavel, resolution,
     illum_func, telgeo, inter
         ):
 
@@ -91,7 +91,7 @@ def residual(
         u_data=u_data,
         v_data=v_data,
         d_z=d_z,
-        lam=lam,
+        wavel=wavel,
         resolution=resolution,
         illum_func=illum_func,
         telgeo=telgeo,
@@ -291,14 +291,26 @@ def fit_beam(
     print('... Saving data ... \n')
 
     # To store fit information and found parameters in ascii file
-    store_ascii(name, n, name_dir, params_to_save, info_to_save)
+    store_ascii(
+        name=name,
+        order=n,
+        name_dir=name_dir,
+        params_to_save=params_to_save,
+        info_to_save=info_to_save
+        )
 
     # To store large files in csv format
     save_to_csv = [
         beam_data, u_data, v_data, res_optim, jac_optim, grad_optim, _phase,
         cov_ptrue, corr_ptrue
         ]
-    store_csv(name, n, name_dir, save_to_csv)
+
+    store_csv(
+        name=name,
+        order=n,
+        name_dir=name_dir,
+        save_to_csv=save_to_csv
+        )
 
     # Printing the results from saved ascii file
     print(ascii.read(name_dir + '/fitpar_n' + str(n) + '.dat'))

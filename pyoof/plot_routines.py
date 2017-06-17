@@ -22,9 +22,49 @@ plt.style.use(os.path.join(plotstyle_dir, 'pyoof.mplstyle'))
 
 
 def plot_beam(
-    params, d_z_m, lam, illum_func, telgeo, resolution, plim_rad, title,
-    angle
+    params, d_z_m, wavel, illum_func, telgeo, resolution, plim_rad, angle,
+    title
         ):
+    """
+    Plot of the beam map given fixed I_coeff coefficients and K_coeff
+    coeffcients. It is the straight forward result from a least squares fit
+    procedure.
+
+    Parameters
+    ----------
+    params : ndarray
+        An stack of the illumination and Zernike circle polynomaisl
+        coefficients. params = np.hstack([I_coeff, K_coeff])
+    d_z_m : list
+        Distance between the secondary and primary refelctor measured in
+        meters. It is the characteristic measurement to give an offset and an
+        out-of-focus image at the end. d_z_m = [-d_z, 0, +d_z].
+    wavel : float
+        Wavelength of the observation in m.
+    illum_func : function
+        Illumination function with parameters (x, y, I_coeff, pr).
+    telgeo : list
+        List that contains the blockage function and the primary radius.
+        telego = [function, int].
+    resolution : int
+        Fast Fourier Transform resolution for a rectancular grid. The input
+        value has to be greater or equal to the telescope resolution and a
+        power of 2 for FFT faster processing.
+    plim_rad : ndarray
+        Contains the maximum values for the u and v wave-vectors, it can be in
+        degrees or radias depending which one is chosen in angle function
+        parameter. plim_rad = np.array([umin, umax, vmin, vmax]).
+    angle : str
+        Choose angle unit, it can be 'degrees' or 'radians'.
+    title : str
+        Figure title.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The three beam maps plotted from the input parameters. Each map with a
+        different offset d_z_m value. From left to right, -d_z, 0 and +d_z
+    """
 
     I_coeff = params[:4]
     K_coeff = params[4:]
@@ -36,7 +76,7 @@ def plot_beam(
     else:
         wavevector_change = wavevector2radians
 
-    d_z = np.array(d_z_m) * 2 * np.pi / lam
+    d_z = np.array(d_z_m) * 2 * np.pi / wavel
 
     u, v, aspectrum = [], [], []
     for _d_z in d_z:
@@ -60,7 +100,7 @@ def plot_beam(
     # Limits, they need to be transformed to degrees
     if plim_rad is None:
         pr = telgeo[1]  # primary reflector radius
-        b_factor = 2 * pr / lam  # D / lambda
+        b_factor = 2 * pr / wavel  # D / lambda
         plim_u = [-700 / b_factor, 700 / b_factor]
         plim_v = [-700 / b_factor, 700 / b_factor]
         figsize = (14, 4.5)
@@ -86,8 +126,8 @@ def plot_beam(
         ]
 
     for i in range(3):
-        u_angle = wavevector_change(u[i], lam)
-        v_angle = wavevector_change(v[i], lam)
+        u_angle = wavevector_change(u[i], wavel)
+        v_angle = wavevector_change(v[i], wavel)
 
         extent = [u_angle.min(), u_angle.max(), v_angle.min(), v_angle.max()]
 
@@ -350,7 +390,7 @@ def plot_fit_path(
         params=np.array(fitpar['parfit']),
         title=name + ' fitted power pattern  $n=' + str(n) + '$',
         d_z_m=d_z_m,
-        lam=fitinfo['wavel'][0],
+        wavel=fitinfo['wavel'][0],
         illum_func=illum_func,
         telgeo=telgeo,
         plim_rad=plim_rad,
@@ -430,7 +470,7 @@ def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, angle):
         params=params_nikolic,
         title=title + ' phase distribution Nikolic fit $n=' + str(n) + '$',
         d_z_m=d_z_m,
-        lam=wavelength,
+        wavel=wavelength,
         illum='nikolic',
         plim_rad=plim_rad,
         angle=angle
