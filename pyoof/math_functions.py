@@ -12,22 +12,21 @@ __all__ = [
 
 def cart2pol(x, y):
     """
-    Transformation for the cartesian coord. to polars. It is needed for the
-    aperture function.
+    Transformation from catesian to polar coordinates, in two dimensions.
 
     Parameters
     ----------
     x : ndarray
-        Grid value for the x variable, same as the contour plot.
+        Grid value for the x variable.
     y : ndarray
-        Grid value for the x variable, same as the contour plot.
+        Grid value for the x variable.
 
     Returns
     -------
     rho : ndarray
-        Grid value for the radial variable, same as the contour plot.
+        Grid value for the radial variable, in m.
     theta : ndarray
-        Grid value for the angular variable, same as the contour plot.
+        Grid value for the angular variable, in radians.
     """
 
     rho = np.sqrt(x ** 2 + y ** 2)
@@ -36,14 +35,14 @@ def cart2pol(x, y):
     return rho, theta
 
 
-def wavevector2degrees(x, wavel):
+def wavevector2degrees(u, wavel):
     """
-    Converst wave-vector 1/m to degrees.
+    Transformation from a wave-vector (1/m) units to degrees.
 
     Parameters
     ----------
-    x : ndarray
-        Wave-vector, result from FFT in 2-dim.
+    u : ndarray
+        Wave-vector, result from FFT2.
     wavel : ndarray
         Wavelength.
 
@@ -53,14 +52,29 @@ def wavevector2degrees(x, wavel):
         Wave-vector in degrees.
     """
 
-    wave_vector_degrees = np.degrees(x * wavel)
+    wave_vector_degrees = np.degrees(u * wavel)
 
     return wave_vector_degrees
 
 
-def wavevector2radians(x, wavel):
+def wavevector2radians(u, wavel):
+    """
+    Transformation from a wave-vector (1/m) units to radians.
 
-    wave_vector_radians = wavevector2degrees(x, wavel) * np.pi / 180
+    Parameters
+    ----------
+    u : ndarray
+        Wave-vector, result from FFT2.
+    wavel : ndarray
+        Wavelength.
+
+    Returns
+    -------
+    wave_vector_degrees : ndarray
+        Wave-vector in radians.
+    """
+
+    wave_vector_radians = wavevector2degrees(u, wavel) * np.pi / 180
 
     return wave_vector_radians
 
@@ -73,20 +87,20 @@ def co_matrices(res, jac, n_pars):
     Parameters
     ----------
     res : ndarray
-        Last residual evaluation from a fit procedure, residual understood as
-        model - data.
+        Last residual evaluation from a fit procedure (least squares
+        optimisation), residual understood as model - data.
     jac : ndarray
         Last jacobian matrix evaluation from a fit procedure.
     n_pars: int
-        Total number of the fittef parameters in the model. It is related to
-        the degrees of freedom.
+        Total number of parameters in the model (only the ones that have been
+        fitted). It is related to the degrees of freedom.
 
     Returns
     -------
     cov : ndarray
-        Variance-Covariance matrix (n x p).
+        Variance-Covariance matrix. Dimensions n x p.
     corr : ndarray
-        Correlation matrix (n x p).
+        Correlation matrix. Dimensions n x p.
     """
 
     m = res.size  # number of data points used in the fit
@@ -108,8 +122,8 @@ def co_matrices(res, jac, n_pars):
 
 def linear_equation(P1, P2, x):
     """
-    Computes the linear equation solution for the y values given the x data
-    points. P1 = (x1, y1) and P2 = (x2, y2).
+    Computes the linear equation solution for the y vector values given two
+    data points, P1 = (x1, y1) and P2 = (x2, y2), and the x vector.
 
     Parameters
     ----------
