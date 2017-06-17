@@ -44,7 +44,7 @@ def wavevector2degrees(u, wavel):
     u : ndarray
         Wave-vector, result from FFT2.
     wavel : ndarray
-        Wavelength.
+        Wavelength in meters.
 
     Returns
     -------
@@ -66,7 +66,7 @@ def wavevector2radians(u, wavel):
     u : ndarray
         Wave-vector, result from FFT2.
     wavel : ndarray
-        Wavelength.
+        Wavelength in meters.
 
     Returns
     -------

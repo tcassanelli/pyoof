@@ -95,7 +95,7 @@ def str2LaTeX(python_string):
     return LaTeX_string
 
 
-def store_csv(name, n, name_dir, save_to_csv):
+def store_csv(name, order, name_dir, save_to_csv):
     """
     Function that stores all important information in a CSVs files after the
     least squares optimisation has finished. It will be saved in the
@@ -105,8 +105,9 @@ def store_csv(name, n, name_dir, save_to_csv):
     ----------
     name : str
         File name of the fits file to be optimised.
-    n : int
-        Order of the fit or opmisation done to the fits maps
+    order : int
+        Order of the fit or opmisation done to the beam maps, also called n in
+        the Zernike circle polynomials convention.
     name_dir : str
         Directory of the fits file.
     save_to_csv : list
@@ -126,9 +127,9 @@ def store_csv(name, n, name_dir, save_to_csv):
 
     fnames = [
         '/beam_data.csv', '/u_data.csv', '/v_data.csv',
-        '/res_n' + str(n) + '.csv', '/jac_n' + str(n) + '.csv',
-        '/grad_n' + str(n) + '.csv', '/phase_n' + str(n) + '.csv',
-        '/cov_n' + str(n) + '.csv', '/corr_n' + str(n) + '.csv'
+        '/res_n' + str(order) + '.csv', '/jac_n' + str(order) + '.csv',
+        '/grad_n' + str(order) + '.csv', '/phase_n' + str(order) + '.csv',
+        '/cov_n' + str(order) + '.csv', '/corr_n' + str(order) + '.csv'
         ]
 
     for fname, header, file in zip(fnames, headers, save_to_csv):
@@ -139,7 +140,7 @@ def store_csv(name, n, name_dir, save_to_csv):
             )
 
 
-def store_ascii(name, n, name_dir, params_to_save, info_to_save):
+def store_ascii(name, order, name_dir, params_to_save, info_to_save):
     """
     Function that stores all information in a ascii files after the
     least squares optimisation has finished. It will be saved in the
@@ -149,7 +150,7 @@ def store_ascii(name, n, name_dir, params_to_save, info_to_save):
     ----------
     name : str
         File name of the fits file to be optimised.
-    n : int
+    order : int
         Order of the fit or opmisation done to the fits maps
     name_dir : str
         Directory of the fits file.
@@ -165,7 +166,7 @@ def store_ascii(name, n, name_dir, params_to_save, info_to_save):
 
     ascii.write(
         table=params_to_save,
-        output=name_dir + '/fitpar_n' + str(n) + '.dat',
+        output=name_dir + '/fitpar_n' + str(order) + '.dat',
         names=['parname', 'parfit', 'parinit'],
         comment='Fitted parameters ' + name
         )
