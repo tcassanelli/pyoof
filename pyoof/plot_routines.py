@@ -26,9 +26,10 @@ def plot_beam(
     title
         ):
     """
-    Plot of the beam map given fixed I_coeff coefficients and K_coeff
+    Plot of the beam maps given fixed I_coeff coefficients and K_coeff
     coeffcients. It is the straight forward result from a least squares fit
-    procedure.
+    procedure. There will be three maps, for three out-of-focus values, d_z_m,
+    given.
 
     Parameters
     ----------
@@ -63,7 +64,7 @@ def plot_beam(
     -------
     fig : matplotlib.figure.Figure
         The three beam maps plotted from the input parameters. Each map with a
-        different offset d_z_m value. From left to right, -d_z, 0 and +d_z
+        different offset d_z_m value. From left to right, -d_z, 0 and +d_z.
     """
 
     I_coeff = params[:4]
@@ -157,7 +158,39 @@ def plot_beam(
     return fig
 
 
-def plot_data(u_data, v_data, beam_data, d_z_m, title, angle):
+def plot_data(u_data, v_data, beam_data, d_z_m, angle, title):
+    """
+    Plot of the real data beam maps given given 3 out-of-focus values of d_z_m.
+
+    Parameters
+    ----------
+    u_data : ndarray
+        x axis value for the 3 beam maps in radians. The values have to be
+        flatten, one dimentional, and stacked in the same order as the
+        d_z_m = [-d_z, 0, +d_z] values from each beam map.
+    v_data : ndarray
+        y axis value for the 3 beam maps in radians. The values have to be
+        flatten, one dimentional, and stacked in the same order as the
+        d_z_m = [-d_z, 0, +d_z] values from each beam map.
+    beam_data : ndarray
+        Amplitude value for the beam map in any unit (it will be normalised).
+        The values have to be flatten, one dimentional, and stacked in the
+        same order as the d_z_m=[-d_z, 0, +d_z] values from each beam map.
+    d_z_m : list
+        Distance between the secondary and primary refelctor measured in
+        meters. It is the characteristic measurement to give an offset and an
+        out-of-focus image at the end. d_z_m = [-d_z, 0, +d_z].
+    angle : str
+        Choose angle unit, it can be 'degrees' or 'radians'.
+    title : str
+        Figure title.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Data figure from the three observed beam maps. Each map with a
+        different offset d_z_m value. From left to right, -d_z, 0 and +d_z.
+    """
 
     # Power pattern normalisation
     beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
@@ -220,7 +253,35 @@ def plot_data(u_data, v_data, beam_data, d_z_m, title, angle):
     return fig
 
 
-def plot_phase(K_coeff, d_z_m, title, notilt, pr):
+def plot_phase(K_coeff, d_z_m, notilt, pr, title):
+    """
+    Plot of the phase or wavefront (aberration) distribution given the Zernike
+    circle polynomials coefficients.
+
+    Parameters
+    ----------
+    K_coeff : ndarray
+        Constants coefficients for each of them there is only one Zernike
+        circle polynomial.
+    d_z_m : list
+        Distance between the secondary and primary refelctor measured in
+        meters. It is the characteristic measurement to give an offset and an
+        out-of-focus image at the end. Only one value for the d_z_m.
+    notilt : bool
+        True or False boolean to include or exclude the tilt coefficients in
+        the aperture phase distribution. The Zernike circle polynomials are
+        related to tilt through U(l=-1, n=1) and U(l=1, n=1).
+    pr : float
+        Primary reflector radius.
+    title : str
+        Figure title.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Phase distribution for the Zernike circle polynomials for a telescope
+        primary dish.
+    """
 
     _K_coeff = K_coeff.copy()
 
@@ -271,7 +332,33 @@ def plot_phase(K_coeff, d_z_m, title, notilt, pr):
     return fig
 
 
-def plot_variance(matrix, params_names, title, cbtitle, diag):
+def plot_variance(matrix, params_names, diag, cbtitle, title):
+    """
+    Plot for the Variance-Covariance matrix or Correlation matrix. It returns
+    the triangle figure with a color amplitude value for each elelemt. Used to
+    check the correlation between the fitted parameters in a least squares
+    optimisation.
+
+    Parameters
+    ----------
+    matrix : ndarray
+        Two dimensional array containing the Variance-Covariance or
+        Correlation function. Output from the fit procedure.
+    params_names : ndarray
+        One dimensional array containing all the string names of the
+        coefficients used, see store_ascii function.
+    diag : bool
+        If True it will plot the matrix diagonal.
+    cbtitle : str
+        Colorbar title.
+    title : str
+        Figure title.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Triangle figure representing Variance-Covariance or Correlation matrix.
+    """
 
     params_used = [int(i) for i in matrix[:1][0]]
     _matrix = matrix[1:]
@@ -330,7 +417,7 @@ def plot_variance(matrix, params_names, title, cbtitle, diag):
     return fig
 
 
-# not sure to keep this function
+# move function to a effelsberg script
 def plot_data_effelsberg(pathfits, save, angle):
     """
     Plot all data from an OOF Effelsberg observation given the path.
@@ -360,8 +447,52 @@ def plot_data_effelsberg(pathfits, save, angle):
 
 
 def plot_fit_path(
-    pathoof, order, telgeo, illum_func, plim_rad, save, angle, resolution
+    pathoof, order, telgeo, illum_func, resolution, angle, plim_rad, save
         ):
+    """
+    Plot all important figures after a least squares optimisation.
+
+    Parameters
+    ----------
+    pathoof : str
+        Path to the pyoof output, 'OOF_out/directory'.
+    telgeo : list
+        List that contains the blockage function and the primary radius.
+        telego = [function, int].
+    illum_func : function
+        Illumination function with parameters (x, y, I_coeff, pr).
+    resolution : int
+        Fast Fourier Transform resolution for a rectancular grid. The input
+        value has to be greater or equal to the telescope resolution and a
+        power of 2 for FFT faster processing.
+    angle : str
+        Choose angle unit, it can be 'degrees' or 'radians'.
+    plim_rad : ndarray
+        Contains the maximum values for the u and v wave-vectors, it can be in
+        degrees or radias depending which one is chosen in angle function
+        parameter. plim_rad = np.array([umin, umax, vmin, vmax]).
+    save : bool
+        If True, it stores all plots in the 'OOF_out/name' directory.
+
+    Returns
+    -------
+    fig_beam : matplotlib.figure.Figure
+        The three beam maps plotted from the input parameters. Each map with a
+        different offset d_z_m value. From left to right, -d_z, 0 and +d_z.
+    fig_phase : matplotlib.figure.Figure
+        Phase distribution for the Zernike circle polynomials for a telescope
+        primary dish.
+    fig_res : matplotlib.figure.Figure
+        Residual from the three beam maps from the last residual evaluation in
+        the optimisation procedure.
+    fig_data : matplotlib.figure.Figure
+        Data figure from the three observed beam maps. Each map with a
+        different offset d_z_m value. From left to right, -d_z, 0 and +d_z
+    fig_cov : matplotlib.figure.Figure
+        Triangle figure representing Variance-Covariance matrix.
+    fig_corr : matplotlib.figure.Figure
+        Triangle figure representing Correlation matrix.
+    """
 
     n = order
     fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')

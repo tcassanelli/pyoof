@@ -99,7 +99,7 @@ def store_csv(name, order, name_dir, save_to_csv):
     """
     Function that stores all important information in a CSVs files after the
     least squares optimisation has finished. It will be saved in the
-    `OOF_out/name` directory
+    'OOF_out/name' directory
 
     Parameters
     ----------
@@ -144,7 +144,7 @@ def store_ascii(name, order, name_dir, params_to_save, info_to_save):
     """
     Function that stores all information in a ascii files after the
     least squares optimisation has finished. It will be saved in the
-    `OOF_out/name` directory
+    'OOF_out/name' directory
 
     Parameters
     ----------
