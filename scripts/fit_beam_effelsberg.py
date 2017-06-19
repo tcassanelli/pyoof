@@ -23,7 +23,7 @@ def fit_beam_effelsberg(pathfits):
 
     fit_beam(
         data=[data_info, data_obs],
-        order_max=5,
+        order_max=5,  # it'll fit from 1 to 5
         illumination=illumination['pedestal'],
         telescope=telescope['effelsberg'],
         fit_previous=True,
