@@ -9,7 +9,7 @@ from scipy import interpolate
 from pyoof import str2LaTeX
 
 # Import plot style matplotlib, change to same directory in future
-plt.style.use('../pyoof/pyoof.mplstyle')
+plt.style.use('../pyoof/pyoof.mplstyle')  # Erase this line
 
 
 def actuator_displacement(pathoof, order, save):

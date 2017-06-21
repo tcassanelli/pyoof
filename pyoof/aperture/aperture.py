@@ -131,7 +131,7 @@ def delta(x, y, d_z):
     return delta
 
 
-def phi(theta, rho, K_coeff):
+def phi(rho, theta, K_coeff):
     """
     Computes the wavefront (aberration) function which coincides with the
     aperture phase distribution in optics theory. The wavefront is an
@@ -214,7 +214,7 @@ def phase(K_coeff, notilt, pr):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    _phase = phi(theta=t, rho=r_norm, K_coeff=_K_coeff)
+    _phase = phi(rho=r_norm, theta=t, K_coeff=_K_coeff)
     _phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
     return _phase
@@ -261,7 +261,7 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum_func, telgeo):
     # Normalisation to be used in the Zernike circle polynomials
     r_norm = r / pr
 
-    _phi = phi(theta=t, rho=r_norm, K_coeff=K_coeff)
+    _phi = phi(rho=r_norm, theta=t, K_coeff=K_coeff)
     _delta = delta(x=x, y=y, d_z=d_z)
 
     # Wavefront aberration distribution (rad)
@@ -319,7 +319,8 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum_func, telgeo, resolution):
     """
 
     # Arrays to generate angular spectrum model
-    box_size = 500  # Effelsberg pr=50, 1/5 of the length
+    pr = telgeo[1]
+    box_size = pr * 5  # 5 times the size of the pr
 
     # default resolution 2 ** 10
     x = np.linspace(-box_size, box_size, resolution)

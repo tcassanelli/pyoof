@@ -168,7 +168,7 @@ def fit_beam(
     print('d_z (out-of-focus): ', d_z_m, 'm')
     print('Illumination to be fitted: ', illum_name)
 
-    for order in range(1, order_max):
+    for order in range(1, order_max + 1):
 
         print('\n... Fit order ' + str(order) + ' ... \n')
 

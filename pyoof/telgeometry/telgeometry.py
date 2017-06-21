@@ -30,7 +30,9 @@ def blockage_manual(pr, sr, a, L):
 
     Returns
     -------
-    block : ndarray
+    block : func
+        It returns the function block(x, y), which depends only on the grid
+        values.
     """
 
     def block(x, y):
