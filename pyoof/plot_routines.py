@@ -101,9 +101,9 @@ def plot_beam(
     # Limits, they need to be transformed to degrees
     if plim_rad is None:
         pr = telgeo[1]  # primary reflector radius
-        b_factor = 2 * pr / wavel  # D / lambda
-        plim_u = [-700 / b_factor, 700 / b_factor]
-        plim_v = [-700 / b_factor, 700 / b_factor]
+        b_factor = 1.22 * wavel / (2 * pr)  # Beamwidth
+        plim_u = [-700 * b_factor, 700 * b_factor]
+        plim_v = [-700 * b_factor, 700 * b_factor]
         figsize = (14, 4.5)
         shrink = 0.88
 
@@ -212,7 +212,8 @@ def plot_data(u_data, v_data, beam_data, d_z_m, angle, title):
     subtitle = [
         '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
         '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z_m[1]) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m']
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m'
+        ]
 
     for i in range(3):
         # new grid for beam_data
@@ -306,7 +307,7 @@ def plot_phase(K_coeff, d_z_m, notilt, pr, title):
     r_norm = r / pr
 
     extent = [x.min(), x.max(), y.min(), y.max()]
-    phase = phi(theta=t, rho=r_norm, K_coeff=_K_coeff)
+    phase = phi(rho=r_norm, theta=t, K_coeff=_K_coeff)
     phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
     fig, ax = plt.subplots()

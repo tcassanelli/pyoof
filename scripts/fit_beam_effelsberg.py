@@ -28,7 +28,7 @@ def fit_beam_effelsberg(pathfits):
         telescope=telescope['effelsberg'],
         fit_previous=True,
         angle='degrees',  # or radians
-        resolution=2**9  # standard used is 2 ** 10
+        resolution=2**8  # standard used is 2 ** 10
         )
 
 
@@ -37,6 +37,6 @@ if __name__ == '__main__':
     import glob  # to list as a string files in a directory
 
     # Change to desired data location in your machine
-    observation = glob.glob('../../data/S9mm/*.fits')  # len = 8
-
-    fit_beam_effelsberg(observation[0])
+    observation = glob.glob('../../data/S9mm/*.fits')[0]  # len = 8
+    # for obs in observation:
+    fit_beam_effelsberg(observation)
