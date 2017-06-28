@@ -28,7 +28,7 @@ def extract_data_effelsberg(pathfits):
     -------
     data_info : list
         It contains all extra data besides the beam map.
-        data_info = [name, pthto, freq, wavel, d_z_m, meanel]
+        data_info = [name, pthto, freq, wavel, d_z, meanel]
 
     data_obs : list
         It contains the main data for the leat squares optimisation.
@@ -51,18 +51,18 @@ def extract_data_effelsberg(pathfits):
     beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
     u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
     v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
-    d_z_m = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
+    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
 
     # Permuting the position to provide same as main_functions
     beam_data.insert(1, beam_data.pop(2))
     u_data.insert(1, u_data.pop(2))
     v_data.insert(1, v_data.pop(2))
-    d_z_m.insert(1, d_z_m.pop(2))
+    d_z.insert(1, d_z.pop(2))
 
     # path or directory where the fits file is located
     pthto = os.path.split(pathfits)[0]
 
-    data_info = [name, pthto, freq, wavel, d_z_m, meanel]
+    data_info = [name, pthto, freq, wavel, d_z, meanel]
     data_obs = [beam_data, u_data, v_data]
 
     return data_info, data_obs

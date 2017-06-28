@@ -8,7 +8,7 @@ from ..zernike import U
 
 # All mathematical function have been adapted for the Effelsberg telescope
 __all__ = [
-    'illumination_pedestal', 'illumination_gauss', 'delta', 'phi',
+    'illumination_pedestal', 'illumination_gauss', 'delta', 'W',
     'phase', 'aperture', 'angular_spectrum'
     ]
 
@@ -109,13 +109,14 @@ def delta(x, y, d_z):
     y : ndarray
         Grid value for the x variable.
     d_z : float
-        Distance between the secondary and primary refelctor measured in rad.
-        It is the characteristic measurement to give an offset and an
-        out-of-focus image at the end.
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end.
 
     Returns
     -------
     delta : ndarray
+        Phase change in meters.
     """
 
     # Cassegrain/Gregorian (at focus) telescope
@@ -131,12 +132,12 @@ def delta(x, y, d_z):
     return delta
 
 
-def phi(rho, theta, K_coeff):
+def W(rho, theta, K_coeff):
     """
-    Computes the wavefront (aberration) function which coincides with the
-    aperture phase distribution in optics theory. The wavefront is an
-    approximation from the Zernike
-    circle polynomials and their coefficients, K(l, n).
+    Computes the wavefront (aberration) distribution. It tells how is the
+    error distributed and it belongs to the complex section of the aperture.
+    The wavefront is described as a parametrisation of the Zernike circle
+    polynomials times a set of coefficients.
 
     Parameters
     ----------
@@ -153,7 +154,7 @@ def phi(rho, theta, K_coeff):
     -------
     phi : ndarray
         Zernile polynomail already evaluated and multiplied by its parameter
-        or constant.
+        or constant. Its values are between -1 and 1.
     """
 
     # List which contains the allowed values for the U function.
@@ -163,21 +164,20 @@ def phi(rho, theta, K_coeff):
     N = np.array(ln)[:, 1]
 
     # Aperture phase distribution function in radians
-    phi = sum(
+    _W = sum(
         K_coeff[i] * U(L[i], N[i], theta, rho)
         for i in range(K_coeff.size)
-        ) * 2 * np.pi
+        )
 
-    return phi
+    return _W
 
 
 def phase(K_coeff, notilt, pr):
     """
-    Aperture phase distribution (or wavefront aberration function), for an
-    specific telescope primary reflector. In general the tilt (in optics,
-    deviation in the direction a beam of light propagates) is substracted from
-    its calculation. Function used to show the final results from the fit
-    procedure.
+    Aperture phase distribution (or phase error), for an specific telescope
+    primary reflector. In general the tilt (in optics, deviation in the
+    direction a beam of light propagates) is substracted from its calculation.
+    Function used to show the final results from the fit procedure.
 
     Parameters
     ----------
@@ -195,10 +195,12 @@ def phase(K_coeff, notilt, pr):
     -------
     phase : ndarray
         Aperture phase ditribution for an specific primary radius.
+    x : ndarray
+        x-axis dimentions for the primary reflector.
+    y : ndarray
+        y-axis dimentions for the primary reflector.
     """
 
-    # Necessary to copy the array, otherwise the original value will be
-    # forgotten, it is important for the fit procedure to keep it
     _K_coeff = K_coeff.copy()
 
     if notilt:
@@ -214,13 +216,16 @@ def phase(K_coeff, notilt, pr):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    _phase = phi(rho=r_norm, theta=t, K_coeff=_K_coeff)
-    _phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
+    _W = W(rho=r_norm, theta=t, K_coeff=_K_coeff)
+    _W[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
-    return _phase
+    # transforming from wavefront aberration to phase error
+    _phase = _W * 2 * np.pi
+
+    return [x, y, _phase]
 
 
-def aperture(x, y, K_coeff, d_z, I_coeff, illum_func, telgeo):
+def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
     """
     Aperture distribution function. Collection of individual functions,
     illumination, telescope geometry, phi and delta.
@@ -234,14 +239,16 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum_func, telgeo):
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
         circle polynomial.
-    d_z : float
-        Distance between the secondary and primary refelctor measured in rad.
-        It is the characteristic measurement to give an offset and an
-        out-of-focus image at the end.
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
         I_coeff = [i_amp, sigma_dB, x0, y0]
+    d_z : float
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end.
+    wavel : float
+        Wavelength of the observation in meters.
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
@@ -261,21 +268,26 @@ def aperture(x, y, K_coeff, d_z, I_coeff, illum_func, telgeo):
     # Normalisation to be used in the Zernike circle polynomials
     r_norm = r / pr
 
-    _phi = phi(rho=r_norm, theta=t, K_coeff=K_coeff)
+    _W = W(rho=r_norm, theta=t, K_coeff=K_coeff)
     _delta = delta(x=x, y=y, d_z=d_z)
-
-    # Wavefront aberration distribution (rad)
-    wavefront = (_phi + _delta)
 
     # Selection of the illumination function
     _illumination = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)
 
-    E = _blockage * _illumination * np.exp(wavefront * 1j)
+    # transformation from wavefront (aberration) to phase error
+    phi = _W * 2 * np.pi
+
+    # exponential argument in radians
+    E = _blockage * _illumination * np.exp(
+        (phi + (2 * np.pi * _delta / wavel)) * 1j
+        )
 
     return E
 
 
-def angular_spectrum(K_coeff, I_coeff, d_z, illum_func, telgeo, resolution):
+def angular_spectrum(
+    K_coeff, I_coeff, d_z, wavel, illum_func, telgeo, resolution
+        ):
     """
     Angular spectrum or (field) radiation pattern, it is the FFT2 computation
     of the aperture distribution in an rectangular grid. Passing the mayority
@@ -287,14 +299,16 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum_func, telgeo, resolution):
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
         circle polynomial.
-    d_z : float
-        Distance between the secondary and primary refelctor measured in rad.
-        It is the characteristic measurement to give an offset and an
-        out-of-focus image at the end.
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
         I_coeff = [i_amp, sigma_dB, x0, y0]
+    d_z : float
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end.
+    wavel : float
+        Wavelength of the observation in meters.
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
@@ -339,8 +353,9 @@ def angular_spectrum(K_coeff, I_coeff, d_z, illum_func, telgeo, resolution):
         x=x_grid,
         y=y_grid,
         K_coeff=K_coeff,
-        d_z=d_z,
         I_coeff=I_coeff,
+        d_z=d_z,
+        wavel=wavel,
         illum_func=illum_func,
         telgeo=telgeo
         )
