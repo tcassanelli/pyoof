@@ -39,6 +39,7 @@ def residual_true(
         u, v, aspectrum = angular_spectrum(
             K_coeff=K_coeff,
             d_z=d_z[i],
+            wavel=wavel,
             I_coeff=I_coeff,
             illum_func=illum_func,
             telgeo=telgeo,
@@ -142,7 +143,7 @@ def fit_beam(
 
     # All observed data needed to fit the beam
     data_info, data_obs = data
-    [name, pthto, freq, wavel, d_z_m, meanel] = data_info
+    [name, pthto, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
     [illum_func, illum_name, taper_name] = illumination
@@ -165,7 +166,7 @@ def fit_beam(
     print('File name: ', name)
     print('Observed frequency: ', freq, 'Hz')
     print('Wavelenght : ', wavel, 'm')
-    print('d_z (out-of-focus): ', d_z_m, 'm')
+    print('d_z (out-of-focus): ', d_z, 'm')
     print('Illumination to be fitted: ', illum_name)
 
     for order in range(1, order_max + 1):
@@ -179,7 +180,7 @@ def fit_beam(
         plim_rad = np.array(plim_u + plim_v)
 
         # d_z is given in units of wavelength (m/m)
-        d_z = np.array(d_z_m) * 2 * np.pi / wavel  # convert to radians
+        # d_z = np.array(d_z)  # needs to be a numpy array
 
         # Beam normalisation
         beam_data_norm = [beam_data[i] / beam_data[i].max() for i in range(3)]
@@ -277,7 +278,7 @@ def fit_beam(
             K_coeff=params_solution[4:],
             notilt=True,
             pr=pr
-            )
+            )[2]
 
         # Making nice table :)
         ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
@@ -290,7 +291,7 @@ def fit_beam(
 
         params_to_save = [params_names, params_solution, params_init]
         info_to_save = [
-            [tel_name], [name], [d_z_m[0]], [d_z_m[1]], [d_z_m[2]], [wavel],
+            [tel_name], [name], [d_z[0]], [d_z[1]], [d_z[2]], [wavel],
             [freq], [illum_name], [meanel], [resolution]
             ]
 

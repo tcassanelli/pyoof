@@ -7,8 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from astropy.io import fits, ascii
-from .aperture import angular_spectrum, phi
-from .math_functions import cart2pol, wavevector2degrees, wavevector2radians
+from .aperture import angular_spectrum, phase
+from .math_functions import wavevector2degrees, wavevector2radians
 from .aux_functions import extract_data_effelsberg, str2LaTeX
 
 __all__ = [
@@ -22,13 +22,13 @@ plt.style.use(os.path.join(plotstyle_dir, 'pyoof.mplstyle'))
 
 
 def plot_beam(
-    params, d_z_m, wavel, illum_func, telgeo, resolution, plim_rad, angle,
+    params, d_z, wavel, illum_func, telgeo, resolution, plim_rad, angle,
     title
         ):
     """
     Plot of the beam maps given fixed I_coeff coefficients and K_coeff
     coeffcients. It is the straight forward result from a least squares fit
-    procedure. There will be three maps, for three out-of-focus values, d_z_m,
+    procedure. There will be three maps, for three out-of-focus values, d_z,
     given.
 
     Parameters
@@ -36,12 +36,12 @@ def plot_beam(
     params : ndarray
         An stack of the illumination and Zernike circle polynomaisl
         coefficients. params = np.hstack([I_coeff, K_coeff])
-    d_z_m : list
+    d_z : list
         Distance between the secondary and primary refelctor measured in
-        meters. It is the characteristic measurement to give an offset and an
-        out-of-focus image at the end. d_z_m = [-d_z, 0, +d_z].
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end. d_z = [-d_z, 0, +d_z].
     wavel : float
-        Wavelength of the observation in m.
+        Wavelength of the observation in meters.
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
@@ -64,7 +64,7 @@ def plot_beam(
     -------
     fig : matplotlib.figure.Figure
         The three beam maps plotted from the input parameters. Each map with a
-        different offset d_z_m value. From left to right, -d_z, 0 and +d_z.
+        different offset d_z value. From left to right, -d_z, 0 and +d_z.
     """
 
     I_coeff = params[:4]
@@ -77,15 +77,14 @@ def plot_beam(
     else:
         wavevector_change = wavevector2radians
 
-    d_z = np.array(d_z_m) * 2 * np.pi / wavel
-
     u, v, aspectrum = [], [], []
     for _d_z in d_z:
 
         _u, _v, _aspectrum = angular_spectrum(
             K_coeff=K_coeff,
-            d_z=_d_z,
             I_coeff=I_coeff,
+            d_z=_d_z,
+            wavel=wavel,
             illum_func=illum_func,
             telgeo=telgeo,
             resolution=resolution
@@ -121,9 +120,9 @@ def plot_beam(
     levels = 10  # number of colour lines
 
     subtitle = [
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z_m[1]) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m'
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[0], 3)) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z[1]) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[2], 3)) + '$ m'
         ]
 
     for i in range(3):
@@ -158,28 +157,30 @@ def plot_beam(
     return fig
 
 
-def plot_data(u_data, v_data, beam_data, d_z_m, angle, title):
+def plot_data(u_data, v_data, beam_data, d_z, angle, title):
     """
-    Plot of the real data beam maps given given 3 out-of-focus values of d_z_m.
+    Plot of the real data beam maps given given 3 out-of-focus values of d_z.
 
     Parameters
     ----------
     u_data : ndarray
         x axis value for the 3 beam maps in radians. The values have to be
         flatten, one dimentional, and stacked in the same order as the
-        d_z_m = [-d_z, 0, +d_z] values from each beam map.
+        d_z = [-d_z, 0, +d_z] values from each beam map.
     v_data : ndarray
         y axis value for the 3 beam maps in radians. The values have to be
         flatten, one dimentional, and stacked in the same order as the
-        d_z_m = [-d_z, 0, +d_z] values from each beam map.
+        d_z = [-d_z, 0, +d_z] values from each beam map.
     beam_data : ndarray
         Amplitude value for the beam map in any unit (it will be normalised).
         The values have to be flatten, one dimentional, and stacked in the
-        same order as the d_z_m=[-d_z, 0, +d_z] values from each beam map.
-    d_z_m : list
+        same order as the d_z=[-d_z, 0, +d_z] values from each beam map.
+    d_z : list
         Distance between the secondary and primary refelctor measured in
-        meters. It is the characteristic measurement to give an offset and an
-        out-of-focus image at the end. d_z_m = [-d_z, 0, +d_z].
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end. d_z = [-d_z, 0, +d_z].
+    wavel : float
+        Wavelength of the observation in meters.
     angle : str
         Choose angle unit, it can be 'degrees' or 'radians'.
     title : str
@@ -189,7 +190,7 @@ def plot_data(u_data, v_data, beam_data, d_z_m, angle, title):
     -------
     fig : matplotlib.figure.Figure
         Data figure from the three observed beam maps. Each map with a
-        different offset d_z_m value. From left to right, -d_z, 0 and +d_z.
+        different offset d_z value. From left to right, -d_z, 0 and +d_z.
     """
 
     # Power pattern normalisation
@@ -210,9 +211,9 @@ def plot_data(u_data, v_data, beam_data, d_z_m, angle, title):
     vmax = np.max(beam_data)
 
     subtitle = [
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[0], 3)) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z_m[1]) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z_m[2], 3)) + '$ m'
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[0], 3)) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z[1]) + '$ m',
+        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[2], 3)) + '$ m'
         ]
 
     for i in range(3):
@@ -254,7 +255,7 @@ def plot_data(u_data, v_data, beam_data, d_z_m, angle, title):
     return fig
 
 
-def plot_phase(K_coeff, d_z_m, notilt, pr, title):
+def plot_phase(K_coeff, d_z, notilt, pr, title):
     """
     Plot of the phase or wavefront (aberration) distribution given the Zernike
     circle polynomials coefficients.
@@ -264,10 +265,10 @@ def plot_phase(K_coeff, d_z_m, notilt, pr, title):
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
         circle polynomial.
-    d_z_m : list
-        Distance between the secondary and primary refelctor measured in
-        meters. It is the characteristic measurement to give an offset and an
-        out-of-focus image at the end. Only one value for the d_z_m.
+    d_z : float
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end.
     notilt : bool
         True or False boolean to include or exclude the tilt coefficients in
         the aperture phase distribution. The Zernike circle polynomials are
@@ -284,31 +285,18 @@ def plot_phase(K_coeff, d_z_m, notilt, pr, title):
         primary dish.
     """
 
-    _K_coeff = K_coeff.copy()
-
     if notilt:
-        _K_coeff[1] = 0  # For value K(-1, 1) = 0
-        _K_coeff[2] = 0  # For value K(1, 1) = 0
         subtitle = (
-            '$\phi_\mathrm{no\,tilt}(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) +
-            '$ m'
+            '$\\varphi_\mathrm{no\,tilt}(x, y)$  $d_z=\pm' +
+            str(round(d_z, 3)) + '$ m'
             )
-        bartitle = '$\phi_\mathrm{no\,tilt}(x, y)$ amplitude rad'
+        bartitle = '$\\varphi_\mathrm{no\,tilt}(x, y)$ amplitude rad'
     else:
-        subtitle = '$\phi(x, y)$  $d_z=\pm' + str(round(d_z_m, 3)) + '$ m'
-        bartitle = '$\phi(x, y)$ amplitude rad'
+        subtitle = '$\\varphi(x, y)$  $d_z=\pm' + str(round(d_z, 3)) + '$ m'
+        bartitle = '$\\varphi(x, y)$ amplitude rad'
 
-    x = np.linspace(-pr, pr, 1e3)
-    y = x
-
-    x_grid, y_grid = np.meshgrid(x, y)
-
-    r, t = cart2pol(x_grid, y_grid)
-    r_norm = r / pr
-
-    extent = [x.min(), x.max(), y.min(), y.max()]
-    phase = phi(rho=r_norm, theta=t, K_coeff=_K_coeff)
-    phase[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
+    extent = [-pr, pr, -pr, pr]
+    [x, y, _phase] = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
 
     fig, ax = plt.subplots()
 
@@ -320,8 +308,8 @@ def plot_phase(K_coeff, d_z_m, notilt, pr, title):
     # to rotate and sign invert
     # phase = -phase[::-1, ::-1]
 
-    im = ax.imshow(phase, extent=extent)
-    ax.contour(x_grid, y_grid, phase, levels=levels, colors='k', alpha=0.5)
+    im = ax.imshow(_phase, extent=extent)
+    ax.contour(x, y, _phase, levels=levels, colors='k', alpha=0.5)
     cb = fig.colorbar(im, ax=ax, shrink=shrink)
     ax.set_title(subtitle)
     ax.set_ylabel('$y$ m')
@@ -425,7 +413,7 @@ def plot_data_effelsberg(pathfits, save, angle):
     """
 
     data_info, data_obs = extract_data_effelsberg(pathfits)
-    [name, _, _, d_z_m, _, pthto] = data_info
+    [name, _, _, d_z, _, pthto] = data_info
     [beam_data, u_data, v_data] = data_obs
 
     fig_data = plot_data(
@@ -433,7 +421,7 @@ def plot_data_effelsberg(pathfits, save, angle):
         v_data=v_data,
         beam_data=beam_data,
         title=name + ' observed beam',
-        d_z_m=d_z_m,
+        d_z=d_z,
         angle=angle
         )
 
@@ -479,7 +467,7 @@ def plot_fit_path(
     -------
     fig_beam : matplotlib.figure.Figure
         The three beam maps plotted from the input parameters. Each map with a
-        different offset d_z_m value. From left to right, -d_z, 0 and +d_z.
+        different offset d_z value. From left to right, -d_z, 0 and +d_z.
     fig_phase : matplotlib.figure.Figure
         Phase distribution for the Zernike circle polynomials for a telescope
         primary dish.
@@ -488,7 +476,7 @@ def plot_fit_path(
         the optimisation procedure.
     fig_data : matplotlib.figure.Figure
         Data figure from the three observed beam maps. Each map with a
-        different offset d_z_m value. From left to right, -d_z, 0 and +d_z
+        different offset d_z value. From left to right, -d_z, 0 and +d_z
     fig_cov : matplotlib.figure.Figure
         Triangle figure representing Variance-Covariance matrix.
     fig_corr : matplotlib.figure.Figure
@@ -511,8 +499,9 @@ def plot_fit_path(
     cov = np.genfromtxt(pathoof + '/cov_n' + str(n) + '.csv')
     corr = np.genfromtxt(pathoof + '/corr_n' + str(n) + '.csv')
 
-    d_z_m = np.array(
-        [fitinfo['d_z-'][0], fitinfo['d_z0'][0], fitinfo['d_z+'][0]])
+    d_z = np.array(
+        [fitinfo['d_z-'][0], fitinfo['d_z0'][0], fitinfo['d_z+'][0]]
+        )
     name = fitinfo['name'][0]
 
     # LaTeX problem with underscore _ -> \_
@@ -521,7 +510,7 @@ def plot_fit_path(
     fig_beam = plot_beam(
         params=np.array(fitpar['parfit']),
         title=name + ' fitted power pattern  $n=' + str(n) + '$',
-        d_z_m=d_z_m,
+        d_z=d_z,
         wavel=fitinfo['wavel'][0],
         illum_func=illum_func,
         telgeo=telgeo,
@@ -532,7 +521,7 @@ def plot_fit_path(
 
     fig_phase = plot_phase(
         K_coeff=np.array(fitpar['parfit'])[4:],
-        d_z_m=d_z_m[2],  # only one function for the three beam maps
+        d_z=d_z[2],  # only one function for the three beam maps
         title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
         notilt=True,
         pr=telgeo[1]
@@ -542,7 +531,7 @@ def plot_fit_path(
         u_data=u_data,
         v_data=v_data,
         beam_data=res,
-        d_z_m=d_z_m,
+        d_z=d_z,
         title=name + ' residual  $n=' + str(n) + '$',
         angle=angle,
         )
@@ -551,7 +540,7 @@ def plot_fit_path(
         u_data=u_data,
         v_data=v_data,
         beam_data=beam_data,
-        d_z_m=d_z_m,
+        d_z=d_z,
         title=name + ' observed power pattern',
         angle=angle
         )
@@ -586,7 +575,8 @@ def plot_fit_path(
     return fig_beam, fig_phase, fig_res, fig_data, fig_cov, fig_corr
 
 
-def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, angle):
+# I will erase this soon, need to be added to other script.
+def plot_fit_nikolic(pathoof, order, d_z, title, plim_rad, angle):
     """
     Designed to plot Bojan Nikolic solutions given a path to its oof output.
     """
@@ -601,7 +591,7 @@ def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, angle):
     fig_beam = plot_beam(
         params=params_nikolic,
         title=title + ' phase distribution Nikolic fit $n=' + str(n) + '$',
-        d_z_m=d_z_m,
+        d_z=d_z,
         wavel=wavelength,
         illum='nikolic',
         plim_rad=plim_rad,
@@ -610,7 +600,7 @@ def plot_fit_nikolic(pathoof, order, d_z_m, title, plim_rad, angle):
 
     fig_phase = plot_phase(
         params=params_nikolic,
-        d_z_m=d_z_m[2],
+        d_z=d_z[2],
         title=title + ' Nikolic fit $n=' + str(n) + '$',
         notilt=True
         )
