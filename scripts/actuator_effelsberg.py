@@ -82,7 +82,7 @@ def actuator_displacement(pathoof, order, save):
         show_label=True,
         title=(
             'Actuators ' + name_LaTeX + ' $n=' + str(n) + '$ meanel$=$' +
-            str(np.round(meanel, 2) + ' deg')
+            str(np.round(meanel, 2)) + ' deg'
             )
         )
 
@@ -136,7 +136,7 @@ def plot_actuator(phase, rad_to_um, pts, act, act_name, show_label, title):
 if __name__ == "__main__":
 
     # Get solution from fit_beam.py
-    pathoof = '../../data/S9mm/OOF_out/S9mm_0397_3C84_H1_SB'
+    pathoof = '../../data/S9mm/OOF_out/S9mm_0397_3C84_H1_SB-001'
     n = 5
 
     displ = actuator_displacement(
