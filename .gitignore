@@ -1,3 +1,7 @@
-build/
-dist/
+# Packages/installer info
+build
+dist
 pyoof.egg-info/
+
+# Compiled files
+__pycache__
