@@ -101,8 +101,8 @@ def plot_beam(
     if plim_rad is None:
         pr = telgeo[1]  # primary reflector radius
         b_factor = 1.22 * wavel / (2 * pr)  # Beamwidth
-        plim_u = [-700 * b_factor, 700 * b_factor]
-        plim_v = [-700 * b_factor, 700 * b_factor]
+        plim_u = [-600 * b_factor, 600 * b_factor]
+        plim_v = [-600 * b_factor, 600 * b_factor]
         figsize = (14, 4.5)
         shrink = 0.88
 
@@ -139,8 +139,8 @@ def plot_beam(
         ax[i].set_title(subtitle[i])
         ax[i].set_ylabel('$v$ ' + uv_title)
         ax[i].set_xlabel('$u$ ' + uv_title)
-        ax[i].set_ylim(plim_v[0], plim_v[1])
-        ax[i].set_xlim(plim_u[0], plim_u[1])
+        ax[i].set_ylim(*plim_v)
+        ax[i].set_xlim(*plim_u)
         ax[i].grid('off')
 
         cb.formatter.set_powerlimits((0, 0))
