@@ -172,7 +172,7 @@ def W(rho, theta, K_coeff):
     return _W
 
 
-def phase(K_coeff, notilt, pr):
+def phase(K_coeff, notilt, pr, resolution=1e3):
     """
     Aperture phase distribution (or phase error), for an specific telescope
     primary reflector. In general the tilt (in optics, deviation in the
@@ -208,8 +208,8 @@ def phase(K_coeff, notilt, pr):
         _K_coeff[2] = 0  # For value K(1, 1) = 0
 
     # Default resolution for the phase map
-    x = np.linspace(-pr, pr, 1e3)
-    y = np.linspace(-pr, pr, 1e3)
+    x = np.linspace(-pr, pr, resolution)
+    y = np.linspace(-pr, pr, resolution)
 
     x_grid, y_grid = np.meshgrid(x, y)
 
@@ -275,12 +275,11 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
     _illumination = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)
 
     # transformation from wavefront (aberration) to phase error
-    phi = _W * 2 * np.pi
+    _phi = (_W + _delta / wavel) * 2 * np.pi
+    # phase error plus the path difference
 
     # exponential argument in radians
-    E = _blockage * _illumination * np.exp(
-        (phi + (2 * np.pi * _delta / wavel)) * 1j
-        )
+    E = _blockage * _illumination * np.exp(_phi * 1j)
 
     return E
 
