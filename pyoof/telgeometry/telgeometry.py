@@ -71,8 +71,9 @@ def delta_manual(Fp, F):
 
     Returns
     -------
-    delta : ndarray
-        Phase change in meters.
+    delta : func
+        It returns the function delta(x, y, d_z), which depends only on the
+        grid and radial offset values.
     """
 
     def delta(x, y, d_z):
