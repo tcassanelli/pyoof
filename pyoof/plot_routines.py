@@ -57,7 +57,7 @@ def plot_beam(
         degrees or radias depending which one is chosen in angle function
         parameter. plim_rad = np.array([umin, umax, vmin, vmax]).
     angle : str
-        Choose angle unit, it can be 'degrees' or 'radians'.
+        Angle unit, it can be 'degrees' or 'radians'.
     title : str
         Figure title.
 
@@ -183,7 +183,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title):
     wavel : float
         Wavelength of the observation in meters.
     angle : str
-        Choose angle unit, it can be 'degrees' or 'radians'.
+        Angle unit, it can be 'degrees' or 'radians'.
     title : str
         Figure title.
 
@@ -458,7 +458,7 @@ def plot_fit_path(
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
     angle : str
-        Choose angle unit, it can be 'degrees' or 'radians'.
+        Angle unit, it can be 'degrees' or 'radians'.
     plim_rad : ndarray
         Contains the maximum values for the u and v wave-vectors, it can be in
         degrees or radias depending which one is chosen in angle function

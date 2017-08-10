@@ -8,8 +8,8 @@ from ..zernike import U
 
 # All mathematical function have been adapted for the Effelsberg telescope
 __all__ = [
-    'illumination_pedestal', 'illumination_gauss', 'W',
-    'phase', 'aperture', 'angular_spectrum'
+    'illumination_pedestal', 'illumination_gauss', 'W', 'phase', 'aperture',
+    'angular_spectrum'
     ]
 
 
@@ -220,6 +220,7 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
         List that contains the blockage function, optical path difference
         (delta function), and the primary radius.
         telego = [blockage, delta, int].
+
     Returns
     -------
     E : ndarray

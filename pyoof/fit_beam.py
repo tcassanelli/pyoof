@@ -135,6 +135,38 @@ def params_complete(params, idx, N_K_coeff):
 def fit_beam(
     data, order_max, illumination, telescope, fit_previous, resolution, angle
         ):
+    """
+    Computes the Zernike circle polynomials coefficients using the least
+    squares minimization. Obsevational data is required.
+
+    Parameters
+    ----------
+    data : list
+        Input data necessary to perform the lest squares minimization.
+        data = [
+            [beam_data, u_data, v_data],
+            [name, pthto, freq, wavel, d_z, meanel]
+            ]
+    order_max : int
+        Maximum order to be fitted in the least squares minimization, e.g.
+        order 3 will calculate order 1, 2 and 3.
+    illumination : list
+        List which contains illumination function, and two strings.
+        illumination = [illum_func, illum_name, taper_name].
+    telescope : list
+        List which contains blockage function, delta function, radius primary
+        dish and the telescope name (string).
+        telescope = [blockage, delta, pr, tel_name].
+    fit_previous : bool
+        If set to True will fit the coefficients from the previous minimization
+        this feature is strongly suggested.
+    resolution : int
+        Fast Fourier Transform resolution for a rectancular grid. The input
+        value has to be greater or equal to the telescope resolution and a
+        power of 2 for FFT faster processing.
+    angle : str
+        Angle unit, it can be 'degrees' or 'radians'.
+    """
 
     start_time = time.time()
 
