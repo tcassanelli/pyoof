@@ -106,8 +106,8 @@ def store_csv(name, order, name_dir, save_to_csv):
     name : str
         File name of the fits file to be optimised.
     order : int
-        Order of the fit or opmisation done to the beam maps, also called n in
-        the Zernike circle polynomials convention.
+        Maximum order for the optimization in the Zernike circle polynomials
+        coefficients.
     name_dir : str
         Directory of the fits file.
     save_to_csv : list

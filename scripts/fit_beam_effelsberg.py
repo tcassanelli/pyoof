@@ -1,11 +1,18 @@
 from pyoof import aperture, telgeometry, fit_beam, extract_data_effelsberg
 
+# telescope = [blockage, delta, pr, name]
 telescope = dict(
-    effelsberg=[telgeometry.blockage_effelsberg, 50, 'effelsberg'],
+    effelsberg=[
+        telgeometry.blockage_effelsberg,
+        telgeometry.delta_effelsberg,
+        50,  # primary refelctor radius
+        'effelsberg'
+        ],
     manual=[
-        telgeometry.blockage_manual(pr=50, sr=5, a=1, L=45),
-        50,
-        'created_telescope'
+        telgeometry.blockage_manual(pr=50, sr=3.25, a=0, L=0),
+        telgeometry.delta_effelsberg,
+        50,  # primary refelctor radius
+        'effelsberg partial blockage'
         ]
     )
 
@@ -23,7 +30,7 @@ def fit_beam_effelsberg(pathfits):
 
     fit_beam(
         data=[data_info, data_obs],
-        order_max=5,  # it'll fit from 1 to 5
+        order_max=5,  # it'll fit from 1 to 7
         illumination=illumination['pedestal'],
         telescope=telescope['effelsberg'],
         fit_previous=True,
