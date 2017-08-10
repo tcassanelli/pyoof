@@ -147,8 +147,8 @@ def fit_beam(
     [beam_data, u_data, v_data] = data_obs
 
     [illum_func, illum_name, taper_name] = illumination
-    [blockage, pr, tel_name] = telescope
-    telgeo = [blockage, pr]
+    [blockage, delta, pr, tel_name] = telescope
+    telgeo = telescope[:3]
 
     # Storing files in OOF_out directory
     # pthto: path or directory where the fits file is located

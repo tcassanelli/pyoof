@@ -6,8 +6,88 @@ import numpy as np
 from ..math_functions import linear_equation
 
 __all__ = [
+    'delta_effelsberg', 'delta_manual',
     'blockage_manual', 'blockage_effelsberg'
     ]
+
+
+def delta_effelsberg(x, y, d_z):
+    """
+    Optical path difference or delta function. Given by geometry of
+    the telescope and defocus parameter. For Cassegrain/Gregorain geometries.
+    Foci specific for Effelsberg radio telescope. In the aperture function
+    delta is transformed to radians
+
+    Parameters
+    ----------
+    x : ndarray
+        Grid value for the x variable.
+    y : ndarray
+        Grid value for the x variable.
+    d_z : float
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end.
+
+    Returns
+    -------
+    delta : ndarray
+        Phase change in meters.
+    """
+
+    # Cassegrain/Gregorian (at focus) telescope
+    Fp = 30  # Focus primary reflector m
+    F = 387.39435  # Total focus Gregorian telescope m
+    r = np.sqrt(x ** 2 + y ** 2)  # polar coordinates radius
+    a = r / (2 * Fp)
+    b = r / (2 * F)
+
+    delta = d_z * ((1 - a ** 2) / (1 + a ** 2) + (1 - b ** 2) / (1 + b ** 2))
+
+    return delta
+
+
+def delta_manual(Fp, F):
+    """
+    Optical path difference or delta function. Given by geometry of
+    the telescope and defocus parameter. For Cassegrain/Gregorain geometries.
+    Primary and total (or effective) foci are required. In the aperture
+    function delta is transformed to radians
+
+    Parameters
+    ----------
+    x : ndarray
+        Grid value for the x variable.
+    y : ndarray
+        Grid value for the x variable.
+    d_z : float
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end.
+    Fp : float
+        Focus primary reflector (main) in meters.
+    F : float
+        Effective or totla focus for the telescope mirror configuration.
+
+    Returns
+    -------
+    delta : ndarray
+        Phase change in meters.
+    """
+
+    def delta(x, y, d_z):
+        # Cassegrain/Gregorian (at focus) telescope
+        r = np.sqrt(x ** 2 + y ** 2)  # polar coordinates radius
+        a = r / (2 * Fp)
+        b = r / (2 * F)
+
+        _delta = d_z * (
+            (1 - a ** 2) / (1 + a ** 2) + (1 - b ** 2) / (1 + b ** 2)
+            )
+
+        return _delta
+
+    return delta
 
 
 def blockage_manual(pr, sr, a, L):

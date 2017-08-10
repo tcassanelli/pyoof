@@ -8,7 +8,7 @@ from ..zernike import U
 
 # All mathematical function have been adapted for the Effelsberg telescope
 __all__ = [
-    'illumination_pedestal', 'illumination_gauss', 'delta', 'W',
+    'illumination_pedestal', 'illumination_gauss', 'W',
     'phase', 'aperture', 'angular_spectrum'
     ]
 
@@ -95,41 +95,6 @@ def illumination_gauss(x, y, I_coeff, pr):
         )
 
     return illumination
-
-
-def delta(x, y, d_z):
-    """
-    Delta or phase change due to defocus function. Given by geometry of
-    the telescope and defocus parameter. For Cassegrain/Gregorain geometries.
-
-    Parameters
-    ----------
-    x : ndarray
-        Grid value for the x variable.
-    y : ndarray
-        Grid value for the x variable.
-    d_z : float
-        Distance between the secondary and primary reflector measured in
-        meters (radial offset). It is the characteristic measurement to give
-        an offset and an out-of-focus image at the end.
-
-    Returns
-    -------
-    delta : ndarray
-        Phase change in meters.
-    """
-
-    # Cassegrain/Gregorian (at focus) telescope
-    f1 = 30  # Focus primary reflector m
-    F = 387.66  # Total focus Cassegrain/Gregorian telescope m
-    r = np.sqrt(x ** 2 + y ** 2)  # polar coordinates radius
-    a = r / (2 * f1)
-    b = r / (2 * F)
-
-    # d_z has to be in radians
-    delta = d_z * ((1 - a ** 2) / (1 + a ** 2) + (1 - b ** 2) / (1 + b ** 2))
-
-    return delta
 
 
 def W(rho, theta, K_coeff):
@@ -252,8 +217,9 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
-        List that contains the blockage function and the primary radius.
-        telego = [function, int].
+        List that contains the blockage function, optical path difference
+        (delta function), and the primary radius.
+        telego = [blockage, delta, int].
     Returns
     -------
     E : ndarray
@@ -262,7 +228,7 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 
     r, t = cart2pol(x, y)
 
-    [blockage, pr] = telgeo
+    [blockage, delta, pr] = telgeo
     _blockage = blockage(x=x, y=y)
 
     # Normalisation to be used in the Zernike circle polynomials
@@ -311,8 +277,9 @@ def angular_spectrum(
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
-        List that contains the blockage function and the primary radius.
-        telego = [function, int].
+        List that contains the blockage function, optical path difference
+        (delta function), and the primary radius.
+        telego = [blockage, delta, int].
     resolution : int
         Fast Fourier Transform resolution for a rectancular grid. The input
         value has to be greater or equal to the telescope resolution and a
@@ -332,7 +299,7 @@ def angular_spectrum(
     """
 
     # Arrays to generate angular spectrum model
-    pr = telgeo[1]
+    pr = telgeo[2]
     box_size = pr * 5  # 5 times the size of the pr
 
     # default resolution 2 ** 10

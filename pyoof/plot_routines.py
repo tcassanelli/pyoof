@@ -5,7 +5,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.mlab import griddata
+from scipy import interpolate
 from astropy.io import fits, ascii
 from .aperture import angular_spectrum, phase
 from .math_functions import wavevector2degrees, wavevector2radians
@@ -45,8 +45,9 @@ def plot_beam(
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
-        List that contains the blockage function and the primary radius.
-        telego = [function, int].
+        List that contains the blockage function, optical path difference
+        (delta function), and the primary radius.
+        telego = [blockage, delta, int].
     resolution : int
         Fast Fourier Transform resolution for a rectancular grid. The input
         value has to be greater or equal to the telescope resolution and a
@@ -99,7 +100,7 @@ def plot_beam(
 
     # Limits, they need to be transformed to degrees
     if plim_rad is None:
-        pr = telgeo[1]  # primary reflector radius
+        pr = telgeo[2]  # primary reflector radius
         b_factor = 1.22 * wavel / (2 * pr)  # Beamwidth
         plim_u = [-600 * b_factor, 600 * b_factor]
         plim_v = [-600 * b_factor, 600 * b_factor]
@@ -221,15 +222,13 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title):
         u_ng = np.linspace(u_data[i].min(), u_data[i].max(), 300)
         v_ng = np.linspace(v_data[i].min(), v_data[i].max(), 300)
 
-        beam_ng = griddata(
+        beam_ng = interpolate.griddata(
             # coordinates of grid points to interpolate from.
-            x=u_data[i],
-            y=v_data[i],
-            z=beam_data[i],
+            points=(u_data[i], v_data[i]),
+            values=beam_data[i],
             # coordinates of grid points to interpolate to.
-            xi=u_ng,
-            yi=v_ng,
-            interp='linear'
+            xi=tuple(np.meshgrid(u_ng, v_ng)),
+            method='cubic'
             )
 
         extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
@@ -309,7 +308,7 @@ def plot_phase(K_coeff, d_z, notilt, pr, title):
     # phase = -phase[::-1, ::-1]
 
     im = ax.imshow(_phase, extent=extent)
-    ax.contour(x, y, _phase, levels=levels, colors='k', alpha=0.5)
+    ax.contour(x, y, _phase, levels=levels, colors='k', alpha=0.3)
     cb = fig.colorbar(im, ax=ax, shrink=shrink)
     ax.set_title(subtitle)
     ax.set_ylabel('$y$ m')
@@ -445,9 +444,13 @@ def plot_fit_path(
     ----------
     pathoof : str
         Path to the pyoof output, 'OOF_out/directory'.
+    order : int
+        Maximum order for the optimization in the Zernike circle polynomials
+        coefficients.
     telgeo : list
-        List that contains the blockage function and the primary radius.
-        telego = [function, int].
+        List that contains the blockage function, optical path difference
+        (delta function), and the primary radius.
+        telego = [blockage, delta, int].
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     resolution : int
@@ -524,7 +527,7 @@ def plot_fit_path(
         d_z=d_z[2],  # only one function for the three beam maps
         title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
         notilt=True,
-        pr=telgeo[1]
+        pr=telgeo[2]
         )
 
     fig_res = plot_data(

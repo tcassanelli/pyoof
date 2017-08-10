@@ -29,7 +29,7 @@ def actuator_displacement(pathoof, order, save):
     theta = np.radians(np.linspace(7.5, 360 - 7.5, 24))
 
     correct = 5  # correction in mm for the last ring
-    R = np.array([1210, 1880, 2600, 3250 - correct]) * 1e-3
+    R = np.array([3250 - correct, 2600, 1880, 1210]) * 1e-3
 
     # Actuator positions
     act_x = np.outer(R, np.cos(theta)).reshape(-1)
@@ -131,6 +131,8 @@ def plot_actuator(phase, rad_to_um, pts, act, act_name, show_label, title):
     ax.set_title(title)
 
     return fig
+
+# CORRECT THE ORDER OF THE ACTUATORS, IT IS WRONG!
 
 
 if __name__ == "__main__":
