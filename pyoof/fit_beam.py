@@ -9,10 +9,10 @@ from scipy import interpolate, optimize
 import os
 import time
 import yaml
-from .aperture import angular_spectrum, phase
+from .aperture import radiation_pattern, phase
 from .math_functions import wavevector2radians, co_matrices
 from .plot_routines import plot_fit_path
-from .aux_functions import store_csv, store_ascii
+from .aux_functions import store_data_csv, store_info_csv
 
 __all__ = [
     'residual_true', 'residual', 'params_complete', 'fit_beam',
@@ -29,6 +29,19 @@ def residual_true(
     params, beam_data, u_data, v_data, d_z, wavel, illum_func, telgeo,
     inter, resolution
         ):
+    """
+    Computes the true residual ready to use for the fit_beam function.
+
+    Parameters
+    ----------
+    params : ndarray
+        Contains the parameters that will be fitted in the least squares
+        minimization. The parameters must be in the following sequence
+        params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)].
+    beam_data : list
+        The beam_data is a list with the three observed maps, minus, zero and
+        plus out-of-focus.
+    """
 
     I_coeff = params[:4]
     K_coeff = params[4:]
@@ -36,7 +49,7 @@ def residual_true(
     beam_model = []
     for i in range(3):
 
-        u, v, aspectrum = angular_spectrum(
+        u, v, F = radiation_pattern(
             K_coeff=K_coeff,
             d_z=d_z[i],
             wavel=wavel,
@@ -46,8 +59,8 @@ def residual_true(
             resolution=resolution
             )
 
-        beam = np.abs(aspectrum) ** 2
-        beam_norm = beam / beam.max()
+        power_pattern = np.abs(F) ** 2
+        power_norm = power_pattern / power_pattern.max()
 
         if inter:
 
@@ -59,7 +72,7 @@ def residual_true(
             # RegularGridInterpolator
             intrp = interpolate.RegularGridInterpolator(
                 points=(u_rad, v_rad),  # points defining grid
-                values=beam_norm.T,  # data in grid
+                values=power_norm.T,  # data in grid
                 method='linear'  # linear or nearest
                 )
 
@@ -67,7 +80,7 @@ def residual_true(
             beam_model.append(intrp(np.array([u_data[i], v_data[i]]).T))
 
         else:
-            beam_model.append(beam_norm)
+            beam_model.append(power_norm)
 
     beam_model_all = np.hstack((beam_model[0], beam_model[1], beam_model[2]))
     beam_data_all = np.hstack((beam_data[0], beam_data[1], beam_data[2]))
@@ -133,11 +146,14 @@ def params_complete(params, idx, N_K_coeff):
 
 # Insert path for the fits file with pre-calibration
 def fit_beam(
-    data, order_max, illumination, telescope, fit_previous, resolution, angle
+    data, order_max, illumination, telescope, fit_previous, resolution, angle,
+    make_plots
         ):
     """
     Computes the Zernike circle polynomials coefficients using the least
-    squares minimization. Obsevational data is required.
+    squares minimization, stores and plot data from the analysis.
+    Obsevational data is required. The most important function in the pyoof
+    package, please provide data as stated here or in the repository examples.
 
     Parameters
     ----------
@@ -147,6 +163,14 @@ def fit_beam(
             [beam_data, u_data, v_data],
             [name, pthto, freq, wavel, d_z, meanel]
             ]
+        The beam_data is a list with the three observed maps, minus, zero and
+        plus out-of-focus. u_data and v_data are the x- y-axis in radians for
+        the three maps minus, zero and plus out-of-focus both are lists.
+        name is a string characterising the observation, pthto the path to the
+        file. freq the frequency in Hz, wavel the wavelength in m. d_z is a
+        list which contains the radial offsets from minus, zero and plus
+        defocus. meanel is the mean elevation for the three beam maps, not
+        necessary for the OOF holography but importat to keep track of.
     order_max : int
         Maximum order to be fitted in the least squares minimization, e.g.
         order 3 will calculate order 1, 2 and 3.
@@ -223,7 +247,7 @@ def fit_beam(
         # Looking for result parameters lower order
         if fit_previous and n != 1:
             N_K_coeff_previous = n * (n + 1) // 2
-            path_params_previous = name_dir + '/fitpar_n' + str(n - 1) + '.dat'
+            path_params_previous = name_dir + '/fitpar_n' + str(n - 1) + '.csv'
             params_to_add = N_K_coeff - N_K_coeff_previous
 
             if os.path.exists(path_params_previous):
@@ -235,7 +259,7 @@ def fit_beam(
             else:
                 print(
                     '\n ERROR: There is no previous parameters file fitpar_n' +
-                    str(n - 1) + '.dat in directory \n'
+                    str(n - 1) + '.csv in directory \n'
                     )
         else:
             params_init = np.array(
@@ -322,22 +346,34 @@ def fit_beam(
             params_names.append('K(' + str(L[i]) + ',' + str(N[i]) + ')')
 
         params_to_save = [params_names, params_solution, params_init]
-        info_to_save = [
-            [tel_name], [name], [d_z[0]], [d_z[1]], [d_z[2]], [wavel],
-            [freq], [illum_name], [meanel], [resolution]
-            ]
 
         # Storing files in directory
         print('... Saving data ... \n')
 
         # To store fit information and found parameters in ascii file
-        store_ascii(
-            name=name,
-            order=n,
-            name_dir=name_dir,
-            params_to_save=params_to_save,
-            info_to_save=info_to_save
+        ascii.write(
+            table=params_to_save,
+            output=name_dir + '/fitpar_n' + str(n) + '.csv',
+            names=['parname', 'parfit', 'parinit'],
+            comment='Fitted parameters ' + name
             )
+
+        if n == 1:
+            # Experiment
+            info_dict = {
+                'telescope': tel_name,
+                'name': name,
+                'd_z-': d_z[0],
+                'd_z0': d_z[1],
+                'd_z+': d_z[2],
+                'wavel': wavel,
+                'freq': freq,
+                'illumination': illum_name,
+                'meanel': meanel,
+                'fft_resolution': resolution
+                }
+
+            store_info_csv(info_dict=info_dict, name_dir=name_dir)
 
         # To store large files in csv format
         save_to_csv = [
@@ -345,7 +381,7 @@ def fit_beam(
             _phase, cov_ptrue, corr_ptrue
             ]
 
-        store_csv(
+        store_data_csv(
             name=name,
             order=n,
             name_dir=name_dir,
@@ -353,23 +389,24 @@ def fit_beam(
             )
 
         # Printing the results from saved ascii file
-        print(ascii.read(name_dir + '/fitpar_n' + str(n) + '.dat'))
+        print(ascii.read(name_dir + '/fitpar_n' + str(n) + '.csv'))
 
-        # Making all relevant plots
-        print('\n... Making plots ...')
+        if make_plots:
+            # Making all relevant plots
+            print('\n... Making plots ...')
 
-        plot_fit_path(
-            pathoof=name_dir,
-            order=n,
-            telgeo=telgeo,
-            illum_func=illum_func,
-            plim_rad=plim_rad,
-            save=True,
-            angle=angle,
-            resolution=resolution
-            )
+            plot_fit_path(
+                pathoof=name_dir,
+                order=n,
+                telgeo=telgeo,
+                illum_func=illum_func,
+                plim_rad=plim_rad,
+                save=True,
+                angle=angle,
+                resolution=resolution
+                )
 
-        plt.close('all')
+            plt.close('all')
 
     final_time = np.round((time.time() - start_time) / 60, 2)
     print('\n **** OOF FIT COMPLETED AT ' + str(final_time) + ' mins **** \n')

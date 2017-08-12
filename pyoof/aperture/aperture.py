@@ -8,12 +8,12 @@ from ..zernike import U
 
 # All mathematical function have been adapted for the Effelsberg telescope
 __all__ = [
-    'illumination_pedestal', 'illumination_gauss', 'W', 'phase', 'aperture',
-    'angular_spectrum'
+    'illum_pedestal', 'illum_gauss', 'wavefront', 'phase', 'aperture',
+    'radiation_pattern'
     ]
 
 
-def illumination_pedestal(x, y, I_coeff, pr, order=2):
+def illum_pedestal(x, y, I_coeff, pr, order=2):
     """
     Illumination function, parabolic taper on a pedestal, sometimes called
     amplitude, apodization, taper or window function. Represents the
@@ -37,7 +37,7 @@ def illumination_pedestal(x, y, I_coeff, pr, order=2):
 
     Returns
     -------
-    illumination : ndarray
+    Ea : ndarray
         Illumination distribution
     """
 
@@ -52,12 +52,12 @@ def illumination_pedestal(x, y, I_coeff, pr, order=2):
 
     c = 10 ** (c_dB / 20.)
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
-    illumination = i_amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** n)
+    Ea = i_amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** n)
 
-    return illumination
+    return Ea
 
 
-def illumination_gauss(x, y, I_coeff, pr):
+def illum_gauss(x, y, I_coeff, pr):
     """
     Illumination function, Gaussian distribution, sometimes called
     amplitude, apodization, taper or window function. Represents the
@@ -79,7 +79,7 @@ def illumination_gauss(x, y, I_coeff, pr):
 
     Returns
     -------
-    illumination : ndarray
+    Ea : ndarray
         Illumination distribution
     """
 
@@ -89,15 +89,15 @@ def illumination_gauss(x, y, I_coeff, pr):
     x0 = I_coeff[2]  # Centre illumination primary reflector
     y0 = I_coeff[3]
 
-    illumination = (
+    Ea = (
         i_amp *
         np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma * pr) ** 2))
         )
 
-    return illumination
+    return Ea
 
 
-def W(rho, theta, K_coeff):
+def wavefront(rho, theta, K_coeff):
     """
     Computes the wavefront (aberration) distribution. It tells how is the
     error distributed and it belongs to the complex section of the aperture.
@@ -129,12 +129,12 @@ def W(rho, theta, K_coeff):
     N = np.array(ln)[:, 1]
 
     # Aperture phase distribution function in radians
-    _W = sum(
+    W = sum(
         K_coeff[i] * U(L[i], N[i], theta, rho)
         for i in range(K_coeff.size)
         )
 
-    return _W
+    return W
 
 
 def phase(K_coeff, notilt, pr, resolution=1e3):
@@ -155,10 +155,12 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
         related to tilt through U(l=-1, n=1) and U(l=1, n=1).
     pr : float
         Primary reflector radius.
+    resolution : int
+        Resolution for the phase map, usually used 1e3 in the pyoof package.
 
     Returns
     -------
-    phase : ndarray
+    phi : ndarray
         Aperture phase ditribution for an specific primary radius.
     x : ndarray
         x-axis dimentions for the primary reflector.
@@ -181,13 +183,13 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     r, t = cart2pol(x_grid, y_grid)
     r_norm = r / pr
 
-    _W = W(rho=r_norm, theta=t, K_coeff=_K_coeff)
-    _W[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
+    W = wavefront(rho=r_norm, theta=t, K_coeff=_K_coeff)
+    W[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
     # transforming from wavefront aberration to phase error
-    _phase = _W * 2 * np.pi
+    phi = W * 2 * np.pi
 
-    return [x, y, _phase]
+    return x, y, phi
 
 
 def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
@@ -229,29 +231,29 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 
     r, t = cart2pol(x, y)
 
-    [blockage, delta, pr] = telgeo
-    _blockage = blockage(x=x, y=y)
+    [block_func, delta, pr] = telgeo
+    B = block_func(x=x, y=y)
 
     # Normalisation to be used in the Zernike circle polynomials
     r_norm = r / pr
 
-    _W = W(rho=r_norm, theta=t, K_coeff=K_coeff)
+    W = wavefront(rho=r_norm, theta=t, K_coeff=K_coeff)
     _delta = delta(x=x, y=y, d_z=d_z)
 
     # Selection of the illumination function
-    _illumination = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)
+    Ea = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)
 
     # transformation from wavefront (aberration) to phase error
-    _phi = (_W + _delta / wavel) * 2 * np.pi
+    phi = (W + _delta / wavel) * 2 * np.pi
     # phase error plus the path difference
 
     # exponential argument in radians
-    E = _blockage * _illumination * np.exp(_phi * 1j)
+    E = B * Ea * np.exp(phi * 1j)
 
     return E
 
 
-def angular_spectrum(
+def radiation_pattern(
     K_coeff, I_coeff, d_z, wavel, illum_func, telgeo, resolution
         ):
     """
@@ -316,7 +318,7 @@ def angular_spectrum(
     # fft2 doesn't work without a grid
     x_grid, y_grid = np.meshgrid(x, y)
 
-    _aperture = aperture(
+    E = aperture(
         x=x_grid,
         y=y_grid,
         K_coeff=K_coeff,
@@ -328,7 +330,7 @@ def angular_spectrum(
         )
 
     # FFT, normalisation not needed, comparing normalised beam
-    F = np.fft.fft2(_aperture)  # * 4 / np.sqrt(Nx * Ny) # Normalisation
+    F = np.fft.fft2(E)  # * 4 / np.sqrt(Nx * Ny) # Normalisation
     F_shift = np.fft.fftshift(F)
 
     u, v = np.fft.fftfreq(x.size, dx), np.fft.fftfreq(y.size, dy)

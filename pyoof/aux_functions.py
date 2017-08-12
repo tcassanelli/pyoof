@@ -6,17 +6,18 @@ import os
 from scipy.constants import c as light_speed
 from astropy.io import fits
 import numpy as np
-from astropy.io import ascii
+import csv
 
 __all__ = [
-    'extract_data_effelsberg', 'str2LaTeX', 'store_csv', 'store_ascii'
+    'extract_data_effelsberg', 'str2LaTeX', 'store_data_csv',
+    'store_info_csv', 'read_info_csv'
     ]
 
 
 def extract_data_effelsberg(pathfits):
     """
-    Extracts the necessary data for the pyoof package, for Effelsberg
-    telescope data only.
+    Extracts data from the Effelsberg OOF holography observations, ready to
+    use for the least squares minimization.
 
     Parameters
     ----------
@@ -29,7 +30,6 @@ def extract_data_effelsberg(pathfits):
     data_info : list
         It contains all extra data besides the beam map.
         data_info = [name, pthto, freq, wavel, d_z, meanel]
-
     data_obs : list
         It contains the main data for the leat squares optimisation.
         data_obs = [beam_data, u_data, v_data]
@@ -45,9 +45,6 @@ def extract_data_effelsberg(pathfits):
     # Mean elevation
     meanel = hdulist[0].header['MEANEL']  # Degrees
 
-    # name of the fit file to fit
-    name = os.path.split(pathfits)[1][:-5]
-
     beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
     u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
     v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
@@ -61,6 +58,8 @@ def extract_data_effelsberg(pathfits):
 
     # path or directory where the fits file is located
     pthto = os.path.split(pathfits)[0]
+    # name of the fit file to fit
+    name = os.path.split(pathfits)[1][:-5]
 
     data_info = [name, pthto, freq, wavel, d_z, meanel]
     data_obs = [beam_data, u_data, v_data]
@@ -95,11 +94,11 @@ def str2LaTeX(python_string):
     return LaTeX_string
 
 
-def store_csv(name, order, name_dir, save_to_csv):
+def store_data_csv(name, order, name_dir, save_to_csv):
     """
-    Function that stores all important information in a CSVs files after the
+    Function that stores all important information in a csv files after the
     least squares optimisation has finished. It will be saved in the
-    'OOF_out/name' directory
+    'OOF_out/name' directory.
 
     Parameters
     ----------
@@ -132,6 +131,11 @@ def store_csv(name, order, name_dir, save_to_csv):
         '/cov_n' + str(order) + '.csv', '/corr_n' + str(order) + '.csv'
         ]
 
+    if order != 1:
+        headers = headers[3:]
+        fnames = fnames[3:]
+        save_to_csv = save_to_csv[3:]
+
     for fname, header, file in zip(fnames, headers, save_to_csv):
         np.savetxt(
             fname=name_dir + fname,
@@ -140,43 +144,56 @@ def store_csv(name, order, name_dir, save_to_csv):
             )
 
 
-def store_ascii(name, order, name_dir, params_to_save, info_to_save):
+def store_info_csv(info_dict, name_dir):
     """
-    Function that stores all information in a ascii files after the
-    least squares optimisation has finished. It will be saved in the
-    'OOF_out/name' directory
+    Stores a python dictionary in csv format.
 
     Parameters
     ----------
-    name : str
-        File name of the fits file to be optimised.
-    order : int
-        Order of the fit or opmisation done to the fits maps
+    info_dict : dict
+        Dictionary with the relevant information to be stored.be
     name_dir : str
-        Directory of the fits file.
-    params_to_save : list
-        Stores the parameters found after the optimisation. The keywords for
-        the fitpar_n#.dat ascii file are ['parname', 'parfit', 'parinit'].
-    info_to_save : list
-        Stores string and some other important information from the
-        observations and optimisation. The keywords for the fitinfo.dat ascii
-        file are ['telescope', 'name', 'd_z-', 'd_z0', 'd_z+', 'wavel',
-        'freq', 'illumination', 'meanel', 'fft_resolution'].
+        Name of the directory where the dictionary is placed.
     """
 
-    ascii.write(
-        table=params_to_save,
-        output=name_dir + '/fitpar_n' + str(order) + '.dat',
-        names=['parname', 'parfit', 'parinit'],
-        comment='Fitted parameters ' + name
-        )
+    with open(name_dir + '/file_info.csv', 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file, delimiter=' ')
+        for key, value in info_dict.items():
+            writer.writerow([key, value])
 
-    ascii.write(
-        table=info_to_save,
-        output=name_dir + '/fitinfo.dat',
-        names=[
-            'telescope', 'name', 'd_z-', 'd_z0', 'd_z+', 'wavel', 'freq',
-            'illumination', 'meanel', 'fft_resolution'
-            ],
-        comment='Fit information ' + name
-        )
+
+def is_number(s):
+    """
+    identifies if a string contains a number or not. Useful to transform a
+    stored dictionary.
+    """
+
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+
+    return False
+
+
+def read_info_csv(path_info):
+    """
+    Transform a csv file into a python dictionary.
+    """
+
+    with open(path_info, 'r', newline='') as csv_file:
+        reader = csv.reader(csv_file, delimiter=' ')
+        file_dict = dict(reader)
+
+    for i in file_dict.keys():
+        if is_number(file_dict[i]):
+            file_dict[i] = float(file_dict[i])
+
+    return file_dict

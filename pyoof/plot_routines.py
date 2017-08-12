@@ -6,14 +6,13 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
-from astropy.io import fits, ascii
-from .aperture import angular_spectrum, phase
+from astropy.io import ascii
+from .aperture import radiation_pattern, phase
 from .math_functions import wavevector2degrees, wavevector2radians
-from .aux_functions import extract_data_effelsberg, str2LaTeX
+from .aux_functions import str2LaTeX, read_info_csv
 
 __all__ = [
-    'plot_beam', 'plot_data', 'plot_phase', 'plot_variance',
-    'plot_data_effelsberg', 'plot_fit_path', 'plot_fit_nikolic',
+    'plot_beam', 'plot_data', 'plot_phase', 'plot_variance', 'plot_fit_path'
     ]
 
 # Plot style added from relative path
@@ -78,10 +77,10 @@ def plot_beam(
     else:
         wavevector_change = wavevector2radians
 
-    u, v, aspectrum = [], [], []
+    u, v, F = [], [], []
     for _d_z in d_z:
 
-        _u, _v, _aspectrum = angular_spectrum(
+        _u, _v, _F = radiation_pattern(
             K_coeff=K_coeff,
             I_coeff=I_coeff,
             d_z=_d_z,
@@ -93,10 +92,12 @@ def plot_beam(
 
         u.append(_u)
         v.append(_v)
-        aspectrum.append(_aspectrum)
+        F.append(_F)
 
-    beam = np.abs(aspectrum) ** 2
-    beam_norm = np.array([beam[i] / beam[i].max() for i in range(3)])
+    power_pattern = np.abs(F) ** 2
+    power_norm = np.array(
+        [power_pattern[i] / power_pattern[i].max() for i in range(3)]
+        )
 
     # Limits, they need to be transformed to degrees
     if plim_rad is None:
@@ -133,8 +134,8 @@ def plot_beam(
         extent = [u_angle.min(), u_angle.max(), v_angle.min(), v_angle.max()]
 
         # make sure it is set to origin='lower', see plot style
-        im = ax[i].imshow(beam_norm[i], extent=extent, vmin=0, vmax=1)
-        ax[i].contour(u_angle, v_angle, beam_norm[i], levels)
+        im = ax[i].imshow(power_norm[i], extent=extent, vmin=0, vmax=1)
+        ax[i].contour(u_angle, v_angle, power_norm[i], levels)
         cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
 
         ax[i].set_title(subtitle[i])
@@ -158,7 +159,7 @@ def plot_beam(
     return fig
 
 
-def plot_data(u_data, v_data, beam_data, d_z, angle, title):
+def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     """
     Plot of the real data beam maps given given 3 out-of-focus values of d_z.
 
@@ -186,6 +187,9 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title):
         Angle unit, it can be 'degrees' or 'radians'.
     title : str
         Figure title.
+    res_mode : bool
+        If True the plot is with no normalisation, and easier to compare
+        residuals.
 
     Returns
     -------
@@ -193,11 +197,10 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title):
         Data figure from the three observed beam maps. Each map with a
         different offset d_z value. From left to right, -d_z, 0 and +d_z.
     """
-
-    # Power pattern normalisation
-    beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
+    if not res_mode:
+        # Power pattern normalisation
+        beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
     # input u and v are in radians
-
     uv_title = angle
 
     if angle == 'degrees':
@@ -405,35 +408,6 @@ def plot_variance(matrix, params_names, diag, cbtitle, title):
     return fig
 
 
-# move function to a effelsberg script
-def plot_data_effelsberg(pathfits, save, angle):
-    """
-    Plot all data from an OOF Effelsberg observation given the path.
-    """
-
-    data_info, data_obs = extract_data_effelsberg(pathfits)
-    [name, _, _, d_z, _, pthto] = data_info
-    [beam_data, u_data, v_data] = data_obs
-
-    fig_data = plot_data(
-        u_data=u_data,
-        v_data=v_data,
-        beam_data=beam_data,
-        title=name + ' observed beam',
-        d_z=d_z,
-        angle=angle
-        )
-
-    if not os.path.exists(pthto + '/OOF_out'):
-        os.makedirs(pthto + '/OOF_out')
-    if not os.path.exists(pthto + '/OOF_out/' + name):
-        os.makedirs(pthto + '/OOF_out/' + name)
-    if save:
-        fig_data.savefig(pthto + '/OOF_out/' + name + '/obsbeam.pdf')
-
-    return fig_data
-
-
 def plot_fit_path(
     pathoof, order, telgeo, illum_func, resolution, angle, plim_rad, save
         ):
@@ -486,9 +460,17 @@ def plot_fit_path(
         Triangle figure representing Correlation matrix.
     """
 
+    if not os.path.exists(pathoof + '/plots'):
+        os.makedirs(pathoof + '/plots')
+
+    path_plot = pathoof + '/plots'
+
+    # Info
     n = order
-    fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.dat')
-    fitinfo = ascii.read(pathoof + '/fitinfo.dat')
+    fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.csv')
+    info_dict = read_info_csv(pathoof + '/file_info.csv')
+    d_z = np.array([info_dict['d_z-'], info_dict['d_z0'], info_dict['d_z+']])
+    name = info_dict['name']
 
     # Residual
     res = np.genfromtxt(pathoof + '/res_n' + str(n) + '.csv')
@@ -502,19 +484,25 @@ def plot_fit_path(
     cov = np.genfromtxt(pathoof + '/cov_n' + str(n) + '.csv')
     corr = np.genfromtxt(pathoof + '/corr_n' + str(n) + '.csv')
 
-    d_z = np.array(
-        [fitinfo['d_z-'][0], fitinfo['d_z0'][0], fitinfo['d_z+'][0]]
-        )
-    name = fitinfo['name'][0]
-
     # LaTeX problem with underscore _ -> \_
     name = str2LaTeX(name)
+
+    if n == 1:
+        fig_data = plot_data(
+            u_data=u_data,
+            v_data=v_data,
+            beam_data=beam_data,
+            d_z=d_z,
+            title=name + ' observed power pattern',
+            angle=angle,
+            res_mode=False
+            )
 
     fig_beam = plot_beam(
         params=np.array(fitpar['parfit']),
         title=name + ' fitted power pattern  $n=' + str(n) + '$',
         d_z=d_z,
-        wavel=fitinfo['wavel'][0],
+        wavel=info_dict['wavel'],
         illum_func=illum_func,
         telgeo=telgeo,
         plim_rad=plim_rad,
@@ -537,15 +525,7 @@ def plot_fit_path(
         d_z=d_z,
         title=name + ' residual  $n=' + str(n) + '$',
         angle=angle,
-        )
-
-    fig_data = plot_data(
-        u_data=u_data,
-        v_data=v_data,
-        beam_data=beam_data,
-        d_z=d_z,
-        title=name + ' observed power pattern',
-        angle=angle
+        res_mode=True
         )
 
     fig_cov = plot_variance(
@@ -565,47 +545,14 @@ def plot_fit_path(
         )
 
     if save:
-        fig_beam.savefig(pathoof + '/fitbeam_n' + str(n) + '.pdf')
+        fig_beam.savefig(path_plot + '/fitbeam_n' + str(n) + '.pdf')
         fig_phase.savefig(
-            filename=pathoof + '/fitphase_n' + str(n) + '.pdf',
+            filename=path_plot + '/fitphase_n' + str(n) + '.pdf',
             bbox_inches='tight'
             )
-        fig_res.savefig(pathoof + '/residual_n' + str(n) + '.pdf')
-        fig_cov.savefig(pathoof + '/cov_n' + str(n) + '.pdf')
-        fig_corr.savefig(pathoof + '/corr_n' + str(n) + '.pdf')
-        fig_data.savefig(pathoof + '/obsbeam.pdf')
+        fig_res.savefig(path_plot + '/residual_n' + str(n) + '.pdf')
+        fig_cov.savefig(path_plot + '/cov_n' + str(n) + '.pdf')
+        fig_corr.savefig(path_plot + '/corr_n' + str(n) + '.pdf')
 
-    return fig_beam, fig_phase, fig_res, fig_data, fig_cov, fig_corr
-
-
-# I will erase this soon, need to be added to other script.
-def plot_fit_nikolic(pathoof, order, d_z, title, plim_rad, angle):
-    """
-    Designed to plot Bojan Nikolic solutions given a path to its oof output.
-    """
-
-    n = order
-    path = pathoof + '/z' + str(n)
-    params_nikolic = np.array(
-        fits.open(path + '/fitpars.fits')[1].data['ParValue'])
-
-    wavelength = fits.open(path + '/aperture-notilt.fits')[0].header['WAVE']
-
-    fig_beam = plot_beam(
-        params=params_nikolic,
-        title=title + ' phase distribution Nikolic fit $n=' + str(n) + '$',
-        d_z=d_z,
-        wavel=wavelength,
-        illum='nikolic',
-        plim_rad=plim_rad,
-        angle=angle
-        )
-
-    fig_phase = plot_phase(
-        params=params_nikolic,
-        d_z=d_z[2],
-        title=title + ' Nikolic fit $n=' + str(n) + '$',
-        notilt=True
-        )
-
-    return fig_beam, fig_phase
+        if n == 1:
+            fig_data.savefig(path_plot + '/obsbeam.pdf')
