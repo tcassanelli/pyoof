@@ -29,10 +29,11 @@ def extract_data_effelsberg(pathfits):
     -------
     data_info : list
         It contains all extra data besides the beam map.
-        data_info = [name, pthto, freq, wavel, d_z, meanel]
+        data_info = [name, pthto, freq, wavel, d_z, meanel].
     data_obs : list
-        It contains the main data for the leat squares optimisation.
-        data_obs = [beam_data, u_data, v_data]
+        It contains beam maps and x-, y-axis data for the leat squares
+        optimization.
+        data_obs = [beam_data, u_data, v_data].
     """
 
     # Opening fits file with astropy
@@ -97,7 +98,7 @@ def str2LaTeX(python_string):
 def store_data_csv(name, order, name_dir, save_to_csv):
     """
     Function that stores all important information in a csv files after the
-    least squares optimisation has finished. It will be saved in the
+    least squares optimization has finished. It will be saved in the
     'OOF_out/name' directory.
 
     Parameters
@@ -166,6 +167,11 @@ def is_number(s):
     """
     identifies if a string contains a number or not. Useful to transform a
     stored dictionary.
+
+    Parameters
+    ----------
+    s : str
+
     """
 
     try:
@@ -186,6 +192,15 @@ def is_number(s):
 def read_info_csv(path_info):
     """
     Transform a csv file into a python dictionary.
+
+    Parameters
+    ----------
+    path_info : str
+        Path to the dictionary previously stored in .csv format.
+
+    Returns
+    -------
+    file_dict : dict
     """
 
     with open(path_info, 'r', newline='') as csv_file:
