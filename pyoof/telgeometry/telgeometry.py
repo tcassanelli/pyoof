@@ -6,8 +6,8 @@ import numpy as np
 from ..math_functions import linear_equation
 
 __all__ = [
-    'delta_effelsberg', 'delta_manual',
-    'blockage_manual', 'blockage_effelsberg'
+    'delta_effelsberg', 'delta_manual', 'block_manual',
+    'block_effelsberg'
     ]
 
 
@@ -91,7 +91,7 @@ def delta_manual(Fp, F):
     return delta
 
 
-def blockage_manual(pr, sr, a, L):
+def block_manual(pr, sr, a, L):
     """
     Truncation for the aperture function, manual set up for the primary radius
     (pr), secondary radius (sr), hald thickness of a support leg (a) and
@@ -126,7 +126,7 @@ def blockage_manual(pr, sr, a, L):
     return block
 
 
-def blockage_effelsberg(x, y):
+def block_effelsberg(x, y):
     """
     Truncation in the aperture function, given by the hole generated for the
     secondary reflector, the supporting structure and shade efects in the
