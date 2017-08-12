@@ -146,8 +146,8 @@ def params_complete(params, idx, N_K_coeff):
 
 # Insert path for the fits file with pre-calibration
 def fit_beam(
-    data, order_max, illumination, telescope, fit_previous, resolution, angle,
-    make_plots
+    data_info, data_obs, order_max, illumination, telescope, fit_previous,
+    resolution, angle, make_plots
         ):
     """
     Computes the Zernike circle polynomials coefficients using the least
@@ -157,20 +157,8 @@ def fit_beam(
 
     Parameters
     ----------
-    data : list
-        Input data necessary to perform the lest squares minimization.
-        data = [
-            [beam_data, u_data, v_data],
-            [name, pthto, freq, wavel, d_z, meanel]
-            ]
-        The beam_data is a list with the three observed maps, minus, zero and
-        plus out-of-focus. u_data and v_data are the x- y-axis in radians for
-        the three maps minus, zero and plus out-of-focus both are lists.
-        name is a string characterising the observation, pthto the path to the
-        file. freq the frequency in Hz, wavel the wavelength in m. d_z is a
-        list which contains the radial offsets from minus, zero and plus
-        defocus. meanel is the mean elevation for the three beam maps, not
-        necessary for the OOF holography but importat to keep track of.
+    data_info :
+    data_obs :
     order_max : int
         Maximum order to be fitted in the least squares minimization, e.g.
         order 3 will calculate order 1, 2 and 3.
@@ -198,7 +186,6 @@ def fit_beam(
     print('... Reading data ... \n')
 
     # All observed data needed to fit the beam
-    data_info, data_obs = data
     [name, pthto, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 

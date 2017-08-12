@@ -26,11 +26,12 @@ def fit_beam_effelsberg(pathfits):
 
     data_info, data_obs = extract_data_effelsberg(pathfits)
 
-    # [name, pthto, freq, wavel, d_z, meanel] = data_info
-    # [beam_data, u_data, v_data] = data_obs
+    [name, pthto, freq, wavel, d_z, meanel] = data_info
+    [beam_data, u_data, v_data] = data_obs
 
     fit_beam(
-        data=[data_info, data_obs],
+        data_info=[name, pthto, freq, wavel, d_z, meanel],
+        data_obs=[beam_data, u_data, v_data],
         order_max=6,  # it'll fit from 1 to order_max
         illumination=illumination['pedestal'],
         telescope=telescope['effelsberg'],
