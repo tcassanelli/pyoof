@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # Author: Tomas Cassanelli
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from scipy import interpolate
 import pyoof
 
-# Import plot style matplotlib, change to same directory in future
-plt.style.use('../pyoof/pyoof.mplstyle')
+# Calling plot style from pyoof package
+plot_style = os.path.join(os.path.dirname(pyoof.__file__), 'pyoof.mplstyle')
+plt.style.use(plot_style)
 
 
 def plot_data_effelsberg(pathfits, angle):
@@ -83,7 +85,7 @@ def plot_lookup_effelsberg(path_lookup):
     vmin = np.min(mini)
     levels = np.linspace(vmin, vmax, 10)
 
-    elevation_plot = [7, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+    elevation_plot = [7] + [i for i in range(10, 100, 10)]
     for j in range(len(elevation_plot)):
 
         phase = interpolate.griddata(
@@ -181,7 +183,7 @@ def plot_rse(paths_pyoof, order, r_max, title):
 
     values = []
     for p in paths_pyoof:
-        phase = np.genfromtxt(p + '/phase_n5.csv')
+        phase = np.genfromtxt(p + '/phase_n' + str(order) + '.csv')
         phase[xx ** 2 + yy ** 2 > r_max ** 2] = 0
 
         info = pyoof.read_info_csv(p + '/file_info.csv')
@@ -253,4 +255,3 @@ if __name__ == '__main__':
 
     plot_rse(['/Users/tomascassanelli/ownCloud/OOF/data/S9mm_bump/OOF_out/S9mm_3478_3C454.3_32deg_H6-000'], 5, 3.25, 'hi')
     plt.show()
-
