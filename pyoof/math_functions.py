@@ -6,7 +6,7 @@ import numpy as np
 
 __all__ = [
     'cart2pol', 'wavevector2degrees', 'wavevector2radians', 'co_matrices',
-    'linear_equation'
+    'linear_equation', 'rms'
     ]
 
 
@@ -146,3 +146,16 @@ def linear_equation(P1, P2, x):
     y = (y2 - y1) / (x2 - x1) * (x - x1) + y1
 
     return y
+
+
+def rms(x):
+    """
+    Computes the root-mean-squared value from a aperture phase distribution
+    map.
+
+    Parameters
+    ----------
+    x : ndarray
+        One or two dimensional array for the phase distribution.
+    """
+    return np.sqrt(np.mean(np.square(x)))
