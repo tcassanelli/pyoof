@@ -9,8 +9,23 @@ from ..zernike import U
 # All mathematical function have been adapted for the Effelsberg telescope
 __all__ = [
     'illum_pedestal', 'illum_gauss', 'wavefront', 'phase', 'aperture',
-    'radiation_pattern'
+    'radiation_pattern', 'e_rse'
     ]
+
+
+# Random-surface-error efficiency
+def e_rse(x, wavel):
+    """
+    Computes the random-surface-error efficiency using the Ruze's equation.
+
+    Parameters
+    ----------
+    x : ndarray
+        Two diemensional with the phase error amplitude values.
+    wavel : float
+        Relative observation wavelength to the phase error map.
+    """
+    return np.exp(-(4 * np.pi * np.sqrt(np.mean(np.square(x))) / wavel) ** 2)
 
 
 def illum_pedestal(x, y, I_coeff, pr, order=2):
