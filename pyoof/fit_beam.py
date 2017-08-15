@@ -18,19 +18,16 @@ __all__ = [
     'residual_true', 'residual', 'params_complete', 'fit_beam',
     ]
 
-# Calling configuration file
-config_params_dir = os.path.dirname(__file__)
-config_params_pth = os.path.join(config_params_dir, 'config_params.yaml')
-with open(config_params_pth, 'r') as stream:
-    config_params = yaml.load(stream)
-
 
 def residual_true(
-    params, beam_data, u_data, v_data, d_z, wavel, illum_func, telgeo,
-    inter, resolution
+    params, beam_data_norm, u_data, v_data, d_z, wavel, illum_func, telgeo,
+    resolution, interp
         ):
     """
-    Computes the true residual ready to use for the fit_beam function.
+    Computes the true residual ready to use for the fit_beam function. True means that some of the parameters used will not be fitted, these parameter are selected by their position as
+    params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)]
+    and to exclude or include them the config_file.yaml file needs to be
+    edited, in the pyoof package directory.
 
     Parameters
     ----------
@@ -38,9 +35,49 @@ def residual_true(
         Contains the parameters that will be fitted in the least squares
         minimization. The parameters must be in the following sequence
         params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)].
-    beam_data : list
-        The beam_data is a list with the three observed maps, minus, zero and
-        plus out-of-focus.
+    beam_data_norm : list
+        The beam_data_norm is a list with the three observed maps, minus, zero
+        and plus out-of-focus. The data has to be initially normalized by its
+        maximum.
+    u_data : list
+        It is the x-axis for the observed beam maps (3 OOF holography
+        observations), using the same indexing than the beam_data_norm. The
+        dimension must be in radians.
+    v_data : list
+        It is the y-axis for the observed beam maps (3 OOF holography
+        observations), using the same indexing than the beam_data_norm. The
+        dimension must be in radians.
+    d_z : list
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end. It has to contain,
+        same as the beam_data_norm, the radial offsets for the minus, zero and
+        plus, such as d_z = [d_z-, 0., d_z+]
+    wavel : float
+        Wavelength of the observation in meters.
+    illum_func : function
+        Illumination function with parameters (x, y, I_coeff, pr).
+    telgeo : list
+        List that contains the blockage function, optical path difference
+        (delta function), and the primary radius (float).
+        telego = [blockage, delta, pr].
+    resolution : int
+        Fast Fourier Transform resolution for a rectangular grid. The input
+        value has to be greater or equal to the telescope resolution and a
+        power of 2 for FFT faster processing.
+    interp : bool
+        If True will process the correspondent interpolation between the
+        observed mesh and the computed mesh for the FFT2 aperture distribution
+        model.
+
+    Returns
+    -------
+    residual : ndarray
+        One dimensional array for the residual between the observed data and
+        the FFT2 aperture distribution model. It has been concatenated as
+        minus, zero and plus radial offset. It is required to have the
+        residual in one dimension in order to use a least squares
+        minimization optimize.least_squares minipack.
     """
 
     I_coeff = params[:4]
@@ -62,7 +99,7 @@ def residual_true(
         power_pattern = np.abs(F) ** 2
         power_norm = power_pattern / power_pattern.max()
 
-        if inter:
+        if interp:
 
             # Generated beam u and v: wavevectors -> degrees -> radians
             u_rad = wavevector2radians(u, wavel)
@@ -83,7 +120,9 @@ def residual_true(
             beam_model.append(power_norm)
 
     beam_model_all = np.hstack((beam_model[0], beam_model[1], beam_model[2]))
-    beam_data_all = np.hstack((beam_data[0], beam_data[1], beam_data[2]))
+    beam_data_all = np.hstack(
+        (beam_data_norm[0], beam_data_norm[1], beam_data_norm[2])
+        )
 
     # Residual = data - model (or fitted)
     residual = beam_data_all - beam_model_all
@@ -92,16 +131,80 @@ def residual_true(
 
 
 def residual(
-    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, wavel, resolution,
-    illum_func, telgeo, inter
+    params, idx, N_K_coeff, beam_data_norm, u_data, v_data, d_z, wavel,
+    illum_func, telgeo, resolution, interp
         ):
+    """
+    Wrapper for the residual_true function. The objective of this function is
+    to fool the optimize.least_squares minipack by changing the number of
+    parameters that will be used. The parameters must be in the following
+    order,
+    params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)]
+    and to exclude or include them the config_file.yaml file needs to be
+    edited, in the pyoof package directory.
 
-    # params for the true fit
+    Parameters
+    ----------
+    params : ndarray
+        Contains the false array of parameters, the params array will be
+        updated here for the correct number of parameters to then be used in
+        the residual_ture function. The params array should be of the form,
+        params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)].
+    idx : list
+        List of the positions of the parameters that are desired to left out \
+        from the optimization. e.g. 0 corresponds to i_amp, 1 to c_dB, and so
+        on.
+    N_K_coeff : int
+        Number of Zernike circle polynomials coefficients to fit. It is
+        obtained from the order to be fitted with the formula
+        N_K_coeff = (n + 1) * (n + 2) // 2.
+    beam_data_norm : list
+        The beam_data_norm is a list with the three observed maps, minus, zero
+        and plus out-of-focus. The data has to be initially normalized by its
+        maximum.
+    u_data : list
+        It is the x-axis for the observed beam maps (3 OOF holography
+        observations), using the same indexing than the beam_data_norm. The
+        dimension must be in radians.
+    v_data : list
+        It is the y-axis for the observed beam maps (3 OOF holography
+        observations), using the same indexing than the beam_data_norm. The
+        dimension must be in radians.
+    d_z : list
+        Distance between the secondary and primary reflector measured in
+        meters (radial offset). It is the characteristic measurement to give
+        an offset and an out-of-focus image at the end. It has to contain,
+        same as the beam_data_norm, the radial offsets for the minus, zero and
+        plus, such as d_z = [d_z-, 0., d_z+]
+    wavel : float
+        Wavelength of the observation in meters.
+    illum_func : function
+        Illumination function with parameters (x, y, I_coeff, pr).
+    telgeo : list
+        List that contains the blockage function, optical path difference
+        (delta function), and the primary radius (float).
+        telego = [blockage, delta, pr].
+    resolution : int
+        Fast Fourier Transform resolution for a rectangular grid. The input
+        value has to be greater or equal to the telescope resolution and a
+        power of 2 for FFT faster processing.
+    interp : bool
+        If True will process the correspondent interpolation between the
+        observed mesh and the computed mesh for the FFT2 aperture distribution
+        model.
+    Returns
+    -------
+    residual : ndarray
+        One dimensional array for the residual between the observed data and
+        the FFT2 aperture distribution model. See residual_true function.
+    """
+
+    # parameters for the true fit
     params_res = params_complete(params, idx, N_K_coeff)
 
     res_true = residual_true(
         params=params_res,  # needs to be a numpy array
-        beam_data=beam_data,
+        beam_data_norm=beam_data_norm,
         u_data=u_data,
         v_data=v_data,
         d_z=d_z,
@@ -109,17 +212,44 @@ def residual(
         resolution=resolution,
         illum_func=illum_func,
         telgeo=telgeo,
-        inter=inter,
+        interp=interp,
         )
 
     return res_true
 
 
 def params_complete(params, idx, N_K_coeff):
-    # Fixed values for parameters, in case they're excluded, see idx
-    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_params['params_fixed']
+    """
+    Fills the missing parameters not used in the lease squares optimization,
+    They are required to compute the correct aperture distribution. Generally the following parameters are excluded [i_amp, taper_dB, x0, y0, K(0, 0)],
+    which correspond to the first 4 in the params array. These parameters can be excluded or included in the config_file.yaml configuration file, located in the pyoof package directory.
 
-    # N_K_coeff number of Zernike coeff
+    Parameters
+    ----------
+    params : ndarray
+        Contains the false array of parameters, the params array will be
+        updated here for the correct number of parameters to then be used in
+        the residual_ture function. The params array should be of the form,
+        params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)].
+    idx : list
+        List of the positions of the parameters that are desired to left out \
+        from the optimization. e.g. 0 corresponds to i_amp, 1 to c_dB, and so
+        on.
+    N_K_coeff : int
+        Number of Zernike circle polynomials coefficients to fit. It is
+        obtained from the order to be fitted with the formula
+        N_K_coeff = (n + 1) * (n + 2) // 2.
+
+    Returns
+    -------
+    _params : ndarray
+        Complete set of parameters to calculate the FFT2 aperture distribution.
+    """
+
+    # Fixed values for parameters, in case they're excluded, see idx
+    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_file['params_fixed']
+
+    # N_K_coeff number of Zernike circle polynomials coefficients
     if params.size != (4 + N_K_coeff):
         _params = params
         for i in idx:
@@ -147,37 +277,49 @@ def params_complete(params, idx, N_K_coeff):
 # Insert path for the fits file with pre-calibration
 def fit_beam(
     data_info, data_obs, order_max, illumination, telescope, fit_previous,
-    resolution, angle, make_plots
+    config_file_path, resolution, make_plots
         ):
     """
     Computes the Zernike circle polynomials coefficients using the least
-    squares minimization, stores and plot data from the analysis.
-    Obsevational data is required. The most important function in the pyoof
-    package, please provide data as stated here or in the repository examples.
+    squares minimization, stores and plot data from the analysis. These data
+    correspond to the best fitted power pattern, and its correspondent phase
+    error, as well as information of the optimization.
+    Observational data is required. The most important function in the pyoof
+    package, please provide data as stated here or as explained in the
+    notebooks examples.
 
     Parameters
     ----------
-    data_info :
-    data_obs :
+    data_info : list
+        It contains useful information for the least squares optimization.
+        data_info = [name, pthto, freq, wavel, d_z, meanel].
+    data_obs : list
+        It contains beam maps and x-, y-axis data for the least squares
+        optimization.
+        data_obs = [beam_data, u_data, v_data].
     order_max : int
         Maximum order to be fitted in the least squares minimization, e.g.
         order 3 will calculate order 1, 2 and 3.
     illumination : list
-        List which contains illumination function, and two strings.
+        Contains illumination function, and two strings, the name
+        and the taper name.
         illumination = [illum_func, illum_name, taper_name].
     telescope : list
-        List which contains blockage function, delta function, radius primary
-        dish and the telescope name (string).
+        Contains blockage function, delta function, radius primary dish and
+        the telescope name (str).
         telescope = [blockage, delta, pr, tel_name].
     fit_previous : bool
-        If set to True will fit the coefficients from the previous minimization
+        If set to True will fit the coefficients from the previous optimization
         this feature is strongly suggested.
+    config_file_path : str
+        Path for the configuration file, required for the excluded or included parameters and their bounds for the optimization. If None the default setting will be used.
     resolution : int
-        Fast Fourier Transform resolution for a rectancular grid. The input
+        Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
-    angle : str
-        Angle unit, it can be 'degrees' or 'radians'.
+    make_plots : bool
+        If True will generate a sub-directory with all the important plots for
+        the OOF holography, including phase and beam fit.
     """
 
     start_time = time.time()
@@ -207,10 +349,21 @@ def fit_beam(
     print('Maximum order to be fitted: ', order_max)
     print('Telescope name: ', tel_name)
     print('File name: ', name)
-    print('Observed frequency: ', freq, 'Hz')
-    print('Wavelenght : ', wavel, 'm')
+    print('Obs frequency: ', freq, 'Hz')
+    print('Obs Wavelength : ', wavel, 'm')
     print('d_z (out-of-focus): ', d_z, 'm')
     print('Illumination to be fitted: ', illum_name)
+
+    # Calling default configuration file for the parameters
+    if config_file_path is None:
+        config_file_dir = os.path.dirname(__file__)
+        config_file_pth = os.path.join(config_file_dir, 'config_file.yaml')
+        with open(config_file_pth, 'r') as _yaml_file:
+            config_file = yaml.load(_yaml_file)
+    else:
+        with open(config_file_path, 'r') as _yaml_file:
+            config_file = yaml.load(_yaml_file)
+
 
     for order in range(1, order_max + 1):
 
@@ -225,11 +378,11 @@ def fit_beam(
         # d_z is given in units of wavelength (m/m)
         # d_z = np.array(d_z)  # needs to be a numpy array
 
-        # Beam normalisation
+        # Beam normalization
         beam_data_norm = [beam_data[i] / beam_data[i].max() for i in range(3)]
 
         n = order  # order polynomial to fit
-        N_K_coeff = (n + 1) * (n + 2) // 2  # number of Zernike coeff to fit
+        N_K_coeff = (n + 1) * (n + 2) // 2  # number of K(m, n) to fit
 
         # Looking for result parameters lower order
         if fit_previous and n != 1:
@@ -250,20 +403,20 @@ def fit_beam(
                     )
         else:
             params_init = np.array(
-                config_params['params_init'] + [0.1] * (N_K_coeff - 1)
+                config_file['params_init'] + [0.1] * (N_K_coeff - 1)
                 )
             print('Initial params: default')
             # i_amp, sigma_r, x0, y0, K(l,m)
             # Giving an initial value of 0.1 for each coeff
 
         bounds_min = np.array(
-            config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
+            config_file['params_bounds_min'] + [-5] * (N_K_coeff - 1)
             )
         bounds_max = np.array(
-            config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
+            config_file['params_bounds_max'] + [5] * (N_K_coeff - 1)
             )
 
-        idx = config_params['params_excluded']  # exclude params from fit
+        idx = config_file['params_excluded']  # exclude params from fit
         # [0, 1, 2, 3, 4] = [i_amp, c_dB, x0, y0, K(0, 0)]
         # or 'None' to include all
 
@@ -286,9 +439,9 @@ def fit_beam(
                 v_data,
                 d_z,
                 wavel,
-                resolution,
                 illum_func,
                 telgeo,
+                resolution,
                 True  # Grid interpolation
                 ),
             bounds=tuple([bounds_min_true, bounds_max_true]),
@@ -299,7 +452,7 @@ def fit_beam(
 
         print('\n')
 
-        # Solutions from least squared optimisation
+        # Solutions from least squared optimization
         params_solution = params_complete(res_lsq.x, idx, N_K_coeff)
         params_init = params_init
         res_optim = res_lsq.fun.reshape(3, -1)  # Optimum residual from fitting
@@ -309,7 +462,7 @@ def fit_beam(
         cov, corr = co_matrices(
             res=res_lsq.fun,
             jac=res_lsq.jac,
-            n_pars=params_init_true.size  # num of parameters fitted
+            n_pars=params_init_true.size  # number of parameters fitted
             )
         cov_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), cov))
         corr_ptrue = np.vstack(
@@ -389,7 +542,7 @@ def fit_beam(
                 illum_func=illum_func,
                 plim_rad=plim_rad,
                 save=True,
-                angle=angle,
+                angle='degrees',
                 resolution=resolution
                 )
 
