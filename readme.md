@@ -11,7 +11,7 @@ pyoof is a Python package that contains all needed tools to perform out-of-focus
 
 and [software](https://github.com/bnikolic/oof) developed by [Bojan Nikolic](http://www.mrao.cam.ac.uk/~bn204/oof/).
 
-The pyoof package currently calculates the phase error maps from 2 out-of-focus and one in-focus beam maps. From here it is possible to compute the phase error in a sub-reflector active surface, same as the [Effelsberg radio telescope](https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope), and then add those changes in phase to improve the telescope's surface. We are currently testing the pyoof package at Effelsberg.
+The pyoof package calculates the phase error map from a set of beam maps, at a relatively good signal-to-noise as described by B. Nikolic. From here it is possible to compute the phase error at the sub-reflector and eventually make surface corrections in the telescope if an active surface exits. We are currently testing the pyoof package at the [Effelsberg radio telescope](https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope) :satellite:.
 
 Usage
 -----
