@@ -4,7 +4,7 @@ pyoof
 * *Version: 0.1*
 * *Author: Tomas Cassanelli*
 
-pyoof is a Python pacakge that contains all needed tools to perform out-of-focus (OOF) holography on astronomical beam maps for single dish radio telescopes. It is based on the original OOF holography papers,
+pyoof is a Python package that contains all needed tools to perform out-of-focus (OOF) holography on astronomical beam maps for single dish radio telescopes. It is based on the original OOF holography papers,
 
 * [Out-of-focus holography at the Green Bank Telescope](https://www.aanda.org/articles/aa/ps/2007/14/aa5765-06.ps.gz)
 * [Measurement of antenna surfaces from in- and out-of-focus beam maps using astronomical sources](https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz)

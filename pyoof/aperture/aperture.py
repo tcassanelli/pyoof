@@ -6,7 +6,6 @@ import numpy as np
 from ..math_functions import cart2pol
 from ..zernike import U
 
-# All mathematical function have been adapted for the Effelsberg telescope
 __all__ = [
     'illum_pedestal', 'illum_gauss', 'wavefront', 'phase', 'aperture',
     'radiation_pattern', 'e_rse'
@@ -21,7 +20,7 @@ def e_rse(x, wavel):
     Parameters
     ----------
     x : ndarray
-        Two diemensional with the phase error amplitude values.
+        Two dimensional with the phase error amplitude values.
     wavel : float
         Relative observation wavelength to the phase error map.
     """
@@ -55,17 +54,10 @@ def illum_pedestal(x, y, I_coeff, pr, order=2):
     Ea : ndarray
         Illumination distribution
     """
-
-    i_amp = I_coeff[0]  # amplitude of the illumination distribution
-    c_dB = I_coeff[1]  # [dB] Illumination taper it is defined by the feedhorn
-    # Number has to be negative, bounds given [-8, -25], see fit
-    x0 = I_coeff[2]  # Centre illumination primary reflector
-    y0 = I_coeff[3]
-
+    i_amp, c_dB, x0, y0 = I_coeff
     # Parabolic taper on a pedestal
     n = order  # Order quadratic model illumination (Parabolic squared)
-
-    c = 10 ** (c_dB / 20.)
+    c = 10 ** (c_dB / 20.)  # c_dB has to be negative, bounds given [-8, -25]
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
     Ea = i_amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** n)
 
@@ -97,12 +89,8 @@ def illum_gauss(x, y, I_coeff, pr):
     Ea : ndarray
         Illumination distribution
     """
-
-    i_amp = I_coeff[0]  # amplitude of the illumination distribution
-    sigma_dB = I_coeff[1]  # illumination taper, sigma_dB
+    i_amp, sigma_dB, x0, y0 = I_coeff
     sigma = 10 ** (sigma_dB / 20)  # -15 to -20 dB
-    x0 = I_coeff[2]  # Centre illumination primary reflector
-    y0 = I_coeff[3]
 
     Ea = (
         i_amp *
@@ -116,7 +104,7 @@ def wavefront(rho, theta, K_coeff):
     """
     Computes the wavefront (aberration) distribution. It tells how is the
     error distributed and it belongs to the complex section of the aperture.
-    The wavefront is described as a parametrisation of the Zernike circle
+    The wavefront is described as a parametrization of the Zernike circle
     polynomials times a set of coefficients.
 
     Parameters
@@ -125,7 +113,7 @@ def wavefront(rho, theta, K_coeff):
         Values for the angular component. theta = np.arctan(y / x).
     rho : ndarray
         Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2)
-        normalised.
+        normalized.
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
         circle polynomial.
@@ -133,7 +121,7 @@ def wavefront(rho, theta, K_coeff):
     Returns
     -------
     phi : ndarray
-        Zernile polynomail already evaluated and multiplied by its parameter
+        Zernike polynomial already evaluated and multiplied by its parameter
         or constant. Its values are between -1 and 1.
     """
 
@@ -156,7 +144,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     """
     Aperture phase distribution (or phase error), for an specific telescope
     primary reflector. In general the tilt (in optics, deviation in the
-    direction a beam of light propagates) is substracted from its calculation.
+    direction a beam of light propagates) is subtracted from its calculation.
     Function used to show the final results from the fit procedure.
 
     Parameters
@@ -176,11 +164,11 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     Returns
     -------
     phi : ndarray
-        Aperture phase ditribution for an specific primary radius.
+        Aperture phase distribution for an specific primary radius.
     x : ndarray
-        x-axis dimentions for the primary reflector.
+        x-axis dimensions for the primary reflector.
     y : ndarray
-        y-axis dimentions for the primary reflector.
+        y-axis dimensions for the primary reflector.
     """
 
     _K_coeff = K_coeff.copy()
@@ -235,8 +223,8 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
         List that contains the blockage function, optical path difference
-        (delta function), and the primary radius.
-        telego = [blockage, delta, int].
+        (delta function), and the primary radius (float).
+        telego = [blockage, delta, pr].
 
     Returns
     -------
@@ -249,7 +237,7 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
     [block_func, delta, pr] = telgeo
     B = block_func(x=x, y=y)
 
-    # Normalisation to be used in the Zernike circle polynomials
+    # Normalization to be used in the Zernike circle polynomials
     r_norm = r / pr
 
     W = wavefront(rho=r_norm, theta=t, K_coeff=K_coeff)
@@ -273,7 +261,7 @@ def radiation_pattern(
         ):
     """
     Angular spectrum or (field) radiation pattern, it is the FFT2 computation
-    of the aperture distribution in an rectangular grid. Passing the mayority
+    of the aperture distribution in an rectangular grid. Passing the majority
     of arguments to the aperture function except the resolution, which is the
     FFT2 resolution.
 
@@ -296,10 +284,10 @@ def radiation_pattern(
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
         List that contains the blockage function, optical path difference
-        (delta function), and the primary radius.
-        telego = [blockage, delta, int].
+        (delta function), and the primary radius (float).
+        telego = [blockage, delta, pr].
     resolution : int
-        Fast Fourier Transform resolution for a rectancular grid. The input
+        Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
 
@@ -344,8 +332,8 @@ def radiation_pattern(
         telgeo=telgeo
         )
 
-    # FFT, normalisation not needed, comparing normalised beam
-    F = np.fft.fft2(E)  # * 4 / np.sqrt(Nx * Ny) # Normalisation
+    # FFT, normalization not needed, comparing normalized beam
+    F = np.fft.fft2(E)  # * 4 / np.sqrt(Nx * Ny) # Normalization
     F_shift = np.fft.fftshift(F)
 
     u, v = np.fft.fftfreq(x.size, dx), np.fft.fftfreq(y.size, dy)

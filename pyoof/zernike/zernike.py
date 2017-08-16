@@ -15,7 +15,7 @@ def R(m, n, rho):
     """
     Radial Zernike polynomials generator (R from Born & Wolf definition).
     The m, n are integers, n >= 0 and n - m even. Only used to compute the
-    general expresion for the Zernike circle polynomials, U.
+    general expression for the Zernike circle polynomials, U.
 
     Parameters
     ----------

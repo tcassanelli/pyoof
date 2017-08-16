@@ -12,7 +12,7 @@ __all__ = [
 
 def cart2pol(x, y):
     """
-    Transformation from catesian to polar coordinates, in two dimensions.
+    Transformation from Cartesian to polar coordinates, in two dimensions.
 
     Parameters
     ----------
@@ -88,9 +88,9 @@ def co_matrices(res, jac, n_pars):
     ----------
     res : ndarray
         Last residual evaluation from a fit procedure (least squares
-        optimisation), residual understood as model - data.
+        optimization), residual understood as model - data.
     jac : ndarray
-        Last jacobian matrix evaluation from a fit procedure.
+        Last Jacobian matrix evaluation from a fit procedure.
     n_pars: int
         Total number of parameters in the model (only the ones that have been
         fitted). It is related to the degrees of freedom.
@@ -106,7 +106,7 @@ def co_matrices(res, jac, n_pars):
     m = res.size  # number of data points used in the fit
     p = m - n_pars  # degrees of freedom
 
-    # Variance-Covarince matrix
+    # Variance-Covariance matrix
     cov = np.dot(res.T, res) / p * np.linalg.inv(np.dot(jac.T, jac))
 
     # Estimated error variance (sigma ** 2)
