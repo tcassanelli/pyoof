@@ -79,7 +79,7 @@ def residual_true(
         the FFT2 aperture distribution model. It has been concatenated as
         minus, zero and plus radial offset. It is required to have the
         residual in one dimension in order to use a least squares
-        minimization optimize.least_squares minipack.
+        minimization scipy.optimize.least_squares package.
     """
 
     I_coeff = params[:4]
@@ -138,7 +138,7 @@ def residual(
         ):
     """
     Wrapper for the residual_true function. The objective of this function is
-    to fool the optimize.least_squares minipack by changing the number of
+    to fool the scipy.optimize.least_squares package by changing the number of
     parameters that will be used. The parameters must be in the following
     order,
     params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)]
@@ -287,8 +287,8 @@ def params_complete(params, idx, N_K_coeff, config_params):
 
 # Insert path for the fits file with pre-calibration
 def fit_beam(
-    data_info, data_obs, order_max, illumination, telescope, fit_previous,
-    config_params_file, resolution, make_plots
+    data_info, data_obs, method, order_max, illumination, telescope,
+    fit_previous, config_params_file, resolution, make_plots
         ):
     """
     Computes the Zernike circle polynomials coefficients using the least
@@ -308,6 +308,10 @@ def fit_beam(
         It contains beam maps and x-, y-axis data for the least squares
         optimization.
         data_obs = [beam_data, u_data, v_data].
+    method : str
+        Least squares minimization algorithm, it can be 'trf', 'lm' or
+        'dogbox'. 'lm' does not handle bounds, please
+        refer to scipy.optimize.least_squares documentation.
     order_max : int
         Maximum order to be fitted in the least squares minimization, e.g.
         order 3 will calculate order 1, 2 and 3.
@@ -393,9 +397,6 @@ def fit_beam(
         plim_v = [np.min(v_data[0]), np.max(v_data[0])]
         plim_rad = np.array(plim_u + plim_v)
 
-        # d_z is given in units of wavelength (m/m)
-        # d_z = np.array(d_z)  # needs to be a numpy array
-
         # Beam normalization
         beam_data_norm = [beam_data[i] / beam_data[i].max() for i in range(3)]
 
@@ -413,7 +414,7 @@ def fit_beam(
                     (ascii.read(path_params_previous)['parfit'],
                         np.ones(params_to_add) * 0.1)
                     )
-                print('Initial params: n=' + str(n - 1) + ' fit')
+                print('Initial params: n={} fit'.format(n - 1))
             else:
                 print(
                     '\n ERROR: There is no previous parameters file fitpar_n' +
@@ -427,21 +428,31 @@ def fit_beam(
             # i_amp, sigma_r, x0, y0, K(n, l)
             # Giving an initial value of 0.1 for each coeff
 
-        bounds_min = np.array(
-            config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
-            )
-        bounds_max = np.array(
-            config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
-            )
         idx = config_params['params_excluded']  # exclude params from fit
         # [0, 1, 2, 3, 4] = [i_amp, c_dB, x0, y0, K(0, 0)]
         # or 'None' to include all
-
         params_init_true = np.delete(params_init, idx)
-        bounds_min_true = np.delete(bounds_min, idx)
-        bounds_max_true = np.delete(bounds_max, idx)
 
-        print('Parameters to fit: ' + str(len(params_init_true)) + '\n')
+        if method == 'lm':
+            bounds = tuple(
+                [-np.ones(params_init_true.shape) * np.inf,
+                np.ones(params_init_true.shape) * np.inf]
+                )
+
+        else:
+            bounds_min = np.array(
+                config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
+                )
+            bounds_max = np.array(
+                config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
+                )
+
+            bounds_min_true = np.delete(bounds_min, idx)
+            bounds_max_true = np.delete(bounds_max, idx)
+
+            bounds = tuple([bounds_min_true, bounds_max_true])
+
+        print('Parameters to fit: {}\n'.format(len(params_init_true)))
 
         # Running non-linear least-squared optimization
         res_lsq = optimize.least_squares(
@@ -462,8 +473,8 @@ def fit_beam(
                 True,  # Grid interpolation
                 config_params
                 ),
-            bounds=tuple([bounds_min_true, bounds_max_true]),
-            method='trf',
+            bounds=bounds,
+            method=method,
             verbose=2,
             max_nfev=None
             )
@@ -530,10 +541,12 @@ def fit_beam(
                 frequency=freq,
                 illumination=illum_name,
                 meanel=meanel,
-                fft_resolution=resolution
+                fft_resolution=resolution,
+                opt_method=method
                 )
 
             with open(name_dir + '/pyoof_info.yaml', 'w') as outfile:
+                outfile.write('# pyoof relevant information\n')
                 yaml.dump(pyoof_info, outfile, default_flow_style=False)
 
         # To store large files in csv format
