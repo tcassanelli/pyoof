@@ -1,30 +1,30 @@
 params_bounds_max:
-- 100000.0
-- -8
-- 0.01
-- 0.01
-- 5
+- 100000.0  # i_amp
+- -8  # c_dB or other taper
+- 0.01  # x0 illumination offset
+- 0.01  # y0
+- 5  # K(0, 0)
 params_bounds_min:
-- 0
-- -25
-- -0.01
-- -0.01
-- -5
+- 0  # i_amp
+- -25  # c_dB
+- -0.01  # x0
+- -0.01  # y0
+- -5  # K(0, 0)
 params_excluded:
-- 0
-- 1
-- 2
-- 3
-- 4
+- 0  # i_amp
+- 1  # c_dB
+- 2  # x0
+- 3  # y0
+- 4  # K(0, 0)
 params_fixed:
-- 1.0
-- -8
-- 0
-- 0
-- 0
+- 1.0  # i_amp
+- -8  # c_dB
+- 0  # x0
+- 0  # y0
+- 0  # K(0, 0)
 params_init:
-- 0.1
-- -9
-- 0
-- 0
-- 0
+- 0.1  # i_amp
+- -9  # c_dB
+- 0  # x0
+- 0  # y0
+- 0  # K(0, 0)
