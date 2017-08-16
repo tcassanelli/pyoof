@@ -55,5 +55,6 @@ if __name__ == '__main__':
 
     import glob  # to list as a string files in a directory
     # Directory for the fits files
-    observation = glob.glob('../../data/S9mm_bump/*.fits')[1]
+    observation = glob.glob('../../data/S9mm_bump/*.fits')[0]
+
     fit_beam_effelsberg(observation)  # Execute!
