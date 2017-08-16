@@ -7,9 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from astropy.io import ascii
+import yaml
 from .aperture import radiation_pattern, phase
 from .math_functions import wavevector2degrees, wavevector2radians
-from .aux_functions import str2LaTeX, read_info_csv
+from .aux_functions import str2LaTeX
 
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance', 'plot_fit_path'
@@ -26,17 +27,17 @@ def plot_beam(
         ):
     """
     Plot of the beam maps given fixed I_coeff coefficients and K_coeff
-    coeffcients. It is the straight forward result from a least squares fit
+    coefficients. It is the straight forward result from a least squares fit
     procedure. There will be three maps, for three out-of-focus values, d_z,
     given.
 
     Parameters
     ----------
     params : ndarray
-        An stack of the illumination and Zernike circle polynomaisl
+        An stack of the illumination and Zernike circle polynomials
         coefficients. params = np.hstack([I_coeff, K_coeff])
     d_z : list
-        Distance between the secondary and primary refelctor measured in
+        Distance between the secondary and primary reflector measured in
         meters (radial offset). It is the characteristic measurement to give
         an offset and an out-of-focus image at the end. d_z = [-d_z, 0, +d_z].
     wavel : float
@@ -45,15 +46,15 @@ def plot_beam(
         Illumination function with parameters (x, y, I_coeff, pr).
     telgeo : list
         List that contains the blockage function, optical path difference
-        (delta function), and the primary radius.
-        telego = [blockage, delta, int].
+        (delta function), and the primary radius (float).
+        telego = [blockage, delta, pr].
     resolution : int
-        Fast Fourier Transform resolution for a rectancular grid. The input
+        Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
     plim_rad : ndarray
         Contains the maximum values for the u and v wave-vectors, it can be in
-        degrees or radias depending which one is chosen in angle function
+        degrees or radians depending which one is chosen in angle function
         parameter. plim_rad = np.array([umin, umax, vmin, vmax]).
     angle : str
         Angle unit, it can be 'degrees' or 'radians'.
@@ -167,18 +168,18 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     ----------
     u_data : ndarray
         x axis value for the 3 beam maps in radians. The values have to be
-        flatten, one dimentional, and stacked in the same order as the
+        flatten, one dimensional, and stacked in the same order as the
         d_z = [-d_z, 0, +d_z] values from each beam map.
     v_data : ndarray
         y axis value for the 3 beam maps in radians. The values have to be
-        flatten, one dimentional, and stacked in the same order as the
+        flatten, one dimensional, and stacked in the same order as the
         d_z = [-d_z, 0, +d_z] values from each beam map.
     beam_data : ndarray
-        Amplitude value for the beam map in any unit (it will be normalised).
-        The values have to be flatten, one dimentional, and stacked in the
+        Amplitude value for the beam map in any unit (it will be normalized).
+        The values have to be flatten, one dimensional, and stacked in the
         same order as the d_z=[-d_z, 0, +d_z] values from each beam map.
     d_z : list
-        Distance between the secondary and primary refelctor measured in
+        Distance between the secondary and primary reflector measured in
         meters (radial offset). It is the characteristic measurement to give
         an offset and an out-of-focus image at the end. d_z = [-d_z, 0, +d_z].
     wavel : float
@@ -188,7 +189,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     title : str
         Figure title.
     res_mode : bool
-        If True the plot is with no normalisation, and easier to compare
+        If True the plot is with no normalization, makes it easier to compare
         residuals.
 
     Returns
@@ -197,8 +198,9 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         Data figure from the three observed beam maps. Each map with a
         different offset d_z value. From left to right, -d_z, 0 and +d_z.
     """
+
     if not res_mode:
-        # Power pattern normalisation
+        # Power pattern normalization
         beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
     # input u and v are in radians
     uv_title = angle
@@ -208,7 +210,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
 
     fig, ax = plt.subplots(ncols=3, figsize=(14, 3.3))
 
-    levels = 10  # number of colour lines
+    levels = 10  # number of color lines
     shrink = 0.77
 
     vmin = np.min(beam_data)
@@ -298,17 +300,12 @@ def plot_phase(K_coeff, d_z, notilt, pr, title):
         bartitle = '$\\varphi(x, y)$ amplitude rad'
 
     extent = [-pr, pr, -pr, pr]
-    [x, y, _phase] = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
+    x, y, _phase = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
 
     fig, ax = plt.subplots()
 
     levels = np.linspace(-2, 2, 9)
-    # as used in Nikolic software
-
     shrink = 1
-
-    # to rotate and sign invert
-    # phase = -phase[::-1, ::-1]
 
     im = ax.imshow(_phase, extent=extent)
     ax.contour(x, y, _phase, levels=levels, colors='k', alpha=0.3)
@@ -326,9 +323,9 @@ def plot_phase(K_coeff, d_z, notilt, pr, title):
 def plot_variance(matrix, params_names, diag, cbtitle, title):
     """
     Plot for the Variance-Covariance matrix or Correlation matrix. It returns
-    the triangle figure with a color amplitude value for each elelemt. Used to
+    the triangle figure with a color amplitude value for each element. Used to
     check the correlation between the fitted parameters in a least squares
-    optimisation.
+    optimization.
 
     Parameters
     ----------
@@ -341,7 +338,7 @@ def plot_variance(matrix, params_names, diag, cbtitle, title):
     diag : bool
         If True it will plot the matrix diagonal.
     cbtitle : str
-        Colorbar title.
+        Color bar title.
     title : str
         Figure title.
 
@@ -409,33 +406,33 @@ def plot_variance(matrix, params_names, diag, cbtitle, title):
 
 
 def plot_fit_path(
-    pathoof, order, telgeo, illum_func, resolution, angle, plim_rad, save
+    path_pyoof, order, telgeo, illum_func, resolution, angle, plim_rad, save
         ):
     """
-    Plot all important figures after a least squares optimisation.
+    Plot all important figures after a least squares optimization.
 
     Parameters
     ----------
-    pathoof : str
+    path_pyoof : str
         Path to the pyoof output, 'OOF_out/directory'.
     order : int
         Maximum order for the optimization in the Zernike circle polynomials
         coefficients.
     telgeo : list
         List that contains the blockage function, optical path difference
-        (delta function), and the primary radius.
-        telego = [blockage, delta, int].
+        (delta function), and the primary radius (float).
+        telego = [blockage, delta, pr].
     illum_func : function
         Illumination function with parameters (x, y, I_coeff, pr).
     resolution : int
-        Fast Fourier Transform resolution for a rectancular grid. The input
+        Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
     angle : str
         Angle unit, it can be 'degrees' or 'radians'.
     plim_rad : ndarray
         Contains the maximum values for the u and v wave-vectors, it can be in
-        degrees or radias depending which one is chosen in angle function
+        degrees or radians depending which one is chosen in angle function
         parameter. plim_rad = np.array([umin, umax, vmin, vmax]).
     save : bool
         If True, it stores all plots in the 'OOF_out/name' directory.
@@ -450,7 +447,7 @@ def plot_fit_path(
         primary dish.
     fig_res : matplotlib.figure.Figure
         Residual from the three beam maps from the last residual evaluation in
-        the optimisation procedure.
+        the optimization procedure.
     fig_data : matplotlib.figure.Figure
         Data figure from the three observed beam maps. Each map with a
         different offset d_z value. From left to right, -d_z, 0 and +d_z
@@ -460,29 +457,31 @@ def plot_fit_path(
         Triangle figure representing Correlation matrix.
     """
 
-    if not os.path.exists(pathoof + '/plots'):
-        os.makedirs(pathoof + '/plots')
+    if not os.path.exists(path_pyoof + '/plots'):
+        os.makedirs(path_pyoof + '/plots')
 
-    path_plot = pathoof + '/plots'
+    path_plot = path_pyoof + '/plots'
 
     # Info
     n = order
-    fitpar = ascii.read(pathoof + '/fitpar_n' + str(n) + '.csv')
-    info_dict = read_info_csv(pathoof + '/file_info.csv')
-    d_z = np.array([info_dict['d_z-'], info_dict['d_z0'], info_dict['d_z+']])
-    name = info_dict['name']
+    fitpar = ascii.read(path_pyoof + '/fitpar_n' + str(n) + '.csv')
+
+    with open(path_pyoof + '/pyoof_info.yaml', 'r') as inputfile:
+        pyoof_info = yaml.load(inputfile)
+
+    name = pyoof_info['name']
 
     # Residual
-    res = np.genfromtxt(pathoof + '/res_n' + str(n) + '.csv')
+    res = np.genfromtxt(path_pyoof + '/res_n' + str(n) + '.csv')
 
     # Data
-    u_data = np.genfromtxt(pathoof + '/u_data.csv')
-    v_data = np.genfromtxt(pathoof + '/v_data.csv')
-    beam_data = np.genfromtxt(pathoof + '/beam_data.csv')
+    u_data = np.genfromtxt(path_pyoof + '/u_data.csv')
+    v_data = np.genfromtxt(path_pyoof + '/v_data.csv')
+    beam_data = np.genfromtxt(path_pyoof + '/beam_data.csv')
 
     # Covariance and Correlation matrix
-    cov = np.genfromtxt(pathoof + '/cov_n' + str(n) + '.csv')
-    corr = np.genfromtxt(pathoof + '/corr_n' + str(n) + '.csv')
+    cov = np.genfromtxt(path_pyoof + '/cov_n' + str(n) + '.csv')
+    corr = np.genfromtxt(path_pyoof + '/corr_n' + str(n) + '.csv')
 
     # LaTeX problem with underscore _ -> \_
     name = str2LaTeX(name)
@@ -492,7 +491,7 @@ def plot_fit_path(
             u_data=u_data,
             v_data=v_data,
             beam_data=beam_data,
-            d_z=d_z,
+            d_z=pyoof_info['d_z'],
             title=name + ' observed power pattern',
             angle=angle,
             res_mode=False
@@ -501,8 +500,8 @@ def plot_fit_path(
     fig_beam = plot_beam(
         params=np.array(fitpar['parfit']),
         title=name + ' fitted power pattern  $n=' + str(n) + '$',
-        d_z=d_z,
-        wavel=info_dict['wavel'],
+        d_z=pyoof_info['d_z'],
+        wavel=pyoof_info['wavel'],
         illum_func=illum_func,
         telgeo=telgeo,
         plim_rad=plim_rad,
@@ -512,7 +511,7 @@ def plot_fit_path(
 
     fig_phase = plot_phase(
         K_coeff=np.array(fitpar['parfit'])[4:],
-        d_z=d_z[2],  # only one function for the three beam maps
+        d_z=pyoof_info['d_z'][2],  # only one function for the three beam maps
         title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
         notilt=True,
         pr=telgeo[2]
@@ -522,7 +521,7 @@ def plot_fit_path(
         u_data=u_data,
         v_data=v_data,
         beam_data=res,
-        d_z=d_z,
+        d_z=pyoof_info['d_z'],
         title=name + ' residual  $n=' + str(n) + '$',
         angle=angle,
         res_mode=True

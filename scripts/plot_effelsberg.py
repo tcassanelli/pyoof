@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from scipy import interpolate
+import yaml
 import pyoof
 
 # Calling plot style from pyoof package
@@ -38,7 +39,7 @@ def plot_data_effelsberg(pathfits, angle):
 
 def plot_lookup_effelsberg(path_lookup):
     """
-    Effeslberg look-up table plot. All degrees with exception of 32. Since it
+    Effelsberg look-up table plot. All degrees with exception of 32. Since it
     is almost zero value. The file must be txt or similar.
     """
     elevation = [7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90]  # degrees
@@ -144,7 +145,7 @@ def plot_phase_um(pts, phase, wavel, act, act_name, title, show_actuator):
 
     im = ax.imshow(phase_um, extent=extent)
     cb = fig.colorbar(im, ax=ax, shrink=shrink)
-    cb.ax.set_ylabel('$\\varphi_\mathrm{no\,tilt}(x, y)$ amplitude $\mu$m')
+    cb.ax.set_ylabel('$\\varphi_{\\bot\mathrm{no\,tilt}}(x, y)$ amplitude $\mu$m')
     cb.formatter.set_powerlimits((0, 0))
     cb.ax.yaxis.set_offset_position('left')
     cb.update_ticks()
@@ -182,17 +183,21 @@ def plot_rse(paths_pyoof, order, r_max, title):
     xx, yy = np.meshgrid(x, y)
 
     values = []
-    for p in paths_pyoof:
-        phase = np.genfromtxt(p + '/phase_n' + str(order) + '.csv')
+    for path in paths_pyoof:
+        phase = np.genfromtxt(path + '/phase_n' + str(order) + '.csv')
         phase[xx ** 2 + yy ** 2 > r_max ** 2] = 0
 
-        info = pyoof.read_info_csv(p + '/file_info.csv')
-        rad_to_um = info['wavel'] / (4 * np.pi)
+        # importing phase related data
+        with open(path + '/pyoof_info.yaml', 'r') as inputfile:
+            pyoof_info = yaml.load(inputfile)
+
+
+        rad_to_um = pyoof_info['wavel'] / (4 * np.pi)
         phase_m = phase * rad_to_um
 
         values.append([
-            info['name'], info['meanel'],
-            pyoof.aperture.e_rse(phase_m, info['wavel'])
+            pyoof_info['name'], pyoof_info['meanel'],
+            pyoof.aperture.e_rse(phase_m, pyoof_info['wavel'])
             ])
 
     fig, ax = plt.subplots()
@@ -203,13 +208,15 @@ def plot_rse(paths_pyoof, order, r_max, title):
         ax.legend(loc='best')
         ax.set_xlabel('$\\alpha$ degrees')
         ax.set_title(title)
-        ax.set_ylabel('Random-surface-error efficiency')
+        ax.set_ylabel(
+            'Random-surface-error efficiency $\\varepsilon_\mathrm{rs}$'
+            )
 
     return fig
 
 
 # take a closer look at this and make it better!
-# Needs corrections in the phase and right convention on paramters!
+# Needs corrections in the phase and right convention on parameters!
 def plot_fit_nikolic(pathoof, order, d_z, telgeo, plim_rad, angle):
     """
     Designed to plot Bojan Nikolic solutions given a path to its oof output.
@@ -253,5 +260,5 @@ def plot_fit_nikolic(pathoof, order, d_z, telgeo, plim_rad, angle):
 
 if __name__ == '__main__':
 
-    plot_rse(['/Users/tomascassanelli/ownCloud/OOF/data/S9mm_bump/OOF_out/S9mm_3478_3C454.3_32deg_H6-000'], 5, 3.25, 'hi')
+    plot_rse(['/Users/tomascassanelli/ownCloud/OOF/data/S9mm_bump/OOF_out/S9mm_3478_3C454.3_32deg_H6-011'], 2, 3.25, 'hi')
     plt.show()
