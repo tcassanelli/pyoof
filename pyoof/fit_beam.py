@@ -12,7 +12,7 @@ import yaml
 from .aperture import radiation_pattern, phase
 from .math_functions import wavevector2radians, co_matrices
 from .plot_routines import plot_fit_path
-from .aux_functions import store_data_csv, store_info_csv
+from .aux_functions import store_data_csv
 
 __all__ = [
     'residual_true', 'residual', 'params_complete', 'fit_beam',
@@ -24,9 +24,11 @@ def residual_true(
     resolution, interp
         ):
     """
-    Computes the true residual ready to use for the fit_beam function. True means that some of the parameters used will not be fitted, these parameter are selected by their position as
+    Computes the true residual ready to use for the fit_beam function. True
+    means that some of the parameters used will not be fitted, these parameter
+    are selected by their position as
     params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)]
-    and to exclude or include them the config_file.yaml file needs to be
+    and to exclude or include them the config_params.yaml file needs to be
     edited, in the pyoof package directory.
 
     Parameters
@@ -132,7 +134,7 @@ def residual_true(
 
 def residual(
     params, idx, N_K_coeff, beam_data_norm, u_data, v_data, d_z, wavel,
-    illum_func, telgeo, resolution, interp
+    illum_func, telgeo, resolution, interp, config_params
         ):
     """
     Wrapper for the residual_true function. The objective of this function is
@@ -140,7 +142,7 @@ def residual(
     parameters that will be used. The parameters must be in the following
     order,
     params = [i_amp, c_dB, x0, y0, K(0, 0), ... , K(l, n)]
-    and to exclude or include them the config_file.yaml file needs to be
+    and to exclude or include them the config_params.yaml file needs to be
     edited, in the pyoof package directory.
 
     Parameters
@@ -192,6 +194,9 @@ def residual(
         If True will process the correspondent interpolation between the
         observed mesh and the computed mesh for the FFT2 aperture distribution
         model.
+    config_params : dict
+        Contains the values for the fixed parameters, commonly the first four
+        parameters are fixed. See the config_params file.
     Returns
     -------
     residual : ndarray
@@ -200,7 +205,7 @@ def residual(
     """
 
     # parameters for the true fit
-    params_res = params_complete(params, idx, N_K_coeff)
+    params_res = params_complete(params, idx, N_K_coeff, config_params)
 
     res_true = residual_true(
         params=params_res,  # needs to be a numpy array
@@ -218,11 +223,14 @@ def residual(
     return res_true
 
 
-def params_complete(params, idx, N_K_coeff):
+def params_complete(params, idx, N_K_coeff, config_params):
     """
     Fills the missing parameters not used in the lease squares optimization,
-    They are required to compute the correct aperture distribution. Generally the following parameters are excluded [i_amp, taper_dB, x0, y0, K(0, 0)],
-    which correspond to the first 4 in the params array. These parameters can be excluded or included in the config_file.yaml configuration file, located in the pyoof package directory.
+    They are required to compute the correct aperture distribution. Generally
+    the following parameters are excluded [i_amp, taper_dB, x0, y0, K(0, 0)],
+    which correspond to the first 4 in the params array. These parameters can
+    be excluded or included in the config_params.yaml configuration file,
+    located in the pyoof package directory.
 
     Parameters
     ----------
@@ -239,6 +247,9 @@ def params_complete(params, idx, N_K_coeff):
         Number of Zernike circle polynomials coefficients to fit. It is
         obtained from the order to be fitted with the formula
         N_K_coeff = (n + 1) * (n + 2) // 2.
+    config_params : dict
+        Contains the values for the fixed parameters, commonly the first four
+        parameters are fixed. See the config_params file.
 
     Returns
     -------
@@ -247,11 +258,11 @@ def params_complete(params, idx, N_K_coeff):
     """
 
     # Fixed values for parameters, in case they're excluded, see idx
-    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_file['params_fixed']
+    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_params['params_fixed']
 
     # N_K_coeff number of Zernike circle polynomials coefficients
     if params.size != (4 + N_K_coeff):
-        _params = params
+        _params = params.copy()
         for i in idx:
             if i == 0:
                 _params = np.insert(_params, i, i_amp_f)
@@ -277,7 +288,7 @@ def params_complete(params, idx, N_K_coeff):
 # Insert path for the fits file with pre-calibration
 def fit_beam(
     data_info, data_obs, order_max, illumination, telescope, fit_previous,
-    config_file_path, resolution, make_plots
+    config_params_file, resolution, make_plots
         ):
     """
     Computes the Zernike circle polynomials coefficients using the least
@@ -311,8 +322,14 @@ def fit_beam(
     fit_previous : bool
         If set to True will fit the coefficients from the previous optimization
         this feature is strongly suggested.
-    config_file_path : str
-        Path for the configuration file, required for the excluded or included parameters and their bounds for the optimization. If None the default setting will be used.
+    config_params_file : str
+        Path for the configuration file, this includes, the maximum and
+        minimum bounds, excluded, fixed and initial parameters for the
+        optimization. See config_params.yaml in the pyoof package directory.
+    config_params_path : str
+        Path for the configuration file, required for the excluded or included
+        parameters and their bounds for the optimization. If None the default
+        setting will be used.
     resolution : int
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
@@ -335,6 +352,18 @@ def fit_beam(
     [blockage, delta, pr, tel_name] = telescope
     telgeo = telescope[:3]
 
+    # Calling default configuration file from the pyoof package
+    if config_params_file is None:
+        config_params_dir = os.path.dirname(__file__)
+        config_params_pyoof = os.path.join(
+            config_params_dir, 'config_params.yaml'
+            )
+        with open(config_params_pyoof, 'r') as yaml_config:
+            config_params = yaml.load(yaml_config)
+    else:
+        with open(config_params_file, 'r') as yaml_config:
+            config_params = yaml.load(yaml_config)
+
     # Storing files in OOF_out directory
     # pthto: path or directory where the fits file is located
     if not os.path.exists(pthto + '/OOF_out'):
@@ -354,17 +383,6 @@ def fit_beam(
     print('d_z (out-of-focus): ', d_z, 'm')
     print('Illumination to be fitted: ', illum_name)
 
-    # Calling default configuration file for the parameters
-    if config_file_path is None:
-        config_file_dir = os.path.dirname(__file__)
-        config_file_pth = os.path.join(config_file_dir, 'config_file.yaml')
-        with open(config_file_pth, 'r') as _yaml_file:
-            config_file = yaml.load(_yaml_file)
-    else:
-        with open(config_file_path, 'r') as _yaml_file:
-            config_file = yaml.load(_yaml_file)
-
-
     for order in range(1, order_max + 1):
 
         print('\n... Fit order ' + str(order) + ' ... \n')
@@ -382,7 +400,7 @@ def fit_beam(
         beam_data_norm = [beam_data[i] / beam_data[i].max() for i in range(3)]
 
         n = order  # order polynomial to fit
-        N_K_coeff = (n + 1) * (n + 2) // 2  # number of K(m, n) to fit
+        N_K_coeff = (n + 1) * (n + 2) // 2  # number of K(n, l) to fit
 
         # Looking for result parameters lower order
         if fit_previous and n != 1:
@@ -403,20 +421,19 @@ def fit_beam(
                     )
         else:
             params_init = np.array(
-                config_file['params_init'] + [0.1] * (N_K_coeff - 1)
+                config_params['params_init'] + [0.1] * (N_K_coeff - 1)
                 )
             print('Initial params: default')
-            # i_amp, sigma_r, x0, y0, K(l,m)
+            # i_amp, sigma_r, x0, y0, K(n, l)
             # Giving an initial value of 0.1 for each coeff
 
         bounds_min = np.array(
-            config_file['params_bounds_min'] + [-5] * (N_K_coeff - 1)
+            config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
             )
         bounds_max = np.array(
-            config_file['params_bounds_max'] + [5] * (N_K_coeff - 1)
+            config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
             )
-
-        idx = config_file['params_excluded']  # exclude params from fit
+        idx = config_params['params_excluded']  # exclude params from fit
         # [0, 1, 2, 3, 4] = [i_amp, c_dB, x0, y0, K(0, 0)]
         # or 'None' to include all
 
@@ -442,7 +459,8 @@ def fit_beam(
                 illum_func,
                 telgeo,
                 resolution,
-                True  # Grid interpolation
+                True,  # Grid interpolation
+                config_params
                 ),
             bounds=tuple([bounds_min_true, bounds_max_true]),
             method='trf',
@@ -453,7 +471,12 @@ def fit_beam(
         print('\n')
 
         # Solutions from least squared optimization
-        params_solution = params_complete(res_lsq.x, idx, N_K_coeff)
+        params_solution = params_complete(
+            params=res_lsq.x,
+            idx=idx,
+            N_K_coeff=N_K_coeff,
+            config_params=config_params
+            )
         params_init = params_init
         res_optim = res_lsq.fun.reshape(3, -1)  # Optimum residual from fitting
         jac_optim = res_lsq.jac
@@ -483,7 +506,7 @@ def fit_beam(
 
         params_names = ['i_amp', taper_name, 'x_0', 'y_0']
         for i in range(N_K_coeff):
-            params_names.append('K(' + str(L[i]) + ',' + str(N[i]) + ')')
+            params_names.append('K({}, {})'.format(N[i], L[i]))
 
         params_to_save = [params_names, params_solution, params_init]
 
@@ -499,21 +522,19 @@ def fit_beam(
             )
 
         if n == 1:
-            # Experiment
-            info_dict = {
-                'telescope': tel_name,
-                'name': name,
-                'd_z-': d_z[0],
-                'd_z0': d_z[1],
-                'd_z+': d_z[2],
-                'wavel': wavel,
-                'freq': freq,
-                'illumination': illum_name,
-                'meanel': meanel,
-                'fft_resolution': resolution
-                }
+            pyoof_info = dict(
+                telescope=tel_name,
+                name=name,
+                d_z=d_z,
+                wavel=wavel,
+                frequency=freq,
+                illumination=illum_name,
+                meanel=meanel,
+                fft_resolution=resolution
+                )
 
-            store_info_csv(info_dict=info_dict, name_dir=name_dir)
+            with open(name_dir + '/pyoof_info.yaml', 'w') as outfile:
+                yaml.dump(pyoof_info, outfile, default_flow_style=False)
 
         # To store large files in csv format
         save_to_csv = [
@@ -536,7 +557,7 @@ def fit_beam(
             print('\n... Making plots ...')
 
             plot_fit_path(
-                pathoof=name_dir,
+                path_pyoof=name_dir,
                 order=n,
                 telgeo=telgeo,
                 illum_func=illum_func,
@@ -549,4 +570,4 @@ def fit_beam(
             plt.close('all')
 
     final_time = np.round((time.time() - start_time) / 60, 2)
-    print('\n **** OOF FIT COMPLETED AT ' + str(final_time) + ' mins **** \n')
+    print('\n **** OOF FIT COMPLETED AT {} mins **** \n'.format(final_time))

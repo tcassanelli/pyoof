@@ -4,12 +4,14 @@
 # Author: Tomas Cassanelli
 import numpy as np
 from astropy.io import ascii
+import yaml
 from scipy import interpolate
-from pyoof import str2LaTeX, read_info_csv, rms, aperture
+from pyoof import str2LaTeX, rms, aperture
 import plot_effelsberg
 
 
-def actuator_displacement(path_pyoof, order, edge_mm, save):
+# In the future make it independent of the plot function
+def actuator_displacement(path_pyoof, order, edge_mm, make_plots):
     """
     Calculates displacement for the active surface on the Effelsberg telescope.
     Given the phase error from the primary reflector the phase error for the
@@ -37,12 +39,6 @@ def actuator_displacement(path_pyoof, order, edge_mm, save):
     # Actuator positions
     act_x = np.outer(R, np.cos(theta)).reshape(-1)
     act_y = np.outer(R, np.sin(theta)).reshape(-1)
-
-    # act_name = np.core.defchararray.add(
-    #     'PVA',
-    #     np.array(range(1, 97), dtype='<U3')
-    #     )
-
     act_name = np.array(range(1, 97), dtype='<U3')
 
     # Interpolation
@@ -55,17 +51,19 @@ def actuator_displacement(path_pyoof, order, edge_mm, save):
     act_phase = intrp(np.array([act_x, act_y]).T)
 
     # importing phase related data
-    info = read_info_csv(path_pyoof + '/file_info.csv')
-    rad_to_um = info['wavel'] / (4 * np.pi) * 1e6  # converted to microns
+    with open(path_pyoof + '/pyoof_info.yaml', 'r') as inputfile:
+        pyoof_info = yaml.load(inputfile)
+
+    rad_to_um = pyoof_info['wavel'] / (4 * np.pi) * 1e6  # converted to microns
 
     # Storing the data
     path_actdisp = path_pyoof + '/actdisp_n' + str(n) + '.csv'
     act_to_save = [act_name, act_x, act_y, act_phase, act_phase * rad_to_um]
 
-    print('File name: ', info['name'])
-    print('Obs Wavelenght : ', info['wavel'], 'm')
-    print('d_z (out-of-focus): ', info['d_z+'], 'm')
-    print('Mean elevation: ', info['meanel'], 'degrees')
+    print('File name: ', pyoof_info['name'])
+    print('Obs Wavelength : ', pyoof_info['wavel'], 'm')
+    print('d_z (out-of-focus): ', pyoof_info['d_z'], 'm')
+    print('Mean elevation: ', pyoof_info['meanel'], 'degrees')
     print('Considered radius: ', external_ring, 'microns')
 
     # RMS for the maximum radius
@@ -78,7 +76,7 @@ def actuator_displacement(path_pyoof, order, edge_mm, save):
     _phase_m = _phase_microns.copy() * 1e-6  # phase in meters
     print(
         'Random-surface-error efficiency: ',
-        aperture.e_rse(_phase_m, info['wavel'])
+        aperture.e_rse(_phase_m, pyoof_info['wavel'])
         )
     print('\n')
 
@@ -91,19 +89,20 @@ def actuator_displacement(path_pyoof, order, edge_mm, save):
     # printing the full table
     ascii.read(path_actdisp).pprint(max_lines=-1, max_width=-1)
 
-    fig_act = plot_effelsberg.plot_phase_um(
-        pts=(x, y),
-        phase=phase,  # phase in microns
-        wavel=info['wavel'],
-        act=(act_x, act_y),
-        act_name=act_name,
-        show_actuator=True,
-        title=(
-            'Actuators ' + str2LaTeX(info['name']) + ' $n=' + str(n) +
-            '$ meanel$=$' + str(np.round(info['meanel'], 2)) + ' degrees')
-        )
+    if make_plots:
+        fig_act = plot_effelsberg.plot_phase_um(
+            pts=(x, y),
+            phase=phase,  # phase in microns
+            wavel=pyoof_info['wavel'],
+            act=(act_x, act_y),
+            act_name=act_name,
+            show_actuator=True,
+            title=(
+                'Actuators ' + str2LaTeX(pyoof_info['name']) +
+                ' $n=' + str(n) + '$ meanel $=' +
+                str(np.round(pyoof_info['meanel'], 2)) + '$ degrees')
+            )
 
-    if save:
         fig_act.savefig(
             filename=path_pyoof + '/plots/actdisp_n' + str(n) + '.pdf',
             bbox_inches='tight'
@@ -113,16 +112,15 @@ def actuator_displacement(path_pyoof, order, edge_mm, save):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     # Get solution from fit_beam.py
-    path_pyoof = '../../data/S9mm_bump/OOF_out/S9mm_3478_3C454.3_32deg_H6-000'
-    n = 6
+    path_pyoof = '../../data/S9mm_bump/OOF_out/S9mm_3478_3C454.3_32deg_H6-011'
+    n = 2
 
     displ = actuator_displacement(
         path_pyoof=path_pyoof,
         order=n,
-        edge_mm=20,  # mm
-        save=True
+        edge_mm=0,  # mm
+        make_plots=True
         )
 
     plt.show()
     plt.close('all')
-
