@@ -18,7 +18,7 @@ Usage
 For now the installation is only available from the source, clone the repository and then execute
 
 ```
-$ python install setup.py
+$ python setup.py install
 ```
 
 I believe in the future :smile:, so please install Python 3.
@@ -26,4 +26,4 @@ I believe in the future :smile:, so please install Python 3.
 License
 -------
 
-I need to read but soon it will be uploaded, sorry for the inconvenience :no_mouth:
+I need to read but soon it'll be uploaded, sorry for the inconvenience :no_mouth:
