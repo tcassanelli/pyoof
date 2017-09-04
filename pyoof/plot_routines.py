@@ -5,12 +5,13 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
 from astropy.io import ascii
 import yaml
 from .aperture import radiation_pattern, phase
 from .math_functions import wavevector2degrees, wavevector2radians
-from .aux_functions import str2LaTeX
+from .aux_functions import uv_ratio
 
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance', 'plot_fit_path'
@@ -22,8 +23,8 @@ plt.style.use(os.path.join(plotstyle_dir, 'pyoof.mplstyle'))
 
 
 def plot_beam(
-    params, d_z, wavel, illum_func, telgeo, resolution, plim_rad, angle,
-    title
+    params, d_z, wavel, illum_func, telgeo, resolution, box_factor, plim_rad,
+    angle, title
         ):
     """
     Plot of the beam maps given fixed I_coeff coefficients and K_coeff
@@ -52,6 +53,10 @@ def plot_beam(
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
+    box_factor : int
+        Related to the FFT resolution, defines the image in the at the pixel
+        size level, depending on the data a good value has to be chosen, the
+        standard is 5, then the box_size = 5 * pr.
     plim_rad : ndarray
         Contains the maximum values for the u and v wave-vectors, it can be in
         degrees or radians depending which one is chosen in angle function
@@ -71,13 +76,6 @@ def plot_beam(
     I_coeff = params[:4]
     K_coeff = params[4:]
 
-    # Selection between radians or degrees plotting
-    uv_title = angle
-    if angle == 'degrees':
-        wavevector_change = wavevector2degrees
-    else:
-        wavevector_change = wavevector2radians
-
     u, v, F = [], [], []
     for _d_z in d_z:
 
@@ -88,13 +86,16 @@ def plot_beam(
             wavel=wavel,
             illum_func=illum_func,
             telgeo=telgeo,
-            resolution=resolution
+            resolution=resolution,
+            box_factor=box_factor
             )
 
         u.append(_u)
         v.append(_v)
         F.append(_F)
 
+    u = np.array(u)
+    v = np.array(v)
     power_pattern = np.abs(F) ** 2
     power_norm = np.array(
         [power_pattern[i] / power_pattern[i].max() for i in range(3)]
@@ -103,59 +104,66 @@ def plot_beam(
     # Limits, they need to be transformed to degrees
     if plim_rad is None:
         pr = telgeo[2]  # primary reflector radius
-        b_factor = 1.22 * wavel / (2 * pr)  # Beamwidth
-        plim_u = [-600 * b_factor, 600 * b_factor]
-        plim_v = [-600 * b_factor, 600 * b_factor]
-        figsize = (14, 4.5)
-        shrink = 0.88
+        bw = 1.22 * wavel / (2 * pr)  # Beamwidth radians
+        size_in_bw = bw * 8
 
-    else:
-        if angle == 'degrees':
-            plim_angle = np.degrees(plim_rad)
-        else:
-            plim_angle = plim_rad
-        plim_u, plim_v = plim_angle[:2], plim_angle[2:]
-        figsize = (14, 3.3)
-        shrink = 0.77
+        # Finding central point for shifted maps
+        uu, vv = np.meshgrid(_u, _v)
+        u_offset = uu[power_norm[1] == power_norm[1].max()][0]
+        v_offset = vv[power_norm[1] == power_norm[1].max()][0]
 
-    fig, ax = plt.subplots(ncols=3, figsize=figsize)
+        u_offset = wavevector2radians(u_offset, wavel)
+        v_offset = wavevector2radians(v_offset, wavel)
 
-    levels = 10  # number of colour lines
+        plim_rad = [
+            -size_in_bw + u_offset, size_in_bw + u_offset,
+            -size_in_bw + v_offset, size_in_bw + v_offset
+            ]
+
+    if angle == 'degrees':
+        plim_angle = np.degrees(plim_rad)
+        u_angle = wavevector2degrees(u, wavel)
+        v_angle = wavevector2degrees(v, wavel)
+    if angle == 'radians':
+        plim_angle = plim_rad
+        u_angle = wavevector2radians(u, wavel)
+        v_angle = wavevector2radians(v, wavel)
+
+    plim_u, plim_v = plim_angle[:2], plim_angle[2:]
 
     subtitle = [
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[0], 3)) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z[1]) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[2], 3)) + '$ m'
+        '$P_{\\textrm{\\scriptsize{norm}}}(u,v)$ $d_z=' +
+        str(round(d_z[i], 3)) + '$ m' for i in range(3)
         ]
 
+    fig, ax = plt.subplots(ncols=3, figsize=uv_ratio(plim_u, plim_v))
+
     for i in range(3):
-        u_angle = wavevector_change(u[i], wavel)
-        v_angle = wavevector_change(v[i], wavel)
 
-        extent = [u_angle.min(), u_angle.max(), v_angle.min(), v_angle.max()]
+        extent = [
+            u_angle[i].min(), u_angle[i].max(),
+            v_angle[i].min(), v_angle[i].max()
+            ]
 
-        # make sure it is set to origin='lower', see plot style
         im = ax[i].imshow(power_norm[i], extent=extent, vmin=0, vmax=1)
-        ax[i].contour(u_angle, v_angle, power_norm[i], levels)
-        cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
+        ax[i].contour(u_angle[i], v_angle[i], power_norm[i], 10)
 
-        ax[i].set_title(subtitle[i])
-        ax[i].set_ylabel('$v$ ' + uv_title)
-        ax[i].set_xlabel('$u$ ' + uv_title)
-        ax[i].set_ylim(*plim_v)
-        ax[i].set_xlim(*plim_u)
-        ax[i].grid('off')
-
+        divider = make_axes_locatable(ax[i])
+        cax = divider.append_axes("right", size="3%", pad=0.03)
+        cb = fig.colorbar(im, cax=cax)
         cb.formatter.set_powerlimits((0, 0))
         cb.ax.yaxis.set_offset_position('left')
         cb.update_ticks()
 
-    # fig.set_tight_layout(True)
+        ax[i].set_title(subtitle[i])
+        ax[i].set_ylabel('$v$ ' + angle)
+        ax[i].set_xlabel('$u$ ' + angle)
+        ax[i].set_ylim(*plim_v)
+        ax[i].set_xlim(*plim_u)
+        ax[i].grid('off')
+
     fig.suptitle(title)
-    fig.subplots_adjust(
-        left=0.06, bottom=0.1, right=1,
-        top=0.91, wspace=0.13, hspace=0.2
-        )
+    fig.tight_layout()
 
     return fig
 
@@ -208,19 +216,15 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     if angle == 'degrees':
         u_data, v_data = np.degrees(u_data), np.degrees(v_data)
 
-    fig, ax = plt.subplots(ncols=3, figsize=(14, 3.3))
-
-    levels = 10  # number of color lines
-    shrink = 0.77
-
     vmin = np.min(beam_data)
     vmax = np.max(beam_data)
 
     subtitle = [
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[0], 3)) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(d_z[1]) + '$ m',
-        '$P_\mathrm{norm}(u,v)$ $d_z=' + str(round(d_z[2], 3)) + '$ m'
+        '$P_{\\textrm{\\scriptsize{norm}}}^{\\textrm{\\scriptsize{obs}}}' +
+        '(u,v)$ $d_z={}$ m'.format(round(d_z[i], 3)) for i in range(3)
         ]
+
+    fig, ax = plt.subplots(ncols=3, figsize=uv_ratio(u_data[0], v_data[0]))
 
     for i in range(3):
         # new grid for beam_data
@@ -238,23 +242,23 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
 
         extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
         im = ax[i].imshow(beam_ng, extent=extent, vmin=vmin, vmax=vmax)
-        ax[i].contour(u_ng, v_ng, beam_ng, levels)
-        cb = fig.colorbar(im, ax=ax[i], shrink=shrink)
+        ax[i].contour(u_ng, v_ng, beam_ng, 10)
+
+        divider = make_axes_locatable(ax[i])
+        cax = divider.append_axes("right", size="3%", pad=0.03)
+
+        cb = fig.colorbar(im, cax=cax)
+        cb.formatter.set_powerlimits((0, 0))
+        cb.ax.yaxis.set_offset_position('left')
+        cb.update_ticks()
 
         ax[i].set_ylabel('$v$ ' + uv_title)
         ax[i].set_xlabel('$u$ ' + uv_title)
         ax[i].set_title(subtitle[i])
         ax[i].grid('off')
 
-        cb.formatter.set_powerlimits((0, 0))
-        cb.ax.yaxis.set_offset_position('left')
-        cb.update_ticks()
-
     fig.suptitle(title)
-    fig.subplots_adjust(
-        left=0.06, bottom=0.1, right=1,
-        top=0.91, wspace=0.13, hspace=0.2
-        )
+    fig.tight_layout()
 
     return fig
 
@@ -291,36 +295,43 @@ def plot_phase(K_coeff, d_z, notilt, pr, title):
 
     if notilt:
         subtitle = (
-            '$\\varphi_\mathrm{no\,tilt}(x, y)$  $d_z=\pm' +
+            '$\\varphi_{\\scriptsize{\\textrm{no-tilt}}}(x,y)$  $d_z=\pm' +
             str(round(d_z, 3)) + '$ m'
             )
-        bartitle = '$\\varphi_\mathrm{no\,tilt}(x, y)$ amplitude rad'
+        cbartitle = (
+            '$\\varphi_{\\scriptsize{\\textrm{no-tilt}}}(x,y)$ amplitude rad'
+            )
     else:
         subtitle = '$\\varphi(x, y)$  $d_z=\pm' + str(round(d_z, 3)) + '$ m'
-        bartitle = '$\\varphi(x, y)$ amplitude rad'
+        cbartitle = '$\\varphi(x, y)$ amplitude rad'
 
     extent = [-pr, pr, -pr, pr]
-    x, y, _phase = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
+    _x, _y, _phase = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6, 5.8))
 
     levels = np.linspace(-2, 2, 9)
-    shrink = 1
 
     im = ax.imshow(_phase, extent=extent)
-    ax.contour(x, y, _phase, levels=levels, colors='k', alpha=0.3)
-    cb = fig.colorbar(im, ax=ax, shrink=shrink)
+    ax.contour(_x, _y, _phase, levels=levels, colors='k', alpha=0.3)
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="3%", pad=0.03)
+    cb = fig.colorbar(im, cax=cax)
+    cb.ax.set_ylabel(cbartitle)
+
     ax.set_title(subtitle)
     ax.set_ylabel('$y$ m')
     ax.set_xlabel('$x$ m')
     ax.grid('off')
-    cb.ax.set_ylabel(bartitle)
+
     fig.suptitle(title)
+    fig.tight_layout()
 
     return fig
 
 
-def plot_variance(matrix, params_names, diag, cbtitle, title):
+def plot_variance(matrix, order, diag, cbtitle, title):
     """
     Plot for the Variance-Covariance matrix or Correlation matrix. It returns
     the triangle figure with a color amplitude value for each element. Used to
@@ -332,9 +343,9 @@ def plot_variance(matrix, params_names, diag, cbtitle, title):
     matrix : ndarray
         Two dimensional array containing the Variance-Covariance or
         Correlation function. Output from the fit procedure.
-    params_names : ndarray
-        One dimensional array containing all the string names of the
-        coefficients used, see store_ascii function.
+    order : int
+        Maximum order for the optimization in the Zernike circle polynomials
+        coefficients.
     diag : bool
         If True it will plot the matrix diagonal.
     cbtitle : str
@@ -347,12 +358,23 @@ def plot_variance(matrix, params_names, diag, cbtitle, title):
     fig : matplotlib.figure.Figure
         Triangle figure representing Variance-Covariance or Correlation matrix.
     """
+    n = order
+    N_K_coeff = (n + 1) * (n + 2) // 2
+    ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
+    L = np.array(ln)[:, 0]
+    N = np.array(ln)[:, 1]
+
+    params_names = [
+        '$A_{E_\mathrm{a}}$', '$\mathrm{taper}_\mathrm{dB}$', '$x_0$', '$y_0$'
+        ]
+    for i in range(N_K_coeff):
+        params_names.append('$K_{' + str(N[i]) + '\,' + str(L[i]) + '}$')
+    params_names = np.array(params_names)
 
     params_used = [int(i) for i in matrix[:1][0]]
     _matrix = matrix[1:]
 
     x_ticks, y_ticks = _matrix.shape
-    shrink = 1
 
     extent = [0, x_ticks, 0, y_ticks]
 
@@ -388,25 +410,29 @@ def plot_variance(matrix, params_names, diag, cbtitle, title):
         origin='upper'
         )
 
-    cb = fig.colorbar(im, ax=ax, shrink=shrink)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="3%", pad=0.03)
+    cb = fig.colorbar(im, cax=cax)
     cb.formatter.set_powerlimits((0, 0))
     cb.ax.yaxis.set_offset_position('left')
     cb.update_ticks()
     cb.ax.set_ylabel(cbtitle)
 
     ax.set_title(title)
-
     ax.set_xticks(np.arange(x_ticks) + 0.5)
     ax.set_xticklabels(labels_x, rotation='vertical')
     ax.set_yticks(np.arange(y_ticks) + 0.5)
     ax.set_yticklabels(labels_y)
     ax.grid('off')
 
+    fig.tight_layout()
+
     return fig
 
 
 def plot_fit_path(
-    path_pyoof, order, telgeo, illum_func, resolution, angle, plim_rad, save
+    path_pyoof, order, telgeo, illum_func, resolution, box_factor, angle,
+    plim_rad, save
         ):
     """
     Plot all important figures after a least squares optimization.
@@ -428,6 +454,10 @@ def plot_fit_path(
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
+    box_factor : int
+        Related to the FFT resolution, defines the image in the at the pixel
+        size level, depending on the data a good value has to be chosen, the
+        standard is 5, then the box_size = 5 * pr.
     angle : str
         Angle unit, it can be 'degrees' or 'radians'.
     plim_rad : ndarray
@@ -457,6 +487,13 @@ def plot_fit_path(
         Triangle figure representing Correlation matrix.
     """
 
+    try:
+        path_pyoof
+    except NameError:
+        print('pyoof directory does not exist: ' + path_pyoof)
+    else:
+        pass
+
     if not os.path.exists(path_pyoof + '/plots'):
         os.makedirs(path_pyoof + '/plots')
 
@@ -465,11 +502,13 @@ def plot_fit_path(
     # Info
     n = order
     fitpar = ascii.read(path_pyoof + '/fitpar_n' + str(n) + '.csv')
+    K_coeff = np.array(fitpar['parfit'])[4:]
 
     with open(path_pyoof + '/pyoof_info.yaml', 'r') as inputfile:
         pyoof_info = yaml.load(inputfile)
 
-    name = pyoof_info['name']
+    obs_object = pyoof_info['obs_object']
+    meanel = round(pyoof_info['meanel'], 2)
 
     # Residual
     res = np.genfromtxt(path_pyoof + '/res_n' + str(n) + '.csv')
@@ -483,36 +522,37 @@ def plot_fit_path(
     cov = np.genfromtxt(path_pyoof + '/cov_n' + str(n) + '.csv')
     corr = np.genfromtxt(path_pyoof + '/corr_n' + str(n) + '.csv')
 
-    # LaTeX problem with underscore _ -> \_
-    name = str2LaTeX(name)
-
     if n == 1:
         fig_data = plot_data(
             u_data=u_data,
             v_data=v_data,
             beam_data=beam_data,
             d_z=pyoof_info['d_z'],
-            title=name + ' observed power pattern',
+            title='{} observed power pattern $\\alpha={}$ degrees'.format(
+                obs_object, meanel),
             angle=angle,
             res_mode=False
             )
 
     fig_beam = plot_beam(
         params=np.array(fitpar['parfit']),
-        title=name + ' fitted power pattern  $n=' + str(n) + '$',
+        title='{} fit power pattern  $n={}$ $\\alpha={}$ degrees'.format(
+            obs_object, n, meanel),
         d_z=pyoof_info['d_z'],
         wavel=pyoof_info['wavel'],
         illum_func=illum_func,
         telgeo=telgeo,
         plim_rad=plim_rad,
         angle=angle,
-        resolution=resolution
+        resolution=resolution,
+        box_factor=box_factor
         )
 
     fig_phase = plot_phase(
-        K_coeff=np.array(fitpar['parfit'])[4:],
+        K_coeff=K_coeff,
         d_z=pyoof_info['d_z'][2],  # only one function for the three beam maps
-        title=name + ' Aperture phase distribution  $n=' + str(n) + '$',
+        title='{} Aperture phase distribution $n={}$ $\\alpha={}$ degrees'
+        .format(obs_object, n, meanel),
         notilt=True,
         pr=telgeo[2]
         )
@@ -522,23 +562,23 @@ def plot_fit_path(
         v_data=v_data,
         beam_data=res,
         d_z=pyoof_info['d_z'],
-        title=name + ' residual  $n=' + str(n) + '$',
+        title='{} residual  $n={}$'.format(obs_object, n),
         angle=angle,
         res_mode=True
         )
 
     fig_cov = plot_variance(
         matrix=cov,
-        params_names=fitpar['parname'],
-        title=name + ' Variance-covariance matrix $n=' + str(n) + '$',
+        order=n,
+        title='{} Variance-covariance matrix $n={}$'.format(obs_object, n),
         cbtitle='$\sigma_{ij}^2$',
         diag=True
         )
 
     fig_corr = plot_variance(
         matrix=corr,
-        params_names=fitpar['parname'],
-        title=name + ' Correlation matrix $n=' + str(n) + '$',
+        order=n,
+        title='{} Correlation matrix $n={}$'.format(obs_object, n),
         cbtitle='$\\rho_{ij}$',
         diag=True
         )
