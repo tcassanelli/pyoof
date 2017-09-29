@@ -3,13 +3,66 @@
 
 # Author: Tomas Cassanelli
 import os
-from scipy.constants import c as light_speed
 from astropy.io import fits
 import numpy as np
+from scipy.constants import c as light_speed
 
 __all__ = [
-    'extract_data_effelsberg', 'str2LaTeX', 'store_data_csv'
+    'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
+    'store_data_csv', 'uv_ratio'
     ]
+
+
+def extract_data_pyoof(pathfits):
+    """
+    Extracts data from the pyoof default fits file OOF holography
+    observations, ready to use for the least squares minimization.
+
+    Parameters
+    ----------
+    pathfits : str
+        Path to the fits file that contains the three beam maps pre-calibrated,
+        plus some other important parameter for the fit.
+
+    Returns
+    -------
+    data_info : list
+        It contains all extra data besides the beam map.
+    data_obs : list
+        It contains beam maps and x-, y-axis data for the least squares
+        optimization.
+    """
+
+    try:
+        hdulist = fits.open(pathfits)  # open fits file, pyoof format
+        freq = hdulist[0].header['FREQ']
+        wavel = hdulist[0].header['WAVEL']
+        meanel = hdulist[0].header['MEANEL']
+        obs_object = hdulist[0].header['OBJECT']
+        obs_date = hdulist[0].header['DATE_OBS']
+
+        beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
+        u_data = [hdulist[i].data['U'] for i in range(1, 4)]
+        v_data = [hdulist[i].data['V'] for i in range(1, 4)]
+        d_z = [hdulist[i].header['DZ'] for i in range(1, 4)]
+
+    except FileNotFoundError:
+        print('Fits file does not exists in directory: ' + pathfits)
+    except NameError:
+        print('Fits file does not have the pyoof format')
+
+    else:
+        pass
+
+    # path or directory where the fits file is located
+    pthto = os.path.split(pathfits)[0]
+    # name of the fit file to fit
+    name = os.path.split(pathfits)[1][:-5]
+
+    data_info = [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel]
+    data_obs = [beam_data, u_data, v_data]
+
+    return data_info, data_obs
 
 
 def extract_data_effelsberg(pathfits):
@@ -27,27 +80,37 @@ def extract_data_effelsberg(pathfits):
     -------
     data_info : list
         It contains all extra data besides the beam map.
-        data_info = [name, pthto, freq, wavel, d_z, meanel].
     data_obs : list
         It contains beam maps and x-, y-axis data for the least squares
         optimization.
-        data_obs = [beam_data, u_data, v_data].
     """
 
     # Opening fits file with astropy
-    hdulist = fits.open(pathfits)
+    try:
+        # main fits file with the OOF holography format
+        hdulist = fits.open(pathfits)
 
-    # Observation frequency
-    freq = hdulist[0].header['FREQ']  # Hz
-    wavel = light_speed / freq
+        # Observation frequency
+        freq = hdulist[0].header['FREQ']  # Hz
+        wavel = light_speed / freq
 
-    # Mean elevation
-    meanel = hdulist[0].header['MEANEL']  # Degrees
+        # Mean elevation
+        meanel = hdulist[0].header['MEANEL']  # Degrees
+        obs_object = hdulist[0].header['OBJECT']  # observed object
+        obs_date = hdulist[0].header['DATE_OBS']  # observation date
+        d_z = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
 
-    beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
-    u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
-    v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
-    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
+        beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
+        u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
+        v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
+
+    except FileNotFoundError:
+        print('Fits file does not exists in directory: ' + pathfits)
+    except NameError:
+        print('Fits file does not have the OOF holography format')
+
+    else:
+        pass
 
     # Permuting the position to provide same as main_functions
     beam_data.insert(1, beam_data.pop(2))
@@ -60,7 +123,7 @@ def extract_data_effelsberg(pathfits):
     # name of the fit file to fit
     name = os.path.split(pathfits)[1][:-5]
 
-    data_info = [name, pthto, freq, wavel, d_z, meanel]
+    data_info = [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel]
     data_obs = [beam_data, u_data, v_data]
 
     return data_info, data_obs
@@ -83,10 +146,9 @@ def str2LaTeX(python_string):
     """
 
     string_list = list(python_string)
-
     for idx, string in enumerate(string_list):
         if string_list[idx] == '_':
-            string_list[idx] = '\_'
+            string_list[idx] = '\\_'
 
     LaTeX_string = ''.join(string_list)
 
@@ -97,7 +159,7 @@ def store_data_csv(name, order, name_dir, save_to_csv):
     """
     Stores all important information in a csv file after the least squares
     optimization has finished. It will be saved in the
-    'OOF_out/name' directory.
+    'pyoof_out/name' directory.
 
     Parameters
     ----------
@@ -107,7 +169,7 @@ def store_data_csv(name, order, name_dir, save_to_csv):
         Maximum order for the optimization in the Zernike circle polynomials
         coefficients.
     name_dir : str
-        Directory of the fits file.
+        Directory of the analyzed fits file.
     save_to_csv : list
         It contains all data that will be stored.
         save_to_csv = [
@@ -141,3 +203,29 @@ def store_data_csv(name, order, name_dir, save_to_csv):
             X=file,
             header=header + ' ' + name
             )
+
+
+def uv_ratio(u, v):
+    """
+    Calculates the ratio for the 3 power pattern plots, plus some corrections
+    for the text on it.
+
+    Parameters
+    ----------
+    u : ndarray
+        Spatial frequencies from the power pattern, usually in degrees.
+    v : ndarray
+        Spatial frequencies from the power pattern, usually in degrees.
+    Returns
+    -------
+    plot_width : float
+        Width for the power pattern figure.
+    plot_height : float
+        Height for the power pattern figure.
+    """
+
+    ratio = (v.max() - v.min()) / (3 * (u.max() - u.min()))
+    width = 14
+    height = width * (ratio) + 0.2
+
+    return width, height
