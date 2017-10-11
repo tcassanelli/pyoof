@@ -5,7 +5,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.io import fits
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from astropy.io import fits, ascii
 from scipy import interpolate
 import yaml
 import pyoof
@@ -15,13 +16,13 @@ plot_style = os.path.join(os.path.dirname(pyoof.__file__), 'pyoof.mplstyle')
 plt.style.use(plot_style)
 
 
-def plot_data_effelsberg(pathfits, angle):
+def plot_data_effelsberg(pathfits):
     """
     Plot all data from an OOF Effelsberg observation given the path.
     """
 
     data_info, data_obs = pyoof.extract_data_effelsberg(pathfits)
-    [name, pthto, freq, wavel, d_z, meanel] = data_info
+    [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
     fig_data = pyoof.plot_data(
@@ -29,8 +30,8 @@ def plot_data_effelsberg(pathfits, angle):
         v_data=v_data,
         beam_data=beam_data,
         d_z=d_z,
-        angle=angle,
-        title=pyoof.str2LaTeX(name) + ' observed beam',
+        angle='degrees',
+        title=str(obs_object) + ' observed beam',
         res_mode=False
         )
 
@@ -81,10 +82,13 @@ def plot_lookup_effelsberg(path_lookup):
         mini.append(phase_mum[str(i)].min())
 
         print('Elev. {} RMS microns: '.format(i), pyoof.rms(phase_mum[str(i)]))
+        print('max displacement: {}'.format(phase_mum[str(i)].max()))
+        print('min displacement: {}\n'.format(phase_mum[str(i)].min()))
 
     vmax = np.max(maxi)
     vmin = np.min(mini)
-    levels = np.linspace(vmin, vmax, 10)
+    levels = np.linspace(vmin, vmax, 9)
+    # levels = np.linspace(-2, 2, 9) * 4 * np.pi / 0.009 * 1e-6
 
     elevation_plot = [7] + [i for i in range(10, 100, 10)]
     for j in range(len(elevation_plot)):
@@ -99,15 +103,18 @@ def plot_lookup_effelsberg(path_lookup):
             )
 
         phase[circ] = 0
+        phase_rot90 = np.rot90(phase)
 
         ax[j].imshow(
-            X=phase,
+            X=phase_rot90,
             extent=extent,
             cmap='viridis',
             vmin=vmin,
             vmax=vmax
             )
-        ax[j].contour(x_ng, y_ng, phase, colors='k', alpha=0.3, levels=levels)
+        ax[j].contour(
+            x_ng, y_ng, phase_rot90, colors='k', alpha=0.3, levels=levels
+            )
 
         circle = plt.Circle(
             (0, 0), sr, color='#24848d', fill=False, alpha=1, linewidth=1.3
@@ -139,18 +146,21 @@ def plot_phase_um(pts, phase, wavel, act, act_name, title, show_actuator):
     phase_um = phase * wavel / (4 * np.pi) * 1e6
     levels = np.linspace(-2, 2, 9) * wavel / (4 * np.pi) * 1e6
     extent = [-3.25, 3.25] * 2
-    shrink = 1
 
     fig, ax = plt.subplots()
 
     im = ax.imshow(phase_um, extent=extent)
-    cb = fig.colorbar(im, ax=ax, shrink=shrink)
-    cb.ax.set_ylabel('$\\varphi_{\\bot\mathrm{no\,tilt}}(x, y)$ amplitude $\mu$m')
+    ax.contour(pts[0], pts[1], phase_um, levels=levels, colors='k', alpha=0.3)
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="3%", pad=0.03)
+    cb = fig.colorbar(im, cax=cax)
+    cb.ax.set_ylabel(
+        '$\\varphi_{\\scriptsize{\\textrm{no-tilt}}}(x,y)$ amplitude $\mu$m'
+        )
     cb.formatter.set_powerlimits((0, 0))
     cb.ax.yaxis.set_offset_position('left')
     cb.update_ticks()
-
-    ax.contour(pts[0], pts[1], phase_um, levels=levels, colors='k', alpha=0.3)
 
     if show_actuator:
         ax.scatter(act[0], act[1], c='r', s=5)
@@ -168,49 +178,105 @@ def plot_phase_um(pts, phase, wavel, act, act_name, title, show_actuator):
     ax.set_ylim(-3.7, 3.7)
     ax.set_title(title)
 
+    fig.tight_layout()
+
     return fig
 
 
-def plot_rse(paths_pyoof, order, r_max, title):
+def plot_rse(paths_pyoof, order, r_max, taper, obs):
     """
     Computes the random-surface-error efficiency using Ruze's formula for
     several observations at a time. You need to provide a list the OOF_out
     directory.
     """
     # Generating mesh
-    x = np.linspace(-3.25, 3.25, 1e3)
+    sr = 3.25  # sub-reflector radius
+    x = np.linspace(-sr, sr, 1e3)
     y = x
     xx, yy = np.meshgrid(x, y)
 
-    values = []
+    source_symbol = {'3C454.3': '^', '3C273': 'o', '3C84': 's'}
+    obs_type = {'FEM': '#1f2db4', 'no-FEM': '#b41f2d', 'OOF': '#1fb4a6'}
+
+    _source, _meanel, _rse, _rse_tot = [], [], [], []
     for path in paths_pyoof:
-        phase = np.genfromtxt(path + '/phase_n' + str(order) + '.csv')
-        phase[xx ** 2 + yy ** 2 > r_max ** 2] = 0
+
+        # Importing result from pyoof package
+        phase_imported = np.genfromtxt(path + '/phase_n{}.csv'.format(order))
+        phase_imported[xx ** 2 + yy ** 2 > r_max ** 2] = 0
+
+        # Extracting K_coeff error from variance-covariance
+        cov = np.genfromtxt(path + '/cov_n{}.csv'.format(order))
+        _error = np.sqrt(np.diag(cov[1:]))
+        params_used = np.array([int(i) for i in cov[:1][0]])
+
+        if not (params_used == 4).any():
+            K_err = np.insert(_error[params_used >= 4], 0, 0)
+        else:
+            K_err = _error[params_used >= 4]
+
+        # Computing the phase of the uncertainties
+        phase_err = pyoof.aperture.phase(
+            K_coeff=K_err,
+            notilt=True,
+            pr=50  # adding the original, same as computed in pyoof
+            )[2]
+        phase_err[xx ** 2 + yy ** 2 > r_max ** 2] = 0
+
+        # Phase taper to reduce edges
+        if taper:
+            I_coeff = ascii.read(
+                path + '/fitpar_n' + str(order) + '.csv')['parfit'][:4]
+            Ea = pyoof.aperture.illum_pedestal(xx, yy, I_coeff, sr)
+            _phase = phase_imported * Ea
+            _phase_err = phase_err * Ea
+        else:
+            _phase = phase_imported
+            _phase_err = phase_err
 
         # importing phase related data
         with open(path + '/pyoof_info.yaml', 'r') as inputfile:
             pyoof_info = yaml.load(inputfile)
 
+        _source.append(pyoof_info['obs_object'])
+        _meanel.append(pyoof_info['meanel'])
+        _rse.append(pyoof.aperture.e_rse(_phase))
+        _rse_tot.append(pyoof.aperture.e_rse(_phase + _phase_err))
 
-        rad_to_um = pyoof_info['wavel'] / (4 * np.pi)
-        phase_m = phase * rad_to_um
-
-        values.append([
-            pyoof_info['name'], pyoof_info['meanel'],
-            pyoof.aperture.e_rse(phase_m, pyoof_info['wavel'])
-            ])
+    source = np.array(_source, dtype='<U8')
+    meanel = np.array(_meanel, dtype='<f8')
+    rse = np.array(_rse, dtype='<f8')
+    rse_tot = np.array(_rse_tot, dtype='<f8')
+    yerr = rse_tot - rse
 
     fig, ax = plt.subplots()
-
-    for name, meanel, rse in values:
-        ax.plot(meanel, rse, 'o', label=pyoof.str2LaTeX(name))
-
-        ax.legend(loc='best')
-        ax.set_xlabel('$\\alpha$ degrees')
-        ax.set_title(title)
-        ax.set_ylabel(
-            'Random-surface-error efficiency $\\varepsilon_\mathrm{rs}$'
+    for name in set(source):
+        ax.errorbar(
+            x=meanel[source == name],
+            y=rse[source == name],
+            yerr=yerr[source == name],
+            fmt=source_symbol[name],
+            color=obs_type[obs],
+            fillstyle=None,
+            label=name,
+            capsize=3,
+            capthick=0.3,
+            markersize=4
             )
+    if taper:
+        title = '{} + taper $n={}$'.format(obs, order)
+    else:
+        title = '{}  $n={}$'.format(obs, order)
+
+    handles, labels = ax.get_legend_handles_labels()
+    handles = [h[0] for h in handles]
+    ax.legend(handles, labels, loc='upper right', numpoints=1)
+
+    ax.set_xlabel('$\\alpha$ degrees')
+    ax.set_title(title)
+    ax.set_ylabel(
+        'Random-surface-error efficiency ' +
+        '$\\varepsilon_{\\scriptsize{\\textrm{rs}}}$')
 
     return fig
 
@@ -260,5 +326,24 @@ def plot_fit_nikolic(pathoof, order, d_z, telgeo, plim_rad, angle):
 
 if __name__ == '__main__':
 
-    plot_rse(['/Users/tomascassanelli/ownCloud/OOF/data/S9mm_bump/OOF_out/S9mm_3478_3C454.3_32deg_H6-011'], 2, 3.25, 'hi')
+    import glob
+
+    obs_noFEM = glob.glob('../../data/S9mm_noFEM/OOF_out/*001')
+    obs_nobump2 = glob.glob('../../data/S9mm_nobump2/OOF_out/*001')
+    obs_FEM = glob.glob('../../data/S9mm_FEM/OOF_out/*001')
+
+    obs_noFEM_BW = glob.glob('../../data/S9mm_noFEM/OOF_out/*BW-001*')
+
+    a=['../../data/S9mm_noFEM/OOF_out/S9mm_3800-3807_3C84_48deg_H6_LON-001', '../../data/S9mm_noFEM/OOF_out/S9mm_3800-3819_3C84_53deg_H6_BW-001', '../../data/S9mm_noFEM/OOF_out/S9mm_3812-3819_3C84_58deg_H6_LAT-001']
+
+    plot_rse(
+        paths_pyoof=a,
+        order=7,
+        r_max=3.25,  # r_max = 3.25 m
+        taper=True,
+        obs='no-FEM',
+        )
+
+    # plot_lookup_effelsberg('../../data/S9mm_bump2/lookup_bump2')
+
     plt.show()
