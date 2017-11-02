@@ -263,7 +263,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     return fig
 
 
-def plot_phase(K_coeff, d_z, notilt, pr, title):
+def plot_phase(K_coeff, notilt, pr, title):
     """
     Plot of the phase or wavefront (aberration) distribution given the Zernike
     circle polynomials coefficients.
@@ -273,10 +273,6 @@ def plot_phase(K_coeff, d_z, notilt, pr, title):
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
         circle polynomial.
-    d_z : float
-        Distance between the secondary and primary reflector measured in
-        meters (radial offset). It is the characteristic measurement to give
-        an offset and an out-of-focus image at the end.
     notilt : bool
         True or False boolean to include or exclude the tilt coefficients in
         the aperture phase distribution. The Zernike circle polynomials are
@@ -294,15 +290,10 @@ def plot_phase(K_coeff, d_z, notilt, pr, title):
     """
 
     if notilt:
-        subtitle = (
-            '$\\varphi_{\\scriptsize{\\textrm{no-tilt}}}(x,y)$  $d_z=\pm' +
-            str(round(d_z, 3)) + '$ m'
-            )
         cbartitle = (
             '$\\varphi_{\\scriptsize{\\textrm{no-tilt}}}(x,y)$ amplitude rad'
             )
     else:
-        subtitle = '$\\varphi(x, y)$  $d_z=\pm' + str(round(d_z, 3)) + '$ m'
         cbartitle = '$\\varphi(x, y)$ amplitude rad'
 
     extent = [-pr, pr, -pr, pr]
@@ -320,12 +311,11 @@ def plot_phase(K_coeff, d_z, notilt, pr, title):
     cb = fig.colorbar(im, cax=cax)
     cb.ax.set_ylabel(cbartitle)
 
-    ax.set_title(subtitle)
+    ax.set_title(title)
     ax.set_ylabel('$y$ m')
     ax.set_xlabel('$x$ m')
     ax.grid('off')
 
-    fig.suptitle(title)
     fig.tight_layout()
 
     return fig
@@ -550,9 +540,10 @@ def plot_fit_path(
 
     fig_phase = plot_phase(
         K_coeff=K_coeff,
-        d_z=pyoof_info['d_z'][2],  # only one function for the three beam maps
-        title='{} Aperture phase distribution $n={}$ $\\alpha={}$ degrees'
-        .format(obs_object, n, meanel),
+        title=(
+            '{} Aperture phase distribution $d_z=\\pm {}$ m ' +
+            '$n={}$ $\\alpha={}$ deg'
+            ).format(obs_object, round(pyoof_info['d_z'][2], 3), n, meanel),
         notilt=True,
         pr=telgeo[2]
         )
@@ -562,7 +553,7 @@ def plot_fit_path(
         v_data=v_data,
         beam_data=res,
         d_z=pyoof_info['d_z'],
-        title='{} residual  $n={}$'.format(obs_object, n),
+        title='{} residual $n={}$'.format(obs_object, n),
         angle=angle,
         res_mode=True
         )

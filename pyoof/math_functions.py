@@ -37,7 +37,7 @@ def cart2pol(x, y):
 
 def wavevector2degrees(u, wavel):
     """
-    Transformation from a wave-vector (1/m) units to degrees.
+    Transformation from a wave-vector 1 / m units to degrees.
 
     Parameters
     ----------
@@ -59,7 +59,7 @@ def wavevector2degrees(u, wavel):
 
 def wavevector2radians(u, wavel):
     """
-    Transformation from a wave-vector (1/m) units to radians.
+    Transformation from a wave-vector 1 / m units to radians.
 
     Parameters
     ----------
@@ -150,7 +150,7 @@ def linear_equation(P1, P2, x):
 
 def rms(x):
     """
-    Computes the root-mean-squared value from a aperture phase distribution
+    Computes the root-mean-square value from a aperture phase distribution
     map.
 
     Parameters
@@ -158,4 +158,8 @@ def rms(x):
     x : ndarray
         One or two dimensional array for the phase distribution.
     """
-    return np.sqrt(np.mean(np.square(x)))
+
+    # To remove elements out limit radius
+    nonzero_values = x[np.nonzero(x)]
+
+    return np.sqrt(np.sum(np.square(nonzero_values)) / nonzero_values.size)

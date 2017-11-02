@@ -34,27 +34,30 @@ def fit_beam_effelsberg(pathfits):
 
     data_info, data_obs = extract_data_effelsberg(pathfits)
 
-    [name, pthto, freq, wavel, d_z, meanel] = data_info
+    [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
     fit_beam(
-        data_info=[name, pthto, freq, wavel, d_z, meanel],
+        data_info=data_info,
         data_obs=[beam_data, u_data, v_data],
-        order_max=6,  # it'll fit from 1 to order_max
+        method='trf',  # optimization algorithm 'trf', 'lm' or 'dogbox'
+        order_max=7,  # it'll fit from 1 to order_max
         illumination=illumination['pedestal'],
         telescope=telescope['effelsberg'],
         config_params_file=None,  # default or add path config_file.yaml
         fit_previous=True,  # True is recommended
         resolution=2**8,  # standard is 2 ** 8
+        box_factor=5,  # box_size = 5 * pr, better pixel resolution
         make_plots=True
         )
 
 
-# Example for my machine :)
+# Example in my machine :)
 if __name__ == '__main__':
 
     import glob  # to list as a string files in a directory
     # Directory for the fits files
-    observation = glob.glob('../../data/S9mm_bump/*.fits')[0]
+    observation = glob.glob('../../data/S9mm_FEM/*.fits')[4:]
 
-    fit_beam_effelsberg(observation)  # Execute!
+    for obs in observation:
+        fit_beam_effelsberg(obs)  # Execute!
