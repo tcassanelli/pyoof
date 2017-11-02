@@ -21,7 +21,7 @@ __all__ = [
 
 def residual_true(
     params, beam_data_norm, u_data, v_data, d_z, wavel, illum_func, telgeo,
-    resolution, interp
+    resolution, box_factor, interp
         ):
     """
     Computes the true residual ready to use for the fit_beam function. True
@@ -67,6 +67,10 @@ def residual_true(
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
+    box_factor : int
+        Related to the FFT resolution, defines the image in the at the pixel
+        size level, depending on the data a good value has to be chosen, the
+        standard is 5, then the box_size = 5 * pr.
     interp : bool
         If True will process the correspondent interpolation between the
         observed mesh and the computed mesh for the FFT2 aperture distribution
@@ -95,7 +99,8 @@ def residual_true(
             I_coeff=I_coeff,
             illum_func=illum_func,
             telgeo=telgeo,
-            resolution=resolution
+            resolution=resolution,
+            box_factor=box_factor
             )
 
         power_pattern = np.abs(F) ** 2
@@ -134,7 +139,7 @@ def residual_true(
 
 def residual(
     params, idx, N_K_coeff, beam_data_norm, u_data, v_data, d_z, wavel,
-    illum_func, telgeo, resolution, interp, config_params
+    illum_func, telgeo, resolution, box_factor, interp, config_params
         ):
     """
     Wrapper for the residual_true function. The objective of this function is
@@ -190,6 +195,10 @@ def residual(
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
+    box_factor : int
+        Related to the FFT resolution, defines the image in the at the pixel
+        size level, depending on the data a good value has to be chosen, the
+        standard is 5, then the box_size = 5 * pr.
     interp : bool
         If True will process the correspondent interpolation between the
         observed mesh and the computed mesh for the FFT2 aperture distribution
@@ -215,6 +224,7 @@ def residual(
         d_z=d_z,
         wavel=wavel,
         resolution=resolution,
+        box_factor=box_factor,
         illum_func=illum_func,
         telgeo=telgeo,
         interp=interp,
@@ -288,7 +298,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
 # Insert path for the fits file with pre-calibration
 def fit_beam(
     data_info, data_obs, method, order_max, illumination, telescope,
-    fit_previous, config_params_file, resolution, make_plots
+    fit_previous, config_params_file, resolution, box_factor, make_plots
         ):
     """
     Computes the Zernike circle polynomials coefficients using the least
@@ -338,6 +348,10 @@ def fit_beam(
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
         power of 2 for FFT faster processing.
+    box_factor : int
+        Related to the FFT resolution, defines the image in the at the pixel
+        size level, depending on the data a good value has to be chosen, the
+        standard is 5, then the box_size = 5 * pr.
     make_plots : bool
         If True will generate a sub-directory with all the important plots for
         the OOF holography, including phase and beam fit.
@@ -345,36 +359,64 @@ def fit_beam(
 
     start_time = time.time()
 
-    print('\n ******* OOF FIT POWER PATTERN ******* \n')
+    print('\n ******* PYOOF FIT POWER PATTERN ******* \n')
     print('... Reading data ... \n')
 
     # All observed data needed to fit the beam
-    [name, pthto, freq, wavel, d_z, meanel] = data_info
+    [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-    [illum_func, illum_name, taper_name] = illumination
-    [blockage, delta, pr, tel_name] = telescope
-    telgeo = telescope[:3]
+    try:
 
-    # Calling default configuration file from the pyoof package
-    if config_params_file is None:
-        config_params_dir = os.path.dirname(__file__)
-        config_params_pyoof = os.path.join(
-            config_params_dir, 'config_params.yaml'
+        [illum_func, illum_name, taper_name] = illumination
+        [blockage, delta, pr, tel_name] = telescope
+        telgeo = telescope[:3]
+
+        # Calling default configuration file from the pyoof package
+        if config_params_file is None:
+            config_params_dir = os.path.dirname(__file__)
+            config_params_pyoof = os.path.join(
+                config_params_dir, 'config_params.yaml'
+                )
+            with open(config_params_pyoof, 'r') as yaml_config:
+                config_params = yaml.load(yaml_config)
+        else:
+            with open(config_params_file, 'r') as yaml_config:
+                config_params = yaml.load(yaml_config)
+
+        # Generating specific exceptions
+        if not (
+            callable(illum_func) and isinstance(illum_name, str) and
+            isinstance(taper_name, str)
+                ):
+            raise ValueError('illumination has to be a list [func, str, str]')
+
+        if not (
+            callable(blockage) and callable(delta) and isinstance(pr, int) and
+            isinstance(tel_name, str)
+                ):
+            raise ValueError(
+                'telescope has to be a list [func, func, int, str]'
+                )
+
+    except ValueError as error:
+        print(error.args)
+    except NameError:
+        print(
+            'Configuration file .yamel does not exist in path: ' +
+            config_params_file
             )
-        with open(config_params_pyoof, 'r') as yaml_config:
-            config_params = yaml.load(yaml_config)
+
     else:
-        with open(config_params_file, 'r') as yaml_config:
-            config_params = yaml.load(yaml_config)
+        pass
 
     # Storing files in OOF_out directory
     # pthto: path or directory where the fits file is located
-    if not os.path.exists(pthto + '/OOF_out'):
-        os.makedirs(pthto + '/OOF_out')
+    if not os.path.exists(pthto + '/pyoof_out'):
+        os.makedirs(pthto + '/pyoof_out')
 
     for j in ["%03d" % i for i in range(101)]:
-        name_dir = pthto + '/OOF_out/' + name + '-' + str(j)
+        name_dir = pthto + '/pyoof_out/' + name + '-' + str(j)
         if not os.path.exists(name_dir):
             os.makedirs(name_dir)
             break
@@ -434,10 +476,10 @@ def fit_beam(
         params_init_true = np.delete(params_init, idx)
 
         if method == 'lm':
-            bounds = tuple(
-                [-np.ones(params_init_true.shape) * np.inf,
-                np.ones(params_init_true.shape) * np.inf]
-                )
+            bounds = tuple([
+                -np.ones(params_init_true.shape) * np.inf,
+                np.ones(params_init_true.shape) * np.inf
+                ])
 
         else:
             bounds_min = np.array(
@@ -470,6 +512,7 @@ def fit_beam(
                 illum_func,
                 telgeo,
                 resolution,
+                box_factor,
                 True,  # Grid interpolation
                 config_params
                 ),
@@ -536,12 +579,15 @@ def fit_beam(
             pyoof_info = dict(
                 telescope=tel_name,
                 name=name,
+                obs_object=obs_object,
+                obs_date=obs_date,
                 d_z=d_z,
                 wavel=wavel,
                 frequency=freq,
                 illumination=illum_name,
                 meanel=meanel,
                 fft_resolution=resolution,
+                box_factor=box_factor,
                 opt_method=method
                 )
 
@@ -577,10 +623,11 @@ def fit_beam(
                 plim_rad=plim_rad,
                 save=True,
                 angle='degrees',
-                resolution=resolution
+                resolution=resolution,
+                box_factor=box_factor
                 )
 
             plt.close('all')
 
     final_time = np.round((time.time() - start_time) / 60, 2)
-    print('\n **** OOF FIT COMPLETED AT {} mins **** \n'.format(final_time))
+    print('\n **** PYOOF FIT COMPLETED AT {} mins **** \n'.format(final_time))

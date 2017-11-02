@@ -12,7 +12,7 @@ __all__ = [
 
 def delta_effelsberg(x, y, d_z):
     """
-    Optical path difference or delta function. Given by geometry of
+    Optical path difference (OPD) or delta function. Given by geometry of
     the telescope and defocus parameter. For Cassegrain/Gregorian geometries.
     Foci specific for Effelsberg radio telescope. In the aperture function
     delta is transformed to radians
@@ -24,9 +24,10 @@ def delta_effelsberg(x, y, d_z):
     y : ndarray
         Grid value for the x variable.
     d_z : float
-        Distance between the secondary and primary reflector measured in
-        meters (radial offset). It is the characteristic measurement to give
-        an offset and an out-of-focus image at the end.
+        Radial offset added to the sub-reflector, usually of the order of
+        centimeters. This characteristic measurement adds the classical
+        interference pattern to the beam maps, normalized squared (field)
+        radiation pattern, which is an out-of-focus property.
 
     Returns
     -------
@@ -60,9 +61,10 @@ def delta_manual(Fp, F):
     y : ndarray
         Grid value for the x variable.
     d_z : float
-        Distance between the secondary and primary reflector measured in
-        meters (radial offset). It is the characteristic measurement to give
-        an offset and an out-of-focus image at the end.
+        Radial offset added to the sub-reflector, usually of the order of
+        centimeters. This characteristic measurement adds the classical
+        interference pattern to the beam maps, normalized squared (field)
+        radiation pattern, which is an out-of-focus property.
     Fp : float
         Focus primary reflector (main) in meters.
     F : float
@@ -161,7 +163,7 @@ def block_effelsberg(x, y):
     block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
     block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
 
-    csc2 = np.sin(alpha) ** (-2)  # cosecant squared
+    csc2 = np.sin(alpha) ** (-2)  # squared cosecant
 
     # base of the triangle
     d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
