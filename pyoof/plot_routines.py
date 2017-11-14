@@ -38,17 +38,20 @@ def plot_beam(
         An stack of the illumination and Zernike circle polynomials
         coefficients. params = np.hstack([I_coeff, K_coeff])
     d_z : list
-        Distance between the secondary and primary reflector measured in
-        meters (radial offset). It is the characteristic measurement to give
-        an offset and an out-of-focus image at the end. d_z = [-d_z, 0, +d_z].
+        Radial offset added to the sub-reflector in meters. This
+        characteristic measurement adds the classical interference pattern to
+        the beam maps, normalized squared (field) radiation pattern, which is
+        an out-of-focus property. It has to contain, same as the
+        beam_data_norm, the radial offsets for the minus, zero and plus, such
+        as d_z = [d_z-, 0., d_z+] all of them in meters.
     wavel : float
         Wavelength of the observation in meters.
     illum_func : function
-        Illumination function with parameters (x, y, I_coeff, pr).
+        Illumination function with parameters illum_func(x, y, I_coeff, pr).
     telgeo : list
-        List that contains the blockage function, optical path difference
-        (delta function), and the primary radius (float).
-        telego = [blockage, delta, pr].
+        List that contains the blockage distribution, optical path difference
+        (OPD) function, and the primary radius (float) in meters.
+        telego = [block_dist, opd_func, pr].
     resolution : int
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
@@ -70,7 +73,7 @@ def plot_beam(
     -------
     fig : matplotlib.figure.Figure
         The three beam maps plotted from the input parameters. Each map with a
-        different offset d_z value. From left to right, -d_z, 0 and +d_z.
+        different offset d_z value. From left to right, d_z-, 0 and d_z+.
     """
 
     I_coeff = params[:4]
@@ -177,19 +180,22 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     u_data : ndarray
         x axis value for the 3 beam maps in radians. The values have to be
         flatten, one dimensional, and stacked in the same order as the
-        d_z = [-d_z, 0, +d_z] values from each beam map.
+        d_z = [d_z-, 0., d_z+] values from each beam map.
     v_data : ndarray
         y axis value for the 3 beam maps in radians. The values have to be
         flatten, one dimensional, and stacked in the same order as the
-        d_z = [-d_z, 0, +d_z] values from each beam map.
+        d_z = [d_z-, 0., d_z+] values from each beam map.
     beam_data : ndarray
         Amplitude value for the beam map in any unit (it will be normalized).
         The values have to be flatten, one dimensional, and stacked in the
-        same order as the d_z=[-d_z, 0, +d_z] values from each beam map.
+        same order as the d_z=[d_z-, 0., d_z+] values from each beam map.
     d_z : list
-        Distance between the secondary and primary reflector measured in
-        meters (radial offset). It is the characteristic measurement to give
-        an offset and an out-of-focus image at the end. d_z = [-d_z, 0, +d_z].
+        Radial offset added to the sub-reflector in meters. This
+        characteristic measurement adds the classical interference pattern to
+        the beam maps, normalized squared (field) radiation pattern, which is
+        an out-of-focus property. It has to contain, same as the
+        beam_data_norm, the radial offsets for the minus, zero and plus, such
+        as d_z = [d_z-, 0., d_z+] all of them in meters.
     wavel : float
         Wavelength of the observation in meters.
     angle : str
@@ -204,7 +210,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     -------
     fig : matplotlib.figure.Figure
         Data figure from the three observed beam maps. Each map with a
-        different offset d_z value. From left to right, -d_z, 0 and +d_z.
+        different offset d_z value. From left to right, d_z-, 0 and d_z+.
     """
 
     if not res_mode:
@@ -276,9 +282,9 @@ def plot_phase(K_coeff, notilt, pr, title):
     notilt : bool
         True or False boolean to include or exclude the tilt coefficients in
         the aperture phase distribution. The Zernike circle polynomials are
-        related to tilt through U(l=-1, n=1) and U(l=1, n=1).
+        related to tilt through U(n=1, l=-1) and U(n=1, l=1).
     pr : float
-        Primary reflector radius.
+        Primary reflector radius in meters.
     title : str
         Figure title.
 
@@ -430,16 +436,16 @@ def plot_fit_path(
     Parameters
     ----------
     path_pyoof : str
-        Path to the pyoof output, 'OOF_out/directory'.
+        Path to the pyoof output, 'pyoof_out/directory'.
     order : int
         Maximum order for the optimization in the Zernike circle polynomials
         coefficients.
     telgeo : list
-        List that contains the blockage function, optical path difference
-        (delta function), and the primary radius (float).
-        telego = [blockage, delta, pr].
+        List that contains the blockage distribution, optical path difference
+        (OPD) function, and the primary radius (float) in meters.
+        telego = [block_dist, opd_func, pr].
     illum_func : function
-        Illumination function with parameters (x, y, I_coeff, pr).
+        Illumination function with parameters illum_func(x, y, I_coeff, pr).
     resolution : int
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
@@ -455,13 +461,13 @@ def plot_fit_path(
         degrees or radians depending which one is chosen in angle function
         parameter. plim_rad = np.array([umin, umax, vmin, vmax]).
     save : bool
-        If True, it stores all plots in the 'OOF_out/name' directory.
+        If True, it stores all plots in the 'pyoof_out/name' directory.
 
     Returns
     -------
     fig_beam : matplotlib.figure.Figure
         The three beam maps plotted from the input parameters. Each map with a
-        different offset d_z value. From left to right, -d_z, 0 and +d_z.
+        different offset d_z value. From left to right, d_z-, 0 and d_z+.
     fig_phase : matplotlib.figure.Figure
         Phase distribution for the Zernike circle polynomials for a telescope
         primary dish.
@@ -470,7 +476,7 @@ def plot_fit_path(
         the optimization procedure.
     fig_data : matplotlib.figure.Figure
         Data figure from the three observed beam maps. Each map with a
-        different offset d_z value. From left to right, -d_z, 0 and +d_z
+        different offset d_z value. From left to right, d_z-, 0 and d_z+
     fig_cov : matplotlib.figure.Figure
         Triangle figure representing Variance-Covariance matrix.
     fig_corr : matplotlib.figure.Figure
@@ -575,14 +581,11 @@ def plot_fit_path(
         )
 
     if save:
-        fig_beam.savefig(path_plot + '/fitbeam_n' + str(n) + '.pdf')
-        fig_phase.savefig(
-            filename=path_plot + '/fitphase_n' + str(n) + '.pdf',
-            bbox_inches='tight'
-            )
-        fig_res.savefig(path_plot + '/residual_n' + str(n) + '.pdf')
-        fig_cov.savefig(path_plot + '/cov_n' + str(n) + '.pdf')
-        fig_corr.savefig(path_plot + '/corr_n' + str(n) + '.pdf')
+        fig_beam.savefig(path_plot + '/fitbeam_n{}.pdf'.format(n))
+        fig_phase.savefig(path_plot + '/fitphase_n{}.pdf'.format(n))
+        fig_res.savefig(path_plot + '/residual_n{}.pdf'.format(n))
+        fig_cov.savefig(path_plot + '/cov_n{}.pdf'.format(n))
+        fig_corr.savefig(path_plot + '/corr_n{}.pdf'.format(n))
 
         if n == 1:
             fig_data.savefig(path_plot + '/obsbeam.pdf')
