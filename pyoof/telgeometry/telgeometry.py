@@ -3,36 +3,35 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
-from ..math_functions import linear_equation
+from ..math_functions import line_equation
 
 __all__ = [
-    'delta_effelsberg', 'delta_manual', 'block_manual', 'block_effelsberg'
+    'opd_effelsberg', 'opd_manual', 'block_manual', 'block_effelsberg'
     ]
 
 
-def delta_effelsberg(x, y, d_z):
+def opd_effelsberg(x, y, d_z):
     """
-    Optical path difference (OPD) or delta function. Given by geometry of
-    the telescope and defocus parameter. For Cassegrain/Gregorian geometries.
-    Foci specific for Effelsberg radio telescope. In the aperture function
-    delta is transformed to radians
+    Optical path difference (OPD) function. Given by the geometry of the
+    telescope and radial offset parameter (d_z). This function is specific
+    for the Effelsberg telescope.
 
     Parameters
     ----------
     x : ndarray
-        Grid value for the x variable.
+        Grid value for the x variable in meters.
     y : ndarray
-        Grid value for the x variable.
+        Grid value for the y variable in meters.
     d_z : float
-        Radial offset added to the sub-reflector, usually of the order of
-        centimeters. This characteristic measurement adds the classical
-        interference pattern to the beam maps, normalized squared (field)
-        radiation pattern, which is an out-of-focus property.
+        Radial offset added to the sub-reflector in meters. This
+        characteristic measurement adds the classical interference pattern to
+        the beam maps, normalized squared (field) radiation pattern, which is
+        an out-of-focus property. It is usually of the order of 1e-2 m.
 
     Returns
     -------
-    delta : ndarray
-        Optical path difference in meters.
+    opd : ndarray
+        Optical path difference function.
     """
 
     # Cassegrain/Gregorian (at focus) telescope
@@ -42,29 +41,20 @@ def delta_effelsberg(x, y, d_z):
     a = r / (2 * Fp)
     b = r / (2 * F)
 
-    delta = d_z * ((1 - a ** 2) / (1 + a ** 2) + (1 - b ** 2) / (1 + b ** 2))
+    opd = d_z * ((1 - a ** 2) / (1 + a ** 2) + (1 - b ** 2) / (1 + b ** 2))
 
-    return delta
+    return opd
 
 
-def delta_manual(Fp, F):
+def opd_manual(Fp, F):
     """
-    Optical path difference or delta function. Given by geometry of
-    the telescope and defocus parameter. For Cassegrain/Gregorian geometries.
-    Primary and total (or effective) foci are required. In the aperture
-    function delta is transformed to radians
+    Optical path difference (OPD) function. Given by geometry of the telescope
+    and defocus parameter. For Cassegrain/Gregorian geometries. Primary and
+    total (or effective) foci are required. In the aperture function delta is
+    transformed to radians
 
     Parameters
     ----------
-    x : ndarray
-        Grid value for the x variable.
-    y : ndarray
-        Grid value for the x variable.
-    d_z : float
-        Radial offset added to the sub-reflector, usually of the order of
-        centimeters. This characteristic measurement adds the classical
-        interference pattern to the beam maps, normalized squared (field)
-        radiation pattern, which is an out-of-focus property.
     Fp : float
         Focus primary reflector (main) in meters.
     F : float
@@ -72,90 +62,54 @@ def delta_manual(Fp, F):
 
     Returns
     -------
-    delta : function
-        It returns the function delta(x, y, d_z), which depends only on the
-        grid and radial offset values.
+    opd_func : function
+        It returns the function opd_func(x, y, d_z), which depends only on the
+        grid and radial offset values. For arguments see opd_effelsberg.
     """
 
-    def delta(x, y, d_z):
+    def opd_func(x, y, d_z):
         # Cassegrain/Gregorian (at focus) telescope
-        r = np.sqrt(x ** 2 + y ** 2)  # polar coordinates radius
+        r = np.sqrt(x ** 2 + y ** 2)  # radial polar coordinate
         a = r / (2 * Fp)
         b = r / (2 * F)
 
-        _delta = d_z * (
+        opd = d_z * (
             (1 - a ** 2) / (1 + a ** 2) + (1 - b ** 2) / (1 + b ** 2)
             )
 
-        return _delta
+        return opd
 
-    return delta
-
-
-def block_manual(pr, sr, a, L):
-    """
-    Truncation for the aperture function, manual set up for the primary radius
-    (pr), secondary radius (sr), half-thickness of a support leg (a) and
-    length of the support leg (L) measured from the edge of the sr. It has been
-    considered 4 support legs. To omit sr, a and L set them to zero.
-
-    Parameters
-    ----------
-    pr : float
-        Primary reflector radius.
-    sr : float
-        Sub-reflector radius.
-    a : float
-        Half thickness of a support leg.
-    L : float
-        Length of a support leg, measured from the edge of the sub-reflector
-        towards its end.
-
-    Returns
-    -------
-    block : function
-        It returns the function block(x, y), which depends only on the grid
-        values.
-    """
-
-    def block(x, y):
-        _block = np.zeros(x.shape)  # or y.shape same
-        _block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
-        _block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
-        _block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
-        return _block
-
-    return block
+    return opd_func
 
 
 def block_effelsberg(x, y):
     """
-    Truncation in the aperture function, given by the hole generated for the
-    secondary reflector, the supporting structure and shade effects in the
-    Effelsberg telescope.
+    Truncation in the aperture (amplitude) distribution, given by the
+    telescope's structure; i.e. support legs, sub-reflector and shade effect
+    as seen from the secondary focus of the Effelsberg telecope.
 
     Parameters
     ----------
     x : ndarray
-        Grid value for the x variable.
+        Grid value for the x variable in meters.
     y : ndarray
-        Grid value for the x variable.
+        Grid value for the y variable in meters.
 
     Returns
     -------
     block : ndarray
-        Truncated in the aperture distribution. Values that are zero
-        correspond to the ones blockade by the telescope's structure.
+        Aperture (amplitude) distribution truncation. Values that are zero
+        correspond to blocked values.
     """
 
-    # default Effelsberg geometry
+    # Default Effelsberg geometry
     pr = 50  # Primary reflector radius
-    sr = 3.25  # secondary reflector radius
+    sr = 3.25  # Sub-reflector radius
 
-    L = 20   # length support structure (from the edge of the sr)
-    a = 1  # half thickness support structure
+    L = 20   # Length support structure (from the edge of the sr)
+    a = 1  # Half-width support structure
 
-    # angle shade effect in aperture
+    # Angle shade effect in aperture plane
     alpha = np.radians(10)  # triangle angle
 
     block = np.zeros(x.shape)  # or y.shape same
@@ -174,14 +128,14 @@ def block_effelsberg(x, y):
     C = d / np.tan(alpha)
     D = a + d
 
-    y1 = linear_equation((A, B), (C, D), x)
-    y2 = linear_equation((A, -B), (C, -D), x)
-    x3 = linear_equation((-A, B), (-C, D), y)
-    x4 = linear_equation((-A, -B), (-C, -D), y)
-    y5 = linear_equation((-A, -B), (-C, -D), x)
-    y6 = linear_equation((-A, B), (-C, D), x)
-    x7 = linear_equation((A, -B), (C, -D), y)
-    x8 = linear_equation((A, B), (C, D), y)
+    y1 = line_equation((A, B), (C, D), x)
+    y2 = line_equation((A, -B), (C, -D), x)
+    x3 = line_equation((-A, B), (-C, D), y)
+    x4 = line_equation((-A, -B), (-C, -D), y)
+    y5 = line_equation((-A, -B), (-C, -D), x)
+    y6 = line_equation((-A, B), (-C, D), x)
+    x7 = line_equation((A, -B), (C, -D), y)
+    x8 = line_equation((A, B), (C, D), y)
 
     def circ(s):
         return np.sqrt(np.abs(pr ** 2 - s ** 2))
@@ -199,3 +153,40 @@ def block_effelsberg(x, y):
     block[(pr > y) & (C < y) & (circ(x) > y) & (-circ(x) < y)] = 0
 
     return block
+
+
+def block_manual(pr, sr, a, L):
+    """
+    Truncation for the aperture (amplitude) distribution, manual set up for
+    the primary radius (pr), sub-reflector radius (sr), half-width of a
+    support leg (a) and length of the support leg (L) measured from the edge
+    of the sr. It has been considered 4 support legs. To exclude sr, a or L
+    set them to zero.
+
+    Parameters
+    ----------
+    pr : float
+        Primary reflector radius.
+    sr : float
+        Sub-reflector radius.
+    a : float
+        Half-width of a support leg.
+    L : float
+        Length of a support leg, measured from the edge of the sub-reflector
+        towards its end.
+
+    Returns
+    -------
+    block_func : function
+        It returns the function block_func(x, y), which depends only on the
+        grid values. For arguments see block_effelsberg.
+    """
+
+    def block_func(x, y):
+        block = np.zeros(x.shape)  # or y.shape same
+        block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+        block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
+        block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
+        return block
+
+    return block_func

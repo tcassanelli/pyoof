@@ -9,8 +9,28 @@ from scipy.constants import c as light_speed
 
 __all__ = [
     'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
-    'store_data_csv', 'uv_ratio'
+    'store_data_csv', 'uv_ratio', 'open_fits_pyoof'
     ]
+
+
+def open_fits_pyoof(hdulist, name):
+
+    freq = hdulist[0].header['FREQ']
+    wavel = hdulist[0].header['WAVEL']
+    meanel = hdulist[0].header['MEANEL']
+    obs_object = hdulist[0].header['OBJECT']
+    obs_date = hdulist[0].header['DATE_OBS']
+
+    beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
+    u_data = [hdulist[i].data['U'] for i in range(1, 4)]
+    v_data = [hdulist[i].data['V'] for i in range(1, 4)]
+    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)]
+
+    data_file = [name, '.']
+    data_info = data_file + [obs_object, obs_date, freq, wavel, d_z, meanel]
+    data_obs = [beam_data, u_data, v_data]
+
+    return data_info, data_obs
 
 
 def extract_data_pyoof(pathfits):
@@ -30,36 +50,34 @@ def extract_data_pyoof(pathfits):
         It contains all extra data besides the beam map.
     data_obs : list
         It contains beam maps and x-, y-axis data for the least squares
-        optimization.
+        minimization.
     """
 
-    try:
-        hdulist = fits.open(pathfits)  # open fits file, pyoof format
-        freq = hdulist[0].header['FREQ']
-        wavel = hdulist[0].header['WAVEL']
-        meanel = hdulist[0].header['MEANEL']
-        obs_object = hdulist[0].header['OBJECT']
-        obs_date = hdulist[0].header['DATE_OBS']
-
-        beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
-        u_data = [hdulist[i].data['U'] for i in range(1, 4)]
-        v_data = [hdulist[i].data['V'] for i in range(1, 4)]
-        d_z = [hdulist[i].header['DZ'] for i in range(1, 4)]
-
-    except FileNotFoundError:
-        print('Fits file does not exists in directory: ' + pathfits)
-    except NameError:
-        print('Fits file does not have the pyoof format')
-
-    else:
-        pass
-
+    hdulist = fits.open(pathfits)  # open fits file, pyoof format
     # path or directory where the fits file is located
     pthto = os.path.split(pathfits)[0]
     # name of the fit file to fit
     name = os.path.split(pathfits)[1][:-5]
 
-    data_info = [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel]
+    if not all(
+            k in hdulist[0].header
+            for k in ['FREQ', 'WAVEL', 'MEANEL', 'OBJECT', 'DATE_OBS']
+            ):
+        raise TypeError('Not all necessary keys found in FITS header.')
+
+    freq = hdulist[0].header['FREQ']
+    wavel = hdulist[0].header['WAVEL']
+    meanel = hdulist[0].header['MEANEL']
+    obs_object = hdulist[0].header['OBJECT']
+    obs_date = hdulist[0].header['DATE_OBS']
+
+    beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
+    u_data = [hdulist[i].data['U'] for i in range(1, 4)]
+    v_data = [hdulist[i].data['V'] for i in range(1, 4)]
+    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)]
+
+    data_file = [name, pthto]
+    data_info = data_file + [obs_object, obs_date, freq, wavel, d_z, meanel]
     data_obs = [beam_data, u_data, v_data]
 
     return data_info, data_obs
@@ -82,7 +100,7 @@ def extract_data_effelsberg(pathfits):
         It contains all extra data besides the beam map.
     data_obs : list
         It contains beam maps and x-, y-axis data for the least squares
-        optimization.
+        minimization.
     """
 
     # Opening fits file with astropy
@@ -158,7 +176,7 @@ def str2LaTeX(python_string):
 def store_data_csv(name, order, name_dir, save_to_csv):
     """
     Stores all important information in a csv file after the least squares
-    optimization has finished. It will be saved in the
+    minimization has finished. It will be saved in the
     'pyoof_out/name' directory.
 
     Parameters
@@ -166,8 +184,7 @@ def store_data_csv(name, order, name_dir, save_to_csv):
     name : str
         File name of the fits file to be optimized.
     order : int
-        Maximum order for the optimization in the Zernike circle polynomials
-        coefficients.
+        Maximum order of the Zernike circle polynomials coefficients.
     name_dir : str
         Directory of the analyzed fits file.
     save_to_csv : list
@@ -207,8 +224,8 @@ def store_data_csv(name, order, name_dir, save_to_csv):
 
 def uv_ratio(u, v):
     """
-    Calculates the ratio for the 3 power pattern plots, plus some corrections
-    for the text on it.
+    Calculates the aspect ratio for the 3 power pattern plots, plus some
+    corrections for the text on it.
 
     Parameters
     ----------
@@ -216,6 +233,7 @@ def uv_ratio(u, v):
         Spatial frequencies from the power pattern, usually in degrees.
     v : ndarray
         Spatial frequencies from the power pattern, usually in degrees.
+
     Returns
     -------
     plot_width : float
