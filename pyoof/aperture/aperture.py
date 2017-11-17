@@ -38,22 +38,22 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
     Parameters
     ----------
     x : ndarray
-        Grid value for the x variable.
+        Grid value for the x variable in meters.
     y : ndarray
-        Grid value for the y variable.
+        Grid value for the y variable in meters.
     I_coeff : ndarray
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
         I_coeff = [i_amp, c_dB, x0, y0]
-    pr : int
-        Radius from the primary reflector.
+    pr : float
+        Primary reflector radius in meters.
     q : int
         Order of the parabolic taper on a pedestal, it is commonly set at 2.
 
     Returns
     -------
     Ea : ndarray
-        Illumination function
+        Illumination function.
     """
 
     i_amp, c_dB, x0, y0 = I_coeff
@@ -77,26 +77,26 @@ def illum_gauss(x, y, I_coeff, pr):
     Parameters
     ----------
     x : ndarray
-        Grid value for the x variable.
+        Grid value for the x variable in meters.
     y : ndarray
-        Grid value for the y variable.
+        Grid value for the y variable in meters.
     I_coeff : ndarray
-        List which contains 4 parameters, the illumination amplitude, the
+        List which contains 4 coefficients, the illumination amplitude, the
         illumination taper and the two coordinate offset.
-        I_coeff = [i_amp, sigma_dB, x0, y0]
-    pr : int
-        Radius from the primary reflector.
+        I_coeff = [i_amp, sigma_dB, x0, y0].
+    pr : float
+        Primary reflector radius in meters.
 
     Returns
     -------
     Ea : ndarray
-        Illumination function
+        Illumination function.
     """
     i_amp, sigma_dB, x0, y0 = I_coeff
     sigma = 10 ** (sigma_dB / 20)  # -15 to -20 dB
-
+    norm = np.sqrt(2 * np.pi * sigma ** 2)  # normalization Gaussian
     Ea = (
-        i_amp *
+        i_amp * norm *
         np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma * pr) ** 2))
         )
 
@@ -107,19 +107,19 @@ def wavefront(rho, theta, K_coeff):
     """
     Computes the wavefront (aberration) distribution. It tells how is the
     error distributed along the primary dish, it is related to the phase error.
-    The wavefront is described as a parametrization of the Zernike circle
-    polynomials multiplied by a set of coefficients.
+    The wavefront (aberration) distribution is described as a parametrization
+    of the Zernike circle polynomials multiplied by a set of coefficients.
 
     Parameters
     ----------
     rho : ndarray
         Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2)
-        normalized by its maximum.
+        normalized by its maximum radius.
     theta : ndarray
         Values for the angular component. theta = np.arctan(y / x).
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
-        circle polynomial.
+        circle polynomial. The coefficients are between -2 and 2.
 
     Returns
     -------
@@ -131,13 +131,12 @@ def wavefront(rho, theta, K_coeff):
     # Total number of Zernike circle polynomials
     n = int((np.sqrt(1 + 8 * K_coeff.size) - 3) / 2)
 
-    ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
-    L = np.array(ln)[:, 0]
-    N = np.array(ln)[:, 1]
+    # list of tuples with (n, l) allowed values
+    nl = [(i, j) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
 
-    # Wavefront (aberration) distribution in radians
+    # Wavefront (aberration) distribution
     W = sum(
-        K_coeff[i] * U(L[i], N[i], theta, rho)
+        K_coeff[i] * U(*nl[i], rho, theta)
         for i in range(K_coeff.size)
         )
 
@@ -147,32 +146,35 @@ def wavefront(rho, theta, K_coeff):
 def phase(K_coeff, notilt, pr, resolution=1e3):
     """
     Aperture phase distribution (or phase error), for an specific telescope
-    primary reflector. In general the tilt (in optics, deviation in the
-    direction a beam of light propagates) is subtracted from its calculation.
-    Function used to show the final results from the fit procedure.
+    primary reflector. In general the tilt (average slope in x- and
+    y-directions, related to telescope pointings) is subtracted from its
+    calculation. Function used to show the final results from the fit
+    procedure.
 
     Parameters
     ----------
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
-        circle polynomial.
+        circle polynomial. The coefficients are between -2 and 2.
     notilt : bool
-        True or False boolean to include or exclude the tilt coefficients in
-        the aperture phase distribution. The Zernike circle polynomials are
-        related to tilt through U(n=-1, l=1) and U(n=1, l=1).
+        Boolean to include or exclude the tilt coefficients in the aperture
+        phase distribution. The Zernike circle polynomials are related to tilt
+        through U(n=1, l=-1) and U(n=1, l=1).
     pr : float
-        Primary reflector radius.
+        Primary reflector radius in meters.
     resolution : int
-        Resolution for the phase map, usually used 1e3 in the pyoof package.
+        Resolution for the phase error map, usually used 1e3 in the pyoof
+        package.
 
     Returns
     -------
     phi : ndarray
-        Aperture phase distribution for an specific primary radius.
+        Aperture phase distribution for an specific primary dish radius,
+        measured in radians.
     x : ndarray
-        x-axis dimensions for the primary reflector.
+        x-axis dimensions for the primary reflector in meters.
     y : ndarray
-        y-axis dimensions for the primary reflector.
+        y-axis dimensions for the primary reflector in meters.
     """
 
     _K_coeff = K_coeff.copy()
@@ -193,7 +195,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     W = wavefront(rho=r_norm, theta=t, K_coeff=_K_coeff)
     W[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
-    phi = W * 2 * np.pi  # Aperture phase distribution
+    phi = W * 2 * np.pi  # Aperture phase distribution in radians
 
     return x, y, phi
 
@@ -203,35 +205,35 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
     Aperture distribution. Collection of individual distribution/functions:
     i.e. illumination function, blockage distribution, aperture phase
     distribution and OPD function. In general is a complex quantity, its
-    phase an amplitude are better understood separately. The FT of the
+    phase an amplitude are better understood separately. The FT (2-dim) of the
     aperture represents the (field) radiation pattern.
 
     Parameters
     ----------
     x : ndarray
-        Grid value for the x variable.
+        Grid value for the x variable in meters.
     y : ndarray
-        Grid value for the y variable.
+        Grid value for the y variable in meters.
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
-        circle polynomial.
+        circle polynomial. The coefficients are between -2 and 2.
     I_coeff : ndarray
-        List which contains 4 parameters, the illumination amplitude, the
+        List which contains 4 coefficients, the illumination amplitude, the
         illumination taper and the two coordinate offset.
-        I_coeff = [i_amp, sigma_dB, x0, y0]
+        I_coeff = [i_amp, sigma_dB, x0, y0].
     d_z : float
-        Radial offset added to the sub-reflector, usually of the order of
-        centimeters. This characteristic measurement adds the classical
-        interference pattern to the beam maps, normalized squared (field)
-        radiation pattern, which is an out-of-focus property.
+        Radial offset added to the sub-reflector in meters. This
+        characteristic measurement adds the classical interference pattern to
+        the beam maps, normalized squared (field) radiation pattern, which is
+        an out-of-focus property. It is usually of the order of 1e-2 m.
     wavel : float
         Wavelength of the observation in meters.
     illum_func : function
-        Illumination function with parameters (x, y, I_coeff, pr).
+        Illumination function with coefficients illum_func(x, y, I_coeff, pr).
     telgeo : list
         List that contains the blockage distribution, optical path difference
-        (OPD or delta) function, and the primary radius (float).
-        telego = [blockage, delta, pr].
+        (OPD) function, and the primary radius (float) in meters.
+        telego = [block_dist, opd_func, pr].
 
     Returns
     -------
@@ -241,19 +243,19 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 
     r, t = cart2pol(x, y)
 
-    [block_func, delta, pr] = telgeo
-    B = block_func(x=x, y=y)
+    [block_dist, opd_func, pr] = telgeo
+    B = block_dist(x=x, y=y)
 
     # Normalization to be used in the Zernike circle polynomials
     r_norm = r / pr
 
     # Wavefront (aberration) distribution
     W = wavefront(rho=r_norm, theta=t, K_coeff=K_coeff)
-    OPD = delta(x=x, y=y, d_z=d_z)  # Optical path difference function
-    Ea = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)  # illumination function
+    delta = opd_func(x=x, y=y, d_z=d_z)  # Optical path difference function
+    Ea = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)  # Illumination function
 
-    # Transformation from wavefront (aberration) distribution to phase error
-    phi = (W + OPD / wavel) * 2 * np.pi  # phase error plus the OPD function
+    # Transformation: wavefront (aberration) distribution -> phase error
+    phi = (W + delta / wavel) * 2 * np.pi  # phase error plus the OPD function
 
     E = B * Ea * np.exp(phi * 1j)  # Aperture distribution
 
@@ -272,24 +274,24 @@ def radiation_pattern(
     ----------
     K_coeff : ndarray
         Constants coefficients for each of them there is only one Zernike
-        circle polynomial.
+        circle polynomial. The coefficients are between -2 and 2.
     I_coeff : ndarray
-        List which contains 4 parameters, the illumination amplitude, the
+        List which contains 4 coefficients, the illumination amplitude, the
         illumination taper and the two coordinate offset.
-        I_coeff = [i_amp, sigma_dB, x0, y0]
+        I_coeff = [i_amp, sigma_dB, x0, y0].
     d_z : float
-        Radial offset added to the sub-reflector, usually of the order of
-        centimeters. This characteristic measurement adds the classical
-        interference pattern to the beam maps, normalized squared (field)
-        radiation pattern, which is an out-of-focus property.
+        Radial offset added to the sub-reflector in meters. This
+        characteristic measurement adds the classical interference pattern to
+        the beam maps, normalized squared (field) radiation pattern, which is
+        an out-of-focus property. It is usually of the order of 1e-2 m.
     wavel : float
         Wavelength of the observation in meters.
     illum_func : function
-        Illumination function with parameters (x, y, I_coeff, pr).
+        Illumination function with coefficients illum_func(x, y, I_coeff, pr).
     telgeo : list
         List that contains the blockage distribution, optical path difference
-        (OPD or delta) function, and the primary radius (float).
-        telego = [blockage, delta, pr].
+        (OPD) function, and the primary radius (float) in meters.
+        telego = [block_dist, opd_func, pr].
     resolution : int
         Fast Fourier Transform resolution for a rectangular grid. The input
         value has to be greater or equal to the telescope resolution and a
@@ -302,11 +304,11 @@ def radiation_pattern(
     Returns
     -------
     u_shift : ndarray
-        u wave-vector in 1/m units. It belongs to the x coordinate in m from
-        the aperture distribution.
+        u wave-vector in 1 / m units. It belongs to the x coordinate in meters
+        from the aperture distribution.
     v_shift : ndarray
-        v wave-vector in 1/m units. It belongs to the y coordinate in m from
-        the aperture distribution.
+        v wave-vector in 1 / m units. It belongs to the y coordinate in meters
+        from the aperture distribution.
     F_shift : ndarray
         Output from the FFT2 pack, unnormalized solution in a grid same as
         aperture input computed from a given resolution.

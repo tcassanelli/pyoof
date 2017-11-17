@@ -6,7 +6,7 @@ import numpy as np
 
 __all__ = [
     'cart2pol', 'wavevector2degrees', 'wavevector2radians', 'co_matrices',
-    'linear_equation', 'rms'
+    'line_equation', 'rms'
     ]
 
 
@@ -19,12 +19,12 @@ def cart2pol(x, y):
     x : ndarray
         Grid value for the x variable.
     y : ndarray
-        Grid value for the x variable.
+        Grid value for the y variable.
 
     Returns
     -------
     rho : ndarray
-        Grid value for the radial variable, in m.
+        Grid value for the radial variable.
     theta : ndarray
         Grid value for the angular variable, in radians.
     """
@@ -42,19 +42,19 @@ def wavevector2degrees(u, wavel):
     Parameters
     ----------
     u : ndarray
-        Wave-vector, result from FFT2.
+        Wave-vector, result from FFT2 in 1 / m units.
     wavel : ndarray
         Wavelength in meters.
 
     Returns
     -------
-    wave_vector_degrees : ndarray
+    wavevector_degrees : ndarray
         Wave-vector in degrees.
     """
 
-    wave_vector_degrees = np.degrees(u * wavel)
+    wavevector_degrees = np.degrees(u * wavel)
 
-    return wave_vector_degrees
+    return wavevector_degrees
 
 
 def wavevector2radians(u, wavel):
@@ -64,19 +64,19 @@ def wavevector2radians(u, wavel):
     Parameters
     ----------
     u : ndarray
-        Wave-vector, result from FFT2.
+        Wave-vector, result from FFT2 in 1 / m units.
     wavel : ndarray
         Wavelength in meters.
 
     Returns
     -------
-    wave_vector_degrees : ndarray
+    wavevector_degrees : ndarray
         Wave-vector in radians.
     """
 
-    wave_vector_radians = wavevector2degrees(u, wavel) * np.pi / 180
+    wavevector_radians = wavevector2degrees(u, wavel) * np.pi / 180
 
-    return wave_vector_radians
+    return wavevector_radians
 
 
 def co_matrices(res, jac, n_pars):
@@ -88,7 +88,7 @@ def co_matrices(res, jac, n_pars):
     ----------
     res : ndarray
         Last residual evaluation from a fit procedure (least squares
-        optimization), residual understood as model - data.
+        minimization), residual understood as data - model.
     jac : ndarray
         Last Jacobian matrix evaluation from a fit procedure.
     n_pars: int
@@ -103,24 +103,20 @@ def co_matrices(res, jac, n_pars):
         Correlation matrix. Dimensions n x p.
     """
 
-    m = res.size  # number of data points used in the fit
-    p = m - n_pars  # degrees of freedom
+    m = res.size  # Number of data points used in the fit
+    p = m - n_pars  # Degrees of freedom
 
     # Variance-Covariance matrix
     cov = np.dot(res.T, res) / p * np.linalg.inv(np.dot(jac.T, jac))
 
-    # Estimated error variance (sigma ** 2)
-    sigmas2 = np.diag(np.diag(cov))
-
-    D = np.linalg.inv(np.sqrt(sigmas2))  # inv diagonal variance matrix
-
-    # Correlation matrix
-    corr = np.dot(np.dot(D, cov), D)
+    sigmas2 = np.diag(np.diag(cov))  # Estimated error variance (sigma ** 2)
+    D = np.linalg.inv(np.sqrt(sigmas2))  # Inverted diagonal variance matrix
+    corr = np.dot(np.dot(D, cov), D)  # Correlation matrix
 
     return cov, corr
 
 
-def linear_equation(P1, P2, x):
+def line_equation(P1, P2, x):
     """
     Computes the linear equation solution for the y vector values given two
     data points, P1 = (x1, y1) and P2 = (x2, y2), and the x vector.

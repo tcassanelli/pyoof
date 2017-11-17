@@ -1,0 +1,4 @@
+include pyoof/config_params.yaml
+include pyoof/pyoof.mplstyle
+include pyoof/tests/data_math_functions/*.npy
+include pyoof/aperture/tests/data_aperture/*.npy

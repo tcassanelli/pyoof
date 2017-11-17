@@ -34,7 +34,7 @@ def fit_beam_effelsberg(pathfits):
 
     data_info, data_obs = extract_data_effelsberg(pathfits)
 
-    [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel] = data_info
+    [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
     fit_beam(
