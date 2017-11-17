@@ -387,7 +387,7 @@ def fit_beam(
         if config_params_file is None:
             config_params_dir = os.path.dirname(__file__)
             config_params_pyoof = os.path.join(
-                config_params_dir, 'config_params.yaml'
+                config_params_dir, 'config_params.yml'
                 )
             with open(config_params_pyoof, 'r') as yaml_config:
                 config_params = yaml.load(yaml_config)
@@ -608,7 +608,7 @@ def fit_beam(
                 opt_method=method
                 )
 
-            with open(name_dir + '/pyoof_info.yaml', 'w') as outfile:
+            with open(name_dir + '/pyoof_info.yml', 'w') as outfile:
                 outfile.write('# pyoof relevant information\n')
                 yaml.dump(pyoof_info, outfile, default_flow_style=False)
 

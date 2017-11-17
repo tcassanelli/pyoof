@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
 from astropy.io import ascii
 from astropy.utils.data import get_pkg_data_filename
+import os
 import yaml
 from .aperture import radiation_pattern, phase
 from .math_functions import wavevector2degrees, wavevector2radians
@@ -499,7 +500,7 @@ def plot_fit_path(
     fitpar = ascii.read(path_pyoof + '/fitpar_n' + str(n) + '.csv')
     K_coeff = np.array(fitpar['parfit'])[4:]
 
-    with open(path_pyoof + '/pyoof_info.yaml', 'r') as inputfile:
+    with open(path_pyoof + '/pyoof_info.yml', 'r') as inputfile:
         pyoof_info = yaml.load(inputfile)
 
     obs_object = pyoof_info['obs_object']
