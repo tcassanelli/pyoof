@@ -1,8 +1,19 @@
+******
 pyoof
------
+******
 
-* *Version: 0.1*
-* *Author: Tomas Cassanelli*
+- *Version: 0.2*
+- *Author: Tomas Cassanelli*
+- *User manual:* `stable <https://readthedocs.../>`__ |
+  `developer <https://readthedocs.../latest/>`__
+
+.. image:: https://img.shields.io/pypi/v/pyoof.svg
+    :target: https://pypi.python.org/pypi/pyoof
+    :alt: PyPI tag
+
+.. image:: https://img.shields.io/badge/license-GPL-blue.svg
+    :target: https://www.github.com/tcassanelli/pyoof/blob/master/COPYING
+    :alt: License
 
 pyoof is a Python package that contains all needed tools to perform out-of-focus (OOF) holography on astronomical beam maps for single dish radio telescopes. It is based on the original OOF holography papers,
 
@@ -13,8 +24,24 @@ and [software](https://github.com/bnikolic/oof) developed by [Bojan Nikolic](htt
 
 The pyoof package calculates the phase error map from a set of beam maps, at a relatively good signal-to-noise as described by B. Nikolic. From here it is possible to compute the phase error at the sub-reflector and eventually make surface corrections in the telescope if an active surface exits. We are currently testing the pyoof package at the [Effelsberg radio telescope](https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope) :satellite:.
 
+Project Status
+==============
+
+.. image:: https://travis-ci.org/bwinkel/pycraf.svg?branch=master
+    :target: https://travis-ci.org/tcassanelli/pyoof
+    :alt: Pyoof's Travis CI Status
+
+.. image:: https://coveralls.io/repos/github/tcassanelli/pyoof/badge.svg?branch=master
+    :target: https://coveralls.io/github/tcassanelli/pyoof?branch=master
+    :alt: Pyoof's Coveralls Status
+
+`pyoof` is still in the early-development stage. While much of the
+functionality is already working as intended, the API is not yet stable.
+Nevertheless, we kindly invite you to use and test the library and we are
+grateful for feedback. Note, that work on the documentation is still ongoing.
+
 Usage
------
+=====
 For now the installation is only available from the source, clone the repository and then execute
 
 ```
@@ -24,6 +51,6 @@ $ python setup.py install
 I believe in the future :smile:, so please install Python 3.
 
 License
--------
+=======
 
 I need to read but soon it'll be uploaded, sorry for the inconvenience :no_mouth:

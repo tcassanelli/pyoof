@@ -4,12 +4,10 @@
 # Author: Tomas Cassanelli
 import pytest
 import numpy as np
+from astropy.utils.data import get_pkg_data_filename
 from astropy.utils.misc import NumpyRNGContext
 from numpy.testing import assert_equal, assert_allclose
-import os
 import pyoof
-
-relative_path = os.path.dirname(__file__)  # Data files relative path
 
 
 def test_e_rse():
@@ -31,10 +29,8 @@ def test_illum_pedestal():
     I_coeff = [1, -14, 0, 0]
 
     _illum_pedestal = pyoof.aperture.illum_pedestal(xx, yy, I_coeff, pr)
-    print(os.path.join(relative_path, 'data_aperture/illum_pedestal.npy'))
-    assert False
     illum_pedestal_true = np.load(
-        os.path.join(relative_path, 'data_aperture/illum_pedestal.npy')
+        get_pkg_data_filename('data/illum_pedestal.npy')
         )
 
 
