@@ -3,8 +3,13 @@ build
 dist
 pyoof.egg-info/
 
+# docs
+docs/_build
+docs/api
+
 # Compiled files
 __pycache__
+.eggs
 
 # Mac OSX
 .DS_Store
@@ -13,6 +18,7 @@ __pycache__
 .ipynb_checkpoints
 notebooks/fft_resolution_test.ipynb
 examples/
+notebooks/pyoof_out
 
 # Not importat scripts
 scripts/config_gen.py
