@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 # Author: Tomas Cassanelli
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
 from astropy.io import ascii
+from astropy.utils.data import get_pkg_data_filename
 import yaml
 from .aperture import radiation_pattern, phase
 from .math_functions import wavevector2degrees, wavevector2radians
@@ -18,8 +18,7 @@ __all__ = [
     ]
 
 # Plot style added from relative path
-plotstyle_dir = os.path.dirname(__file__)
-plt.style.use(os.path.join(plotstyle_dir, 'pyoof.mplstyle'))
+plt.style.use(get_pkg_data_filename('data/pyoof.mplstyle'))
 
 
 def plot_beam(
