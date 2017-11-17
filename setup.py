@@ -110,7 +110,7 @@ package_info = get_package_info()
 # Add the project-global data
 package_info['package_data'].setdefault(PACKAGENAME, [])
 package_info['package_data'][PACKAGENAME].append('data/*')
-package_info['package_data'][PACKAGENAME].append('tests/data_math_functions/*')
+package_info['package_data'][PACKAGENAME].append('tests/data/*')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}

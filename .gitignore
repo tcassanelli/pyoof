@@ -3,7 +3,7 @@ build
 dist
 pyoof.egg-info/
 
-# docs
+# Documentation
 docs/_build
 docs/api
 
@@ -20,10 +20,8 @@ notebooks/fft_resolution_test.ipynb
 examples/
 notebooks/pyoof_out
 
-# Not importat scripts
-scripts/config_gen.py
-scripts/generate_data.py
-scripts/poly_fit.py
-scripts/residual_nikolic.py
-
-
+# Not importat examples
+examples/config_gen.py
+examples/generate_data.py
+examples/poly_fit.py
+examples/residual_nikolic.py

@@ -7,7 +7,6 @@ import numpy as np
 from astropy.utils.misc import NumpyRNGContext
 from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_equal, assert_allclose
-import os
 import pyoof
 
 
@@ -69,16 +68,16 @@ def test_co_matrices():
 
     # importing tests files
     res = np.load(
-        get_pkg_data_filename('data_math_functions/res_co_matrices.npy')
+        get_pkg_data_filename('data/res_co_matrices.npy')
         )
     jac = np.load(
-        get_pkg_data_filename('data_math_functions/jac_co_matrices.npy')
+        get_pkg_data_filename('data/jac_co_matrices.npy')
         )
     cov_true = np.load(
-        get_pkg_data_filename('data_math_functions/cov_co_matrices.npy')
+        get_pkg_data_filename('data/cov_co_matrices.npy')
         )
     corr_true = np.load(
-        get_pkg_data_filename('data_math_functions/corr_co_matrices.npy')
+        get_pkg_data_filename('data/corr_co_matrices.npy')
         )
 
     cov, corr = pyoof.co_matrices(res, jac, 1)
