@@ -5,6 +5,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
+from astropy.utils.data import get_pkg_data_filename
 from scipy import interpolate, optimize
 import os
 import time
@@ -385,10 +386,10 @@ def fit_beam(
 
         # Calling default configuration file from the pyoof package
         if config_params_file is None:
-            config_params_dir = os.path.dirname(__file__)
-            config_params_pyoof = os.path.join(
-                config_params_dir, 'config_params.yml'
+            config_params_pyoof = get_pkg_data_filename(
+                'data/config_params.yml'
                 )
+
             with open(config_params_pyoof, 'r') as yaml_config:
                 config_params = yaml.load(yaml_config)
         else:

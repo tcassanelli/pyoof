@@ -1,4 +1,4 @@
-Copyright (c) 2017-2018, pyoof Developers
+Copyright (c) 2017-2018, pyoof developers
 
 All rights reserved.
 

@@ -13,15 +13,15 @@ __all__ = [
 
 
 def e_rse(phase):
-    """
+    '''
     Computes the random-surface-error efficiency using the Ruze's equation.
 
     Parameters
     ----------
-    phase : ndarray
+    phase : `~numpy.ndarray`
         The phase error is a two dimensional array (one of the solutions from
         the pyoof package). Its amplitude values are in radians.
-    """
+    '''
 
     rms_rad = rms(phase)  # rms value in radians
 
@@ -29,7 +29,7 @@ def e_rse(phase):
 
 
 def illum_pedestal(x, y, I_coeff, pr, q=2):
-    """
+    '''
     Illumination function, parabolic taper on a pedestal, sometimes called
     apodization, taper or window function. Represents the distribution of
     light in the primary reflector. The illumination reduces the side lobes in
@@ -37,11 +37,11 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
 
     Parameters
     ----------
-    x : ndarray
+    x : `~numpy.ndarray`
         Grid value for the x variable in meters.
-    y : ndarray
+    y : `~numpy.ndarray`
         Grid value for the y variable in meters.
-    I_coeff : ndarray
+    I_coeff : `~numpy.ndarray`
         List which contains 4 parameters, the illumination amplitude, the
         illumination taper and the two coordinate offset.
         I_coeff = [i_amp, c_dB, x0, y0]
@@ -52,9 +52,9 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
 
     Returns
     -------
-    Ea : ndarray
+    Ea : `~numpy.ndarray`
         Illumination function.
-    """
+    '''
 
     i_amp, c_dB, x0, y0 = I_coeff
 
@@ -68,7 +68,7 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
 
 
 def illum_gauss(x, y, I_coeff, pr):
-    """
+    '''
     Illumination function, Gaussian, sometimes called apodization, taper or
     window function. Represents the distribution of light in the primary
     reflector. The illumination reduces the side lobes in the FT and
@@ -76,11 +76,11 @@ def illum_gauss(x, y, I_coeff, pr):
 
     Parameters
     ----------
-    x : ndarray
+    x : `~numpy.ndarray`
         Grid value for the x variable in meters.
-    y : ndarray
+    y : `~numpy.ndarray`
         Grid value for the y variable in meters.
-    I_coeff : ndarray
+    I_coeff : `~numpy.ndarray`
         List which contains 4 coefficients, the illumination amplitude, the
         illumination taper and the two coordinate offset.
         I_coeff = [i_amp, sigma_dB, x0, y0].
@@ -89,9 +89,9 @@ def illum_gauss(x, y, I_coeff, pr):
 
     Returns
     -------
-    Ea : ndarray
+    Ea : `~numpy.ndarray`
         Illumination function.
-    """
+    '''
     i_amp, sigma_dB, x0, y0 = I_coeff
     sigma = 10 ** (sigma_dB / 20)  # -15 to -20 dB
     norm = np.sqrt(2 * np.pi * sigma ** 2)  # normalization Gaussian
@@ -104,7 +104,7 @@ def illum_gauss(x, y, I_coeff, pr):
 
 
 def wavefront(rho, theta, K_coeff):
-    """
+    '''
     Computes the wavefront (aberration) distribution. It tells how is the
     error distributed along the primary dish, it is related to the phase error.
     The wavefront (aberration) distribution is described as a parametrization
@@ -112,21 +112,21 @@ def wavefront(rho, theta, K_coeff):
 
     Parameters
     ----------
-    rho : ndarray
+    rho : `~numpy.ndarray`
         Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2)
         normalized by its maximum radius.
-    theta : ndarray
+    theta : `~numpy.ndarray`
         Values for the angular component. theta = np.arctan(y / x).
-    K_coeff : ndarray
+    K_coeff : `~numpy.ndarray`
         Constants coefficients for each of them there is only one Zernike
         circle polynomial. The coefficients are between -2 and 2.
 
     Returns
     -------
-    W : ndarray
+    W : `~numpy.ndarray`
         Zernike circle polynomial already evaluated and multiplied by their
         coefficients. Its values are between -1 and 1.
-    """
+    '''
 
     # Total number of Zernike circle polynomials
     n = int((np.sqrt(1 + 8 * K_coeff.size) - 3) / 2)
@@ -144,7 +144,7 @@ def wavefront(rho, theta, K_coeff):
 
 
 def phase(K_coeff, notilt, pr, resolution=1e3):
-    """
+    '''
     Aperture phase distribution (or phase error), for an specific telescope
     primary reflector. In general the tilt (average slope in x- and
     y-directions, related to telescope pointings) is subtracted from its
@@ -153,7 +153,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
 
     Parameters
     ----------
-    K_coeff : ndarray
+    K_coeff : `~numpy.ndarray`
         Constants coefficients for each of them there is only one Zernike
         circle polynomial. The coefficients are between -2 and 2.
     notilt : bool
@@ -168,14 +168,14 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
 
     Returns
     -------
-    phi : ndarray
+    phi : `~numpy.ndarray`
         Aperture phase distribution for an specific primary dish radius,
         measured in radians.
-    x : ndarray
+    x : `~numpy.ndarray`
         x-axis dimensions for the primary reflector in meters.
-    y : ndarray
+    y : `~numpy.ndarray`
         y-axis dimensions for the primary reflector in meters.
-    """
+    '''
 
     _K_coeff = K_coeff.copy()
 
@@ -201,7 +201,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
 
 
 def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
-    """
+    '''
     Aperture distribution. Collection of individual distribution/functions:
     i.e. illumination function, blockage distribution, aperture phase
     distribution and OPD function. In general is a complex quantity, its
@@ -210,14 +210,14 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 
     Parameters
     ----------
-    x : ndarray
+    x : `~numpy.ndarray`
         Grid value for the x variable in meters.
-    y : ndarray
+    y : `~numpy.ndarray`
         Grid value for the y variable in meters.
-    K_coeff : ndarray
+    K_coeff : `~numpy.ndarray`
         Constants coefficients for each of them there is only one Zernike
         circle polynomial. The coefficients are between -2 and 2.
-    I_coeff : ndarray
+    I_coeff : `~numpy.ndarray`
         List which contains 4 coefficients, the illumination amplitude, the
         illumination taper and the two coordinate offset.
         I_coeff = [i_amp, sigma_dB, x0, y0].
@@ -237,9 +237,9 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 
     Returns
     -------
-    E : ndarray
+    E : `~numpy.ndarray`
         Grid value that contains general expression for aperture distribution.
-    """
+    '''
 
     r, t = cart2pol(x, y)
 
@@ -265,17 +265,17 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 def radiation_pattern(
     K_coeff, I_coeff, d_z, wavel, illum_func, telgeo, resolution, box_factor
         ):
-    """
+    '''
     Spectrum or (field) radiation pattern, it is the FFT2 computation of the
     aperture distribution in a rectangular grid. Passing the majority of
     arguments to the aperture distribution except the FFT2 resolution.
 
     Parameters
     ----------
-    K_coeff : ndarray
+    K_coeff : `~numpy.ndarray`
         Constants coefficients for each of them there is only one Zernike
         circle polynomial. The coefficients are between -2 and 2.
-    I_coeff : ndarray
+    I_coeff : `~numpy.ndarray`
         List which contains 4 coefficients, the illumination amplitude, the
         illumination taper and the two coordinate offset.
         I_coeff = [i_amp, sigma_dB, x0, y0].
@@ -303,16 +303,16 @@ def radiation_pattern(
 
     Returns
     -------
-    u_shift : ndarray
+    u_shift : `~numpy.ndarray`
         u wave-vector in 1 / m units. It belongs to the x coordinate in meters
         from the aperture distribution.
-    v_shift : ndarray
+    v_shift : `~numpy.ndarray`
         v wave-vector in 1 / m units. It belongs to the y coordinate in meters
         from the aperture distribution.
-    F_shift : ndarray
+    F_shift : `~numpy.ndarray`
         Output from the FFT2 pack, unnormalized solution in a grid same as
         aperture input computed from a given resolution.
-    """
+    '''
 
     # Arrays to generate (field) radiation pattern
     pr = telgeo[2]

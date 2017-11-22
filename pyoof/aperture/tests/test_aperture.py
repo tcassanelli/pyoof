@@ -33,10 +33,7 @@ def test_illum_pedestal():
         get_pkg_data_filename('data/illum_pedestal.npy')
         )
 
-
     assert_allclose(_illum_pedestal, illum_pedestal_true)
-
-
 
 
 # def test_wavefront(rho, theta, K_coeff):
@@ -51,7 +48,3 @@ def test_illum_pedestal():
 
 #     W = aperture.wavefront(rho, theta, K_coeff)
 #     W_true = 1
-
-
-
-

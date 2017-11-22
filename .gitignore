@@ -2,6 +2,8 @@
 build
 dist
 pyoof.egg-info/
+.cache/
+version.py
 
 # Documentation
 docs/_build
@@ -17,8 +19,8 @@ __pycache__
 # Notebooks
 .ipynb_checkpoints
 notebooks/fft_resolution_test.ipynb
-examples/
 notebooks/pyoof_out
+examples/
 
 # Not importat examples
 examples/config_gen.py
