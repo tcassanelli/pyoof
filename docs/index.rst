@@ -131,22 +131,57 @@ User Documentation
 The fits file
 -------------
 
-The format used for the fits file is simple. Basically it needs to have the following data.
-
-
+The `pyoof` package requires a specific format for the fits files. The format must include observational parameters as well as data. These parameters can be seen in `~pyoof.extract_data_pyoof` function.
 
     >>> import pyoof
+    >>> from pyoof import aperture, telgeometry
     >>> from astropy.io import fits
-    >>> hdulist = fists.open('../my_fits.fits')
+    >>> from astropy.utils.data import get_pkg_data_filename
+    >>> oofh_data = get_pkg_data_filename('data/test0.fits')
+    >>> hdulist = fits.open(oofh_data)
+
+After generating the data file, the main structure of the fits file has to be as follows,
+
     >>> hdulist.info()
-    Filename: (No file associated with this HDUList)
+    Filename: (my_fits)
     No.    Name         Type      Cards   Dimensions   Format
     0    PRIMARY     PrimaryHDU      11   ()
     1    MINUS OOF   BinTableHDU     16   9409R x 3C   ['E', 'E', 'E']
     2    ZERO OOF    BinTableHDU     16   9409R x 3C   ['E', 'E', 'E']
     3    PLUS OOF    BinTableHDU     16   9409R x 3C   ['E', 'E', 'E']
 
+Where the data files are separated in MINUS, ZERO and PLUS out-of-focus observations. Each of them has to have a :math:`d_z` value which has to be written in the BinTableHDU header with the key DZ. The BinTableHDU header then is,
 
+    >>> hdulist[1].header  # minus file
+    XTENSION= 'BINTABLE'         / binary table extension
+    BITPIX  =                    8 / array data type
+    NAXIS   =                    2 / number of array dimensions
+    NAXIS1  =                   12 / length of dimension 1
+    NAXIS2  =                 9409 / length of dimension 2
+    PCOUNT  =                    0 / number of group parameters
+    GCOUNT  =                    1 / number of groups
+    TFIELDS =                    3 / number of table field
+    TTYPE1  = 'U       '
+    TFORM1  = 'E       '
+    TTYPE2  = 'V       '
+    TFORM2  = 'E       '
+    TTYPE3  = 'BEAM    '
+    TFORM3  = 'E       '
+    EXTNAME = 'MINUS OOF'
+    DZ      =               -0.022 / meters
+
+BinTableHDU data has to have another three keys, if ``hdulist[1].data`` is printed, the MINUS OOF observation selected, then
+
+>>> hdulist[1].data
+    FITS_rec([(-0.00089586416, -0.00089586416, -1007.5198),
+           (-0.00087720033, -0.00089586416, 262.23615),
+           (-0.00085853651, -0.00089586416, -557.19135), ...,
+           (0.00085853651, 0.00089586416, 419.55826),
+           (0.00087720033, 0.00089586416, -53.516975),
+           (0.00089586416, 0.00089586416, -110.75285)],
+          dtype=(numpy.record, [('U', '<f4'), ('V', '<f4'), ('BEAM', '<f4')]))
+
+were the U and V are the dimensions or x- and y-axis. the BEAM corresponds to the observed power pattern. The three of them are flat arrays. Hence, to reconstruct the plot in two dimensions an interpolation is required.
 
 Available modules
 =================

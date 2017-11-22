@@ -8,6 +8,7 @@ version.py
 # Documentation
 docs/_build
 docs/api
+docs/generated
 
 # Compiled files
 __pycache__
