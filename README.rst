@@ -29,7 +29,7 @@ We are currently testing the pyoof package at the [Effelsberg radio telescope](h
 Project Status
 ==============
 
-.. image:: https://travis-ci.org/bwinkel/pycraf.svg?branch=master
+.. image:: https://travis-ci.org/tcassanelli/pyoof.svg?branch=master
     :target: https://travis-ci.org/tcassanelli/pyoof
     :alt: Pyoof's Travis CI Status
 

@@ -36,7 +36,14 @@ def open_fits_pyoof(hdulist, name):
 def extract_data_pyoof(pathfits):
     """
     Extracts data from the pyoof default fits file OOF holography
-    observations, ready to use for the least squares minimization.
+    observations, ready to use for the least squares minimization. The fits
+    file has to have the following keys on its PrimaryHDU header: 'FREQ',
+    'WAVEL', 'MEANEL', 'OBJECT' and 'DATE_OBS'. Besides this three BinTableHDU
+    are required for the data itself; MINUS OOF, ZERO OOF and PLUS OOF. The
+    BinTableHDU header has to have the 'DZ' key which includes the radial
+    offset. Finally the BinTableHDU has the data files 'U', 'V' and 'BEAM',
+    which is the x- and y-axis position in radians and the 'BEAM' in a flat
+    array, in mJy.
 
     Parameters
     ----------

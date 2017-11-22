@@ -44,6 +44,7 @@ recursive-include pyoof *.npz *.npy
 
 include pyoof/data/config_params.yml  # configuration file parameters
 include pyoof/data/pyoof.mplstyle  # Matplotlib style plots
+include pyoof/data/example0.fits  # example fits
 
 # Data for pytest
 include pyoof/tests/data/*.npy
