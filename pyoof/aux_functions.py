@@ -176,8 +176,8 @@ def str2LaTeX(python_string):
 def store_data_csv(name, order, name_dir, save_to_csv):
     """
     Stores all important information in a csv file after the least squares
-    minimization has finished. It will be saved in the
-    'pyoof_out/name' directory.
+    minimization has finished. It will be saved in the 'pyoof_out/name'
+    directory.
 
     Parameters
     ----------
@@ -189,10 +189,8 @@ def store_data_csv(name, order, name_dir, save_to_csv):
         Directory of the analyzed fits file.
     save_to_csv : list
         It contains all data that will be stored.
-        save_to_csv = [
-        beam_data, u_data, v_data, res_optim, jac_optim, grad_optim, phase,
-        cov_ptrue, corr_ptrue
-            ]
+        save_to_csv = [beam_data, u_data, v_data, res_optim, jac_optim,
+        grad_optim, phase, cov_ptrue, corr_ptrue]
     """
 
     headers = [
@@ -229,9 +227,9 @@ def uv_ratio(u, v):
 
     Parameters
     ----------
-    u : ndarray
+    u : `~numpy.ndarray`
         Spatial frequencies from the power pattern, usually in degrees.
-    v : ndarray
+    v : `~numpy.ndarray`
         Spatial frequencies from the power pattern, usually in degrees.
 
     Returns

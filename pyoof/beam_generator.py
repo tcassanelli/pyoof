@@ -6,7 +6,7 @@ import numpy as np
 import os
 from scipy.constants import c as light_speed
 from astropy.io import fits
-from .aperture import radiation_pattern, illum_pedestal
+from .aperture import radiation_pattern
 from .math_functions import wavevector2radians
 
 __all__ = ['beam_generator']

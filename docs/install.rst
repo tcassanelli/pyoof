@@ -27,10 +27,10 @@ There are a few optional packages, which are necessary for some functionality:
 
 
 Installing pyoof
-==================
+================
 
 Using pip
--------------
+---------
 
 To install pyoof with `pip <http://www.pip-installer.org/en/latest/>`__, simply run
 
@@ -54,8 +54,7 @@ To install pyoof with `pip <http://www.pip-installer.org/en/latest/>`__, simply 
     <http://www.pip-installer.org/en/1.2.1/other-tools.html#using-pip-with-the-user-scheme>`__.
 
     We recommend to use a Python distribution, such as `Anaconda
-    <https://www.continuum.io/downloads>`_, especially, if you are on
-    :ref:`windows_install`.
+    <https://www.continuum.io/downloads>`_.
 
     Do **not** install pyoof or other third-party packages using ``sudo``
     unless you are fully aware of the risks.
@@ -63,7 +62,7 @@ To install pyoof with `pip <http://www.pip-installer.org/en/latest/>`__, simply 
 .. _source_install:
 
 Installation from source
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 There are two options, if you want to build pyoof from sources. Either, you
 install the tar-ball (`*.tar.gz` file) from `PyPI
@@ -75,7 +74,7 @@ repository:
 
     git clone https://github.com/tcassanelli/pyoof
 
-Then go into the pyoof source directory and run:
+Then go into the `pyoof` source directory and run:
 
 .. code-block:: bash
 
@@ -88,9 +87,9 @@ the system-wide Python installation.
 .. _testing_installed_pyoof:
 
 Testing an installed pyoof
-----------------------------
+--------------------------
 
-The easiest way to test your installed version of pyoof is running
+The easiest way to test your installed version of `pyoof` is running
 correctly is to use the `~pyoof.test()` function::
 
     import pyoof
@@ -107,7 +106,7 @@ the `pyoof issue tracker <http://github.com/tcassanelli/pyoof/issues>`__.
 .. note::
 
     This way of running the tests may not work if you do it in the
-    pyoof source distribution directory.
+    `pyoof` source distribution directory.
 
 If you prefer testing on the command line and usually work with the source
 code, you can also do

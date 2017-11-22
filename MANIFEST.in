@@ -10,14 +10,13 @@ recursive-include pyoof *.pyx *.c *.pxd
 recursive-include docs *
 recursive-include licenses *
 recursive-include cextern *
-recursive-include scripts *
+recursive-include examples *
 
 prune build
 prune docs/_build
 prune docs/api
 
-
-# the next few stanzas are for astropy_helpers.  It's derived from the
+# the next few stanzas are for astropy_helpers. It's derived from the
 # astropy_helpers/MANIFEST.in, but requires additional includes for the actual
 # package directory and egg-info.
 
@@ -31,19 +30,21 @@ include astropy_helpers/ah_bootstrap.py
 
 recursive-include astropy_helpers/astropy_helpers *.py *.pyx *.c *.h *.rst
 recursive-include astropy_helpers/astropy_helpers.egg-info *
+
 # include the sphinx stuff with "*" because there are css/html/rst/etc.
 recursive-include astropy_helpers/astropy_helpers/sphinx *
 
 prune astropy_helpers/build
 prune astropy_helpers/astropy_helpers/tests
 
-
 # global-exclude *.pyc *.o
 # recursive-include pyoof *.py
 recursive-include pyoof/data *
 recursive-include pyoof *.npz *.npy
 
-include pyoof/config_params.yaml
-include pyoof/pyoof.mplstyle
-include pyoof/tests/data_math_functions/*.npy
-include pyoof/aperture/tests/data_aperture/*.npy
+include pyoof/data/config_params.yml  # configuration file parameters
+include pyoof/data/pyoof.mplstyle  # Matplotlib style plots
+
+# Data for pytest
+include pyoof/tests/data/*.npy
+include pyoof/aperture/tests/data/*.npy
