@@ -16,16 +16,16 @@ def cart2pol(x, y):
 
     Parameters
     ----------
-    x : ndarray
+    x : `~numpy.ndarray`
         Grid value for the x variable.
-    y : ndarray
+    y : `~numpy.ndarray`
         Grid value for the y variable.
 
     Returns
     -------
-    rho : ndarray
+    rho : `~numpy.ndarray`
         Grid value for the radial variable.
-    theta : ndarray
+    theta : `~numpy.ndarray`
         Grid value for the angular variable, in radians.
     """
 
@@ -41,14 +41,14 @@ def wavevector2degrees(u, wavel):
 
     Parameters
     ----------
-    u : ndarray
+    u : `~numpy.ndarray`
         Wave-vector, result from FFT2 in 1 / m units.
-    wavel : ndarray
+    wavel : `~numpy.ndarray`
         Wavelength in meters.
 
     Returns
     -------
-    wavevector_degrees : ndarray
+    wavevector_degrees : `~numpy.ndarray`
         Wave-vector in degrees.
     """
 
@@ -63,14 +63,14 @@ def wavevector2radians(u, wavel):
 
     Parameters
     ----------
-    u : ndarray
+    u : `~numpy.ndarray`
         Wave-vector, result from FFT2 in 1 / m units.
-    wavel : ndarray
+    wavel : `~numpy.ndarray`
         Wavelength in meters.
 
     Returns
     -------
-    wavevector_degrees : ndarray
+    wavevector_degrees : `~numpy.ndarray`
         Wave-vector in radians.
     """
 
@@ -86,10 +86,10 @@ def co_matrices(res, jac, n_pars):
 
     Parameters
     ----------
-    res : ndarray
+    res : `~numpy.ndarray`
         Last residual evaluation from a fit procedure (least squares
         minimization), residual understood as data - model.
-    jac : ndarray
+    jac : `~numpy.ndarray`
         Last Jacobian matrix evaluation from a fit procedure.
     n_pars: int
         Total number of parameters in the model (only the ones that have been
@@ -97,9 +97,9 @@ def co_matrices(res, jac, n_pars):
 
     Returns
     -------
-    cov : ndarray
+    cov : `~numpy.ndarray`
         Variance-Covariance matrix. Dimensions n x p.
-    corr : ndarray
+    corr : `~numpy.ndarray`
         Correlation matrix. Dimensions n x p.
     """
 
@@ -127,12 +127,12 @@ def line_equation(P1, P2, x):
         First point that belongs to the desired linear equation.
     P2 : tuple
         Second point that belongs to the desired linear equation.
-    x : ndarray
+    x : `~numpy.ndarray`
         Data points from the x-axis.
 
     Returns
     -------
-    y  : ndarray
+    y  : `~numpy.ndarray`
         Linear equation y-data points.
     """
 
@@ -151,7 +151,7 @@ def rms(x):
 
     Parameters
     ----------
-    x : ndarray
+    x : `~numpy.ndarray`
         One or two dimensional array for the phase distribution.
     """
 
