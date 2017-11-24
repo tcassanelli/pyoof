@@ -54,7 +54,7 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
     Ea[xx ** 2 + yy ** 2 > pr ** 2] = 0  # circle shape
 
     fig, ax = plt.subplots()
-    ax.imshow(Ea, extent=[-pr, pr] * 2)
+    ax.imshow(Ea, extent=[-pr, pr] * 2, cmap='viridis')
     ax.set_xlabel('$x$ m')
     ax.set_ylabel('$y$ m')
     ax.set_title('Illumination function')
@@ -86,7 +86,7 @@ The wavefront (aberration) distribution, :math:`W(x, y)`, is strictly related to
 
     fig, ax = plt.subplots()
     ax.contour(x, y, phi, levels=levels, colors='k', alpha=0.3)
-    ax.imshow(phi, extent=[-pr, pr] * 2, origin='lower')
+    ax.imshow(phi, extent=[-pr, pr] * 2, origin='lower', cmap='viridis')
 
     ax.set_title('Aperture phase distribution')
     ax.set_ylabel('$y$ m')

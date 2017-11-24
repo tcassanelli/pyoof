@@ -228,6 +228,8 @@ Following the same example as before, it is possible to make a simple preview of
     :include-source:
 
     import pyoof
+    from scipy import interpolate
+    import matplotlib.pyplot as plt
     # Generally you would store the filename as string
     from astropy.utils.data import get_pkg_data_filename
     oofh_data = get_pkg_data_filename('pyoof/data/example0.fits')
@@ -236,15 +238,30 @@ Following the same example as before, it is possible to make a simple preview of
     [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-    pyoof.plot_data(
-        u_data=u_data,
-        v_data=v_data,
-        beam_data=beam_data,
-        d_z=d_z,
-        angle='degrees',
-        title='',
-        res_mode=False
-        )
+    u_data, v_data = np.degrees(u_data), np.degrees(v_data)
+    vmin = np.min(beam_data)
+    vmax = np.max(beam_data)
+
+
+    fig, ax = plt.subplots(ncols=3)
+
+    for i in range(3):
+        # new grid for beam_data
+        u_ng = np.linspace(u_data[i].min(), u_data[i].max(), 300)
+        v_ng = np.linspace(v_data[i].min(), v_data[i].max(), 300)
+
+        beam_ng = interpolate.griddata(
+            # coordinates of grid points to interpolate from.
+            points=(u_data[i], v_data[i]),
+            values=beam_data[i],
+            # coordinates of grid points to interpolate to.
+            xi=tuple(np.meshgrid(u_ng, v_ng)),
+            method='cubic'
+            )
+
+        extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
+        ax[i].imshow(beam_ng, extent=extent, vmin=vmin, vmax=vmax)
+        ax[i].contour(u_ng, v_ng, beam_ng, 10)
 
 The properties of the receiver and the telescope can be found in the sub-packages `~pyoof.aperture` and `~pyoof.telgeometry`. These are important geometrical aspects and will make the nonlinear least squares minimization process more precise. For the Effelsberg telescope there are::
 
