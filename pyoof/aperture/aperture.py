@@ -133,12 +133,10 @@ def wavefront(rho, theta, K_coeff):
 
     # list of tuples with (n, l) allowed values
     nl = [(i, j) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
-    N = np.array(nl)[:, 0]  # polynomial order
-    L = np.array(nl)[:, 1]  # polynomial angular dependence
 
     # Wavefront (aberration) distribution
     W = sum(
-        K_coeff[i] * U(N[i], L[i], rho, theta)
+        K_coeff[i] * U(*nl[i], rho, theta)
         for i in range(K_coeff.size)
         )
 
