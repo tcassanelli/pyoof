@@ -44,14 +44,46 @@ grateful for feedback. Note, that work on the documentation is still ongoing.
 
 Usage
 =====
-For now the installation is only available from the source, clone the repository and then execute
+
+The easiest and more convenient way to install the `pyoof` package is via `pip`
+
+.. code-block:: bash
+
+    pip install pyoof
+
+The installation is also possible from the source. Clone the GitHub repository and execute!
 
 .. code-block:: bash
 
     python setup.py install
 
-
 I believe in the future :smile:, so please install Python 3.
+I am sorry but a windows version of the package is currently not available.
+
+Dependencies
+============
+
+So far the `pyoof` package uses the common Python packages, it is recommended to install the `anaconda <https://www.anaconda.com>`_ distribution first, although using `pip` is also fine.
+
+pyoof has the following strict requirements:
+
+- `Python <http://www.python.org/>`__ 3.5 or later
+
+- `setuptools <https://pythonhosted.org/setuptools/>`__: Used for the package
+  installation.
+
+- `NumPy <http://www.numpy.org/>`__ 1.11 or later
+
+- `SciPy <https://scipy.org/>`__: 0.15 or later
+
+- `astropy <http://www.astropy.org/>`__: 1.3 or later (2.0 recommended)
+
+- `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later
+
+- `matplotlib <http://matplotlib.org/>`__ 1.5 or later: To provide plotting
+  functionality that `~pyoof.pathprof.helper` enhances.
+
+In the future we'll try to minimize the requirements.
 
 License
 =======
