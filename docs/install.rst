@@ -20,8 +20,6 @@ pyoof has the following strict requirements:
 
 - `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later
 
-There are a few optional packages, which are necessary for some functionality:
-
 - `matplotlib <http://matplotlib.org/>`__ 1.5 or later: To provide plotting
   functionality that `~pyoof.pathprof.helper` enhances.
 
@@ -74,7 +72,7 @@ repository:
 
     git clone https://github.com/tcassanelli/pyoof
 
-Then go into the `pyoof` source directory and run:
+Then go into the `~pyoof` source directory and run:
 
 .. code-block:: bash
 
@@ -95,7 +93,7 @@ correctly is to use the `~pyoof.test()` function::
     import pyoof
     pyoof.test()
 
-To run the tests for one sub-package, e.g., `aperture`, only::
+To run the tests for one sub-package, e.g., `~pyoof.aperture`, only::
 
     import pyoof
     pyoof.test('aperture')

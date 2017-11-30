@@ -21,10 +21,5 @@ __pycache__
 .ipynb_checkpoints
 notebooks/fft_resolution_test.ipynb
 notebooks/pyoof_out
-examples/
+data_generated/
 
-# Not importat examples
-examples/config_gen.py
-examples/generate_data.py
-examples/poly_fit.py
-examples/residual_nikolic.py

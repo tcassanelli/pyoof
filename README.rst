@@ -1,6 +1,6 @@
-******
+*****
 pyoof
-******
+*****
 
 - *Version: 0.2*
 - *Author: Tomas Cassanelli*
@@ -46,9 +46,10 @@ Usage
 =====
 For now the installation is only available from the source, clone the repository and then execute
 
-```
-$ python setup.py install
-```
+.. code-block:: bash
+
+    python setup.py install
+
 
 I believe in the future :smile:, so please install Python 3.
 

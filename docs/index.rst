@@ -1,13 +1,12 @@
 
 :tocdepth: 3
 
-###################
+*******************
 pyoof Documentation
-###################
+*******************
 
-**********************
 Introduction (`pyoof`)
-**********************
+======================
 
 Welcome to the `~pyoof` documentation. `~pyoof` is a Python package which computes out-of-focus (OOF) holography, for beam maps of a single-dish radio telescope. The method was developed by `B. Nikolic et al <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_. The OOF holography is a phase-retrieval holography procedure used to find the aperture phase distribution, :math:`\varphi(x, y)`, (or simply the phase error) and the associated errors on a telescope's surface (primary dish). The main advantage of this method, over the traditional with-phase holography, is that it does not require additional equipment to perform observations and it can be used for a wide elevation range. These two allow OOF holography to study and model gravitational deformations, the most well behaved and prominent source of deformation (other sources could also be thermal and wind deformations which are non-repeatable), on the telescope's primary dish.
 
@@ -28,8 +27,8 @@ The parametrization of the aperture phase distribution allows its construction b
 
 Among the basic operations that the `~pyoof` package does, there are: construction aperture distribution (`~pyoof.aperture.aperture`), calculation of its Fast Fourier Transform in two dimensions (`~pyoof.aperture.radiation_pattern`), calculation of a residual between observed and modeled power pattern, and nonlinear least squares minimization (`~pyoof.fit_beam`).
 
-OOF holography constants/distribution/function
-==============================================
+OOF holography parameters
+=========================
 The OOF holography makes use of several constants, distributions and functions, and some of them are related to each other. Please keep in mind their mathematical symbols and what they represent.
 
 Aperture distribution: :math:`\underline{E_\text{a}}(x, y)` (`~pyoof.aperture.aperture`)
@@ -129,16 +128,6 @@ The Zernike circle polynomial coefficients, ``K_coeff``, are the final parameter
 
 .. math::
     \left[K_{0\,0}, K_{1\,-1}, K_{1\,0}, K_{1\,1}, \dotso , K_{n\, \ell}\right]^\intercal.
-
-See Also
-========
-
-* `Out-of-focus holography at the Green Bank Telescope <https://www.aanda.org/articles/aa/ps/2007/14/aa5765-06.ps.gz>`_
-* `Measurement of antenna surfaces from in- and out-of-focus beam maps using astronomical sources <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_
-* `Zernike circle polynomials <https://en.wikipedia.org/wiki/Zernike_polynomials>`_
-* `Effelsberg 100-m radio telescope <https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope>`_
-* `Essential Radio Astronomy <http://www.cv.nrao.edu/course/astr534/ERA_old.shtml>`_
-
 
 Getting Started
 ===============
@@ -336,6 +325,15 @@ The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, whe
 
 Finally if the key ``make_plots=True``, then `~pyoof.fit_beam` will create a sub-directory containing the most important plots to study the fit, as well as the phase error maps for the primary dish.
 
+See Also
+========
+
+* `Out-of-focus holography at the Green Bank Telescope <https://www.aanda.org/articles/aa/ps/2007/14/aa5765-06.ps.gz>`_
+* `Measurement of antenna surfaces from in- and out-of-focus beam maps using astronomical sources <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_
+* `Zernike circle polynomials <https://en.wikipedia.org/wiki/Zernike_polynomials>`_
+* `Effelsberg 100-m radio telescope <https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope>`_
+* `Essential Radio Astronomy <http://www.cv.nrao.edu/course/astr534/ERA_old.shtml>`_
+
 
 Available modules
 =================
@@ -361,6 +359,10 @@ Acknowledgments
 ===============
 
 This code makes use of the excellent work provided by the
-`Astropy <http://www.astropy.org/>`__ community. `pyoof` uses the Astropy package and also the
+`Astropy <http://www.astropy.org/>`__ community. `~pyoof` uses the Astropy package and also the
 `Astropy Package Template <https://github.com/astropy/package-template>`__
 for the packaging.
+
+As well `bwinkel <https://github.com/bwinkel>`_ for his support and help during the development of `~pyoof`.
+
+
