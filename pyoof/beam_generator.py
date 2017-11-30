@@ -13,7 +13,7 @@ __all__ = ['beam_generator']
 
 
 def beam_generator(
-    params, freq, d_z, telgeo, illum_func, noise, resolution, box_factor, save
+    params, freq, d_z, telgeo, illum_func, noise, resolution, box_factor
         ):
     """
     Routine to generate data and test the pyoof package algorithm. It has the
@@ -110,28 +110,33 @@ def beam_generator(
     table_hdu1.update_ext_name('ZERO OOF')
     table_hdu2.update_ext_name('PLUS OOF')
 
-    prihdr = fits.Header()
-    prihdr['FREQ'] = freq
-    prihdr['WAVEL'] = wavel
-    prihdr['MEANEL'] = 0
-    prihdr['OBJECT'] = 'created'
-    prihdr['DATE_OBS'] = 'created'
-    prihdr['COMMENT'] = 'Generated data pyoof package'
-    prihdr['AUTHOR'] = 'Tomas Cassanelli'
-    prihdu = fits.PrimaryHDU(header=prihdr)
+    # storing data
+    current_path = os.getcwd()
+    if not os.path.exists(current_path + '/data_generated'):
+        os.makedirs(current_path + '/data_generated')
 
-    pyoof_fits = fits.HDUList([prihdu, table_hdu0, table_hdu1, table_hdu2])
+    for j in ["%03d" % i for i in range(101)]:
+        name_file = current_path + '/data_generated/test{}.fits'.format(j)
+        if not os.path.exists(name_file):
 
-    for i in range(3):
-        pyoof_fits[i + 1].header['DZ'] = d_z[i]
+            prihdr = fits.Header()
+            prihdr['FREQ'] = freq
+            prihdr['WAVEL'] = wavel
+            prihdr['MEANEL'] = 0
+            prihdr['OBJECT'] = 'test{}'.format(j)
+            prihdr['DATE_OBS'] = 'test{}'.format(j)
+            prihdr['COMMENT'] = 'Generated data pyoof package'
+            prihdr['AUTHOR'] = 'Tomas Cassanelli'
+            prihdu = fits.PrimaryHDU(header=prihdr)
+            pyoof_fits = fits.HDUList(
+                [prihdu, table_hdu0, table_hdu1, table_hdu2]
+                )
 
-    if save:
-        current_path = os.getcwd()
-        if not os.path.exists(current_path + '/data_gen'):
-            os.makedirs(current_path + '/data_gen')
+            for i in range(3):
+                pyoof_fits[i + 1].header['DZ'] = d_z[i]
 
-        name_file = current_path + '/data_gen/data_gen.fits'
+            pyoof_fits.writeto(name_file, clobber=True)
 
-        pyoof_fits.writeto(name_file, clobber=True)
+            break
 
     return pyoof_fits

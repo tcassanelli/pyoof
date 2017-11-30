@@ -547,7 +547,7 @@ def plot_fit_path(
     fig_phase = plot_phase(
         K_coeff=K_coeff,
         title=(
-            '{} Aperture phase distribution $d_z=\\pm {}$ m ' +
+            '{} phase error $d_z=\\pm {}$ m ' +
             '$n={}$ $\\alpha={}$ deg'
             ).format(obs_object, round(pyoof_info['d_z'][2], 3), n, meanel),
         notilt=True,
@@ -567,7 +567,7 @@ def plot_fit_path(
     fig_cov = plot_variance(
         matrix=cov,
         order=n,
-        title='{} Variance-covariance matrix $n={}$'.format(obs_object, n),
+        title='{} variance-covariance matrix $n={}$'.format(obs_object, n),
         cbtitle='$\sigma_{ij}^2$',
         diag=True
         )
@@ -575,7 +575,7 @@ def plot_fit_path(
     fig_corr = plot_variance(
         matrix=corr,
         order=n,
-        title='{} Correlation matrix $n={}$'.format(obs_object, n),
+        title='{} correlation matrix $n={}$'.format(obs_object, n),
         cbtitle='$\\rho_{ij}$',
         diag=True
         )
