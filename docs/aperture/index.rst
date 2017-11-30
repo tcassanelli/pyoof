@@ -184,19 +184,24 @@ To compute the aperture distribution, two extra function from the `~pyoof.telgeo
                 )
             )
 
+    extent = [-pr, pr] * 2
 
     fig, axes = plt.subplots(ncols=3, nrows=2)
     ax = axes.flat
 
     for i in range(3):
-        ax[i].imshow(Ea[i].real, cmap='viridis')
-        ax[i + 3].imshow(Ea[i].imag, cmap='viridis')
+        ax[i].imshow(Ea[i].real, cmap='viridis', origin='lower', extent=extent)
+        ax[i + 3].imshow(
+            Ea[i].imag, cmap='viridis', origin='lower', extent=extent
+            )
+        ax[i].contour(xx, yy, Ea[i].real, cmap='viridis')
+        ax[i + 3].contour(xx, yy, Ea[i].imag, cmap='viridis')
 
     ax[0].set_title('Aperture real $d_z^-$')
-    ax[1].set_title('Aperture real')
+    ax[1].set_title('Aperture real $d_z$')
     ax[2].set_title('Aperture real $d_z^+$')
     ax[3].set_title('Aperture imag $d_z^-$')
-    ax[4].set_title('Aperture imag')
+    ax[4].set_title('Aperture imag $d_z$')
     ax[5].set_title('Aperture imag $d_z^+$')
 
     # Turn off tick labels
