@@ -17,9 +17,9 @@ def cart2pol(x, y):
     Parameters
     ----------
     x : `~numpy.ndarray`
-        Grid value for the x variable.
+        Grid value for the :math:`x` variable.
     y : `~numpy.ndarray`
-        Grid value for the y variable.
+        Grid value for the :math:`y` variable.
 
     Returns
     -------
@@ -98,9 +98,9 @@ def co_matrices(res, jac, n_pars):
     Returns
     -------
     cov : `~numpy.ndarray`
-        Variance-Covariance matrix. Dimensions n x p.
+        Variance-Covariance matrix. Dimensions :math:`n \times p`.
     corr : `~numpy.ndarray`
-        Correlation matrix. Dimensions n x p.
+        Correlation matrix. Dimensions :math:`n \times p`.
     """
 
     m = res.size  # Number of data points used in the fit
@@ -118,8 +118,9 @@ def co_matrices(res, jac, n_pars):
 
 def line_equation(P1, P2, x):
     """
-    Computes the linear equation solution for the y vector values given two
-    data points, P1 = (x1, y1) and P2 = (x2, y2), and the x vector.
+    Computes the linear equation solution for the :math:`y` vector values
+    given two data points, :math:`P_1 = (x_1, y_1)` and :math:`P_2 = (x_2,
+    y_2)`, and  the :math:`x` vector.
 
     Parameters
     ----------
@@ -128,12 +129,12 @@ def line_equation(P1, P2, x):
     P2 : tuple
         Second point that belongs to the desired linear equation.
     x : `~numpy.ndarray`
-        Data points from the x-axis.
+        Data points from the :math:`x`-axis.
 
     Returns
     -------
     y  : `~numpy.ndarray`
-        Linear equation y-data points.
+        Linear equation :math:`y`-data points.
     """
 
     (x1, y1) = P1
@@ -147,7 +148,7 @@ def line_equation(P1, P2, x):
 def rms(x):
     """
     Computes the root-mean-square value from a aperture phase distribution
-    map.
+    map, :math:`\varphi(x, y)`.
 
     Parameters
     ----------

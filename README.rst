@@ -37,15 +37,15 @@ Project Status
     :target: https://coveralls.io/github/tcassanelli/pyoof?branch=master
     :alt: Pyoof's Coveralls Status
 
-`pyoof` is still in the early-development stage. While much of the
+pyoof is still in the early-development stage. While much of the
 functionality is already working as intended, the API is not yet stable.
 Nevertheless, we kindly invite you to use and test the library and we are
 grateful for feedback. Note, that work on the documentation is still ongoing.
 
-Usage
-=====
+Installation
+============
 
-The easiest and more convenient way to install the `pyoof` package is via `pip`
+The easiest and more convenient way to install the pyoof package is via `pip`
 
 .. code-block:: bash
 
@@ -58,12 +58,12 @@ The installation is also possible from the source. Clone the GitHub repository a
     python setup.py install
 
 I believe in the future :smile:, so please install Python 3.
-I am sorry but a windows version of the package is currently not available.
+Unfortunately, a windows version of the package is currently not available.
 
 Dependencies
 ============
 
-So far the `pyoof` package uses the common Python packages, it is recommended to install the `anaconda <https://www.anaconda.com>`_ distribution first, although using `pip` is also fine.
+So far the pyoof package uses the common Python packages, it is recommended to install the `anaconda <https://www.anaconda.com>`_ distribution first, although using `pip` is also fine.
 
 pyoof has the following strict requirements:
 
@@ -83,8 +83,17 @@ pyoof has the following strict requirements:
 - `matplotlib <http://matplotlib.org/>`__ 1.5 or later: To provide plotting
   functionality that `~pyoof.pathprof.helper` enhances.
 
-In the future we'll try to minimize the requirements.
+Usage
+=====
 
 License
 =======
+
 pyoof is licensed under a 3-clause BSD style license - see the LICENSE.rst file.
+
+Contact
+=======
+
+If you have any questions :confused:, about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
+
+- *tcassanelli@gmail.com*

@@ -9,13 +9,13 @@ Aperture (`pyoof.aperture`)
 Introduction
 ============
 
-The `~pyoof.aperture` sub-package contains related distributions/functions to the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`. The aperture distribution is a two dimension complex distribution, hence has amplitude and phase. The amplitude is represented by the blockage distribution, :math:`B(x, y)`, and the illumination function, :math:`E_\text{a}(x, y)`. The phase is given by the aperture phase distribution, :math:`\varphi(x, y)` and the optical path difference (OPD) function, :math:`\delta(x,y;d_z)`.
-The collection of all distribution/functions for the aperture distribution is then,
+The `~pyoof.aperture` sub-package contains related distributions/functions to the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`. The aperture distribution is a two dimensional complex distribution, hence has an amplitude and a phase. The amplitude is represented by the blockage distribution, :math:`B(x, y)`, and the illumination function, :math:`E_\text{a}(x, y)`. The phase is given by the aperture phase distribution, :math:`\varphi(x, y)` and the optical path difference (OPD) function, :math:`\delta(x,y;d_z)`.
+The collection of all distributions/functions for the aperture distribution is then,
 
 .. math::
     \underline{E_\text{a}}(x, y) = B(x, y)\cdot E_\text{a}(x, y) \cdot \mathrm{e}^{\mathrm{i} \{\varphi(x, y) + \frac{2\pi}{\lambda}\delta(x,y;d_z)\}}.
 
-Between them, the blockage distribution and OPD function are strictly dependent on the telescope geometry, reason why they are gathered in the `~pyoof.telgeometry` sub-package.
+Between them, the blockage distribution and OPD function are strictly dependent on the telescope geometry, which is the reason why they are gathered in the `~pyoof.telgeometry` sub-package.
 
 .. note::
     All mentioned Python functions are for a two dimensional analysis and they require as an input meshed values. They can also be used in one dimensional analysis by adding ``y=0`` to each of the Python functions. Although their analysis in the `~pyoof` package is strictly two dimensional.
@@ -33,7 +33,7 @@ Lastly there is another distribution left which is the (field) radiation pattern
 .. math::
     F(u, v) = \mathcal{F}\left[\underline{E_\text{a}}(x, y)\right]
 
-The (field) radiation pattern is the most extended function on this sub-package. To computed a FFT in two dimensions is used using the standard Python package `~numpy.fft.fft2`.
+The (field) radiation pattern is the most extensive function in this sub-package. The standard Python package `~numpy.fft.fft2` is used to compute the FFT in two dimensions.
 
 Using `~pyoof.aperture`
 =======================
@@ -62,15 +62,15 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
     ax.set_ylabel('$y$ m')
     ax.set_title('Illumination function')
 
-It is only requires the standard Python libraries to use `~pyoof.aperture`. What needs special consideration are the Python functions with the parameter ``K_coeff``, coming up.
+The `~pyoof.aperture` only uses standard Python libraries, but what needs special consideration are the Python functions with the parameter ``K_coeff``, coming up.
 
 Wavefront (aberration) distribution :math:`W(x, y)`
 ---------------------------------------------------
 
-The wavefront (aberration) distribution, :math:`W(x, y)`, is strictly related to the aperture phase distribution (see Jupyter notebook, `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_ on GitHub), and it is the base of the nonlinear least squares minimization done by the `~pyoof` package.
+The wavefront (aberration) distribution, :math:`W(x, y)`, is strictly related to the aperture phase distribution (see Jupyter notebook, `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_ on GitHub), and it is the basis of the nonlinear least squares minimization done by the `~pyoof` package.
 
 .. note::
-    The Zernike circle coefficients, given by ``K_coeff`` are the basic structure for the aperture phase distribution. It is important to notice that for an order :math:`n` of the polynomial there are :math:`(n+1)(n+2)/2` total number of polynomials. See `~pyoof.zernike`.
+    The Zernike circle coefficients, given by ``K_coeff`` are the basic structure for the aperture phase distribution. It is important to note that for an order :math:`n` of the polynomial there are :math:`(n+1)(n+2)/2` total number of polynomials. See `~pyoof.zernike`.
 
 One basic example is to plot :math:`W(x, y)` with a random set of Zernike circle polynomial coefficients.
 
@@ -106,7 +106,7 @@ One basic example is to plot :math:`W(x, y)` with a random set of Zernike circle
 Aperture phase distribution :math:`\varphi(x, y)`
 -------------------------------------------------
 
-The aperture phase distribution, `~aperture.phase`, calculation follows the same guidelines as the wavefront, `~aperture.wavefront`. In general, the problem will only focus on the aperture phase distribution, and not on the wavefront (aberration) distribution. To compute the phase simply,
+The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, follows the same guidelines as the wavefront (aberration) distribution, `~pyoof.aperture.wavefront`. In general, the problem will only focus on the aperture phase distribution, and not on the wavefront (aberration) distribution. To compute the phase simply,
 
 .. plot::
     :include-source:
@@ -136,7 +136,7 @@ The aperture phase distribution, `~aperture.phase`, calculation follows the same
         ax[i].set_ylabel('$y$ m')
 
     ax[0].set_title('$\\varphi(x, y)$ no-tilt')
-    ax[1].set_title('$\\varphi(x, y)$ tilt')
+    ax[1].set_title('$\\varphi(x, y)$')
 
     fig.tight_layout()
 
@@ -145,7 +145,7 @@ To study the aberration in the aperture phase distribution, first it is necessar
 Aperture distribution :math:`\underline{E_\text{a}}(x, y)`
 ----------------------------------------------------------
 
-To compute the aperture distribution, two extra function from the `~pyoof.telgeometry` package are required. Assuming the reader knows them, to compute :math:`\underline{E_\text{a}}(x, y)` is really easy,
+To compute the aperture distribution, two extra functions from the `~pyoof.telgeometry` package are required. Assuming the reader knows them, it is easy to compute :math:`\underline{E_\text{a}}(x, y)`,
 
 .. plot::
     :include-source:
@@ -211,9 +211,9 @@ To compute the aperture distribution, two extra function from the `~pyoof.telgeo
 
     fig.tight_layout()
 
-As mentioned before the aperture distribution is complex, which also depends on the radial offset added to defocus the telescope. Depending on that its shape in real and imaginary will change. In general, the aperture distribution will not be used for the OOF holography study, only the power pattern and phase error will be used for visual inspection.
+As mentioned before the aperture distribution is complex, which also depends on the radial offset added to defocus the telescope. Depending on that its shape in the real and imaginary parts will change. In general, the aperture distribution will not be used for the OOF holography study, only the power pattern and phase error will be used for visual inspection.
 
-In contrast the (field) radiation pattern, has the same inputs, except for the `~numpy.ftt.fft2` routine, which requires two more important parameters. These are ``resolution`` and ``box_factor``. Hence, it is simply executed by,
+In contrast the (field) radiation pattern, has the same inputs, except for the `~numpy.fft.fft2` routine, which requires two more important parameters. These are ``resolution`` and ``box_factor``. Hence, it is simply executed by,
 
 .. code-block:: python
 

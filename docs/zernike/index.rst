@@ -9,14 +9,14 @@ Zernike circle polynomials (`pyoof.zernike`)
 Introduction
 ============
 
-The Zernike circle polynomials [Virendra]_ were introduced by `Frits Zernike <https://en.wikipedia.org/wiki/Frits_Zernike>`_ (winner Nobel prize in physics 1953), for testing his phase contrast method in circular mirror figures. The polynomials were used by Ben Nijboer to study effects on small aberrations on diffracted images with a rotationally symmetric origin on circular pupils.
+The Zernike circle polynomials [Virendra]_ were introduced by `Frits Zernike <https://en.wikipedia.org/wiki/Frits_Zernike>`_ (winner Nobel prize in physics 1953), for testing his phase contrast method in circular mirror figures. The polynomials were used by Ben Nijboer to study the effects of small aberrations on diffracted images with a rotationally symmetric origin on circular pupils.
 
-From the studies of the wavefront (aberration) distribution, has been classically described as a power series, where it is possible to expand it in terms of `orthonormal polynomials in the unitary circle`. Although, there is a wide range of polynomials that fulfill this condition, the Zernike circle polynomials have certain properties of invariance that make them unique.
+The studies on the wavefront (aberration) distribution, have been classically described as a power series, where it is possible to expand it in terms of `orthonormal polynomials in the unitary circle`. Although, there is a wide range of polynomials that fulfill this condition, the Zernike circle polynomials have certain properties of invariance that make them unique.
 
 Mathematical definitions
 ========================
 
-There is not any conventions assigned on how to enumerate the Zernike circle polynomials. In the `~pyoof` package has been selected the same letters and conventions from [Born]_. The Zernike circle polynomials can be expressed as a multiplication of radial and angular sections. The radial section it is called radial polynomials, and its generating function is given by,
+There are no conventions assigned on how to enumerate the Zernike circle polynomials. In the `~pyoof` package uses the same letters and conventions from [Born]_. The Zernike circle polynomials can be expressed as a multiplication of radial and angular sections. The radial section it is called radial polynomials, and its generating function is given by,
 
 .. math::
 
@@ -61,7 +61,7 @@ The Zernike circle polynomials can be used to represent, in a convenient way, th
     \varphi(x, y) = 2\pi \cdot W(x, y) = 2\pi \cdot \sum_{n, \ell} K_{n\ell}U^\ell_n(\varrho, \vartheta),
 
 where :math:`K_{n\ell}` are the Zernike circle polynomial coefficients. The final output from the `~pyoof` package is to find such coefficients and then make a representation of the aberration in the (telescope) aperture plane. The wavefront (aberration) distribution, `~pyoof.aperture.wavefront`, is a function listed in the `~pyoof.aperture` sub-package.
-The order of the :math:`K_{n\ell}` coefficients will vary from the order of the polynomials. Commonly for the `~pyoof` package their values are in between :math:`[-2, 2]`.
+The order of the :math:`K_{n\ell}` coefficients will vary from the order of the polynomials. Commonly for the `~pyoof` package their values are between :math:`[-2, 2]`.
 
 .. warning::
     The order of magnitude of the Zernike circle polynomial coefficients (:math:`K_{n\ell}`) will vary on what conventions are used to generate them. There are some conventions that require a normalization constant.
@@ -110,9 +110,9 @@ To plot the polynomials first it is required to construct a grid.
 
 
 .. note::
-    At the time of using the function `~pyoof.zernike.U` make sure that the radius is normalized by its maximum. The Zernike circle polynomials are only orthonormal under the unitary circle. To avoid the use of extra constants, it is only required to do, :math:`\varrho / \varrho_\text{max}`.
+    At the time of using the function `~pyoof.zernike.U` make sure that the radius is normalized by its maximum. The Zernike circle polynomials are only orthonormal under the unitary circle. It is to avoid the use of extra constants, use :math:`\varrho / \varrho_\text{max}`.
 
-For more in-deep example of their usage go to the Jupyter notebook `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_.
+For more in-depth example of their usage go to the Jupyter notebook `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_.
 
 
 An example of wavefront (aberration) distribution could be the following,

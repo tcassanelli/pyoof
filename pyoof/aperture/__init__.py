@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-This subpackage contains all necessary functions to compute the aperture
-distribution and the angular spectrum or (field) radiation pattern, and ready
-to be used at the a least squares optimisation.
+This sub-package contains all necessary functions to compute the aperture
+distribution and the (field) radiation pattern, and is ready to be used by the
+least squares minimization.
 """
 
 from .aperture import *
