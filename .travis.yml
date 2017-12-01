@@ -84,8 +84,8 @@ matrix:
           env: DO_MAC_DIST=YES
 
         # Do a coverage test.
-        # - os: linux
-        #   env: SETUP_CMD='test --coverage'
+        - os: linux
+          env: SETUP_CMD='test --coverage'
 
         # A test without remote-data
         - os: linux
