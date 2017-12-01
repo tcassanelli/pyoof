@@ -4,8 +4,8 @@ pyoof
 
 - *Version: 0.2*
 - *Author: Tomas Cassanelli*
-- *User manual:* `stable <https://readthedocs.../>`__ |
-  `developer <https://readthedocs.../latest/>`__
+- *User manual:* `stable <http://pyoof.readthedocs.io/en/stable/>`__ |
+  `developer <http://pyoof.readthedocs.io/en/latest/>`__
 
 .. image:: https://img.shields.io/pypi/v/pyoof.svg
     :target: https://pypi.python.org/pypi/pyoof
@@ -14,6 +14,10 @@ pyoof
 .. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
     :target: https://opensource.org/licenses/BSD-3-Clause
     :alt: License
+
+.. image:: https://img.shields.io/readthedocs/pip.svg
+    :target: http://pyoof.readthedocs.io/en/latest/
+    :alt: Docs
 
 pyoof is a Python package that contains all needed tools to perform out-of-focus (OOF) holography on astronomical beam maps for single-dish radio telescopes. It is based on the original OOF holography papers,
 
@@ -85,6 +89,30 @@ pyoof has the following strict requirements:
 
 Usage
 =====
+
+To use the pyoof package is straight forward. First define your observational data in the established fits file format and then execute!
+
+.. code-block:: python
+
+    import pyoof
+
+    oofh_data = 'path/to/file.fits'
+    pyoof.extract_data_pyoof(oofh_data)
+
+    pyoof.fit_beam(
+        data_info=data_info,
+        data_obs=[beam_data, u_data, v_data],
+        method='trf',  # optimization algorithm 'trf', 'lm' or 'dogbox'
+        order_max=5,  # it will fit from 1 to order_max
+        illumination=illumination['pedestal'],
+        telescope=telescope['effelsberg'],
+        config_params_file=None,  # default or add path config_file.yaml
+        fit_previous=True,  # True is recommended
+        resolution=2**8,  # standard is 2 ** 8
+        box_factor=5,  # box_size = 5 * pr, better pixel resolution
+        make_plots=False,  # store plots in sub-directory
+        verbose=0  # short output string
+        )
 
 License
 =======
