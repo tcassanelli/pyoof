@@ -9,19 +9,19 @@ Telescope geometry (`pyoof.telgeometry`)
 Introduction
 ============
 
-To apply the OOF holography to any type of antenna or radio telescope it is necessary to use their geometrical aspects. This properties can be the type of telescope, Cassegrain, Gregorian, etc, and how/where is the sub/reflector located in the aperture plane (if there is any). The type of the telescope will give information about the optical path carried every time OOF observations are performed and the location of the sub-reflector will give a truncation over the aperture plane.
+To apply the OOF holography to any type of antenna or radio telescope it is necessary to use their geometrical aspects. These properties include the type of telescope, Cassegrain, Gregorian, etc, and how/where is the sub/reflector located in the aperture plane (if there is any). The type of the telescope will give information about the optical path carried every time OOF observations are performed and the location of the sub-reflector will give a truncation over the aperture plane.
 
 Getting started
 ===============
 
-To start using the telescope geometry functions is straight forward, simply by defining a meshed array and replacing them in the function.
+Using the telescope geometry functions is straight forward, simply by defining a meshed array and replacing them in the function.
 
 .. note::
-    Unfortunately for now there is only pre-made functions for the Effelsberg telescope, plus a manual version of the functions. The user is encouraged to develop their own functions for the telescope geometry. In future versions this will be updated.
+    Unfortunately for now there are only pre-made functions for the Effelsberg telescope, plus a manual version of the functions. The user is encouraged to develop their own functions for the telescope geometry. In future versions this will be updated.
 
 Blockage distribution :math:`B(x, y)`
 -------------------------------------
-The blockage distribution corresponds to the elements that block the light in the aperture plane. Thi could be the support legs, the sub-reflector and shade effects. For the Effelsberg telescope the three of them are present. How to construct the blockage, follows
+The blockage distribution corresponds to the elements that block the light in the aperture plane. This could be the support legs, the sub-reflector and shade effects. And for the Effelsberg telescope, all three of them are present. How to construct the blockage, follows,
 
 .. plot::
     :include-source:
@@ -42,7 +42,7 @@ The blockage distribution corresponds to the elements that block the light in th
     ax.set_ylabel('$y$ m')
     ax.set_title('Blockage dist. Effelsberg telescope')
 
-To construct manually the blockage distribution, using the pre-made function `~pyoof.telgeometry.block_manual`, basic geometrical aspect from the telescope are required, such as the primary and secondary dish radii, dimensions of the support legs, etc.
+To construct manually the blockage distribution, using the pre-made function `~pyoof.telgeometry.block_manual`, basic geometrical aspects from the telescope are required, such as the primary and secondary dish radii, dimensions of the support legs, etc.
 
 Optical path difference function :math:`\delta(x, y; d_z)`
 ----------------------------------------------------------
@@ -52,7 +52,7 @@ The optical path difference (OPD) function, in Cassegrain and Gregorian geometri
 .. note::
     If you are interested in its theoretical derivation send me an email!
 
-Same as before the OPD function for the Effelsberg telescope is already made, then,
+Same as before the OPD function for the Effelsberg telescope is already made,
 
 .. plot::
     :include-source:
@@ -80,7 +80,7 @@ Same as before the OPD function for the Effelsberg telescope is already made, th
     ax.set_title('OPD function Effelsberg telescope')
     ax.legend(loc='upper right')
 
-Becomes clear that by adding a radial offset of :math:`d_z=0` m the solution becomes flat.
+From the plot, it becomes clear that by adding a radial offset of :math:`d_z=0` m the solution becomes flat.
 
 See Also
 ========

@@ -13,18 +13,19 @@ __all__ = [
 
 def R(n, m, rho):
     """
-    Radial Zernike polynomials generator (R from Born & Wolf definition).
-    The m, n are integers, n >= 0 and n - m even. Only used to compute the
-    general expression for the Zernike circle polynomials, U.
+    Radial Zernike polynomials generator (:math:`R^m_n` from Born & Wolf
+    definition). The :math:`m`, :math:`n` are integers, :math:`n \geqslant 0`
+    and :math:`n - m` even. Only used to compute the general expression for
+    the Zernike circle polynomials, `~pyoof.zernike.U`.
 
     Parameters
     ----------
     n : int
-        It is n >= 0. Order of the radial component.
+        It is :math:`n \geqslant 0`. Order of the radial component.
     m : int
         Positive number, relative to the angle component.
     rho : `~numpy.ndarray`
-        Values for the radial component. rho = np.sqrt(x ** 2 + y ** 2).
+        Values for the radial component, :math:`\sqrt{x^2 + y^2}`.
 
     Returns
     -------
@@ -46,11 +47,12 @@ def R(n, m, rho):
 
 def U(n, l, rho, theta):
     """
-    Zernike circle polynomials generator (U from Born & Wolf definition).
-    The l, n are integers, n >= 0 and n - abs(l) even.
-    Expansion of a complete set of orthonormal polynomials in a unitary circle,
-    for the wavefront aberration distribution.
-    The total number of polynomials is given by (n + 1) * (n + 2) / 2.
+    Zernike circle polynomials generator (:math:`U^\ell_n` from Born & Wolf
+    definition). The :math:`\ell`, :math:`n` are integers, :math:`n \geqslant
+    0` and :math:`n - |\ell|` even. Expansion of a complete set of orthonormal
+    polynomials in a unitary circle, for the wavefront (aberration)
+    distribution. The total number of polynomials is given by :math:`(n + 1)(n
+    + 2) / 2.`
 
     Parameters
     ----------
