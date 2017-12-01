@@ -1,7 +1,7 @@
-# Note: it's important that none of the packages below depend on pyoof,
-# because if they do, the conda version of pyoof will get installed. If that
+# Note: it's important that none of the packages below depend on Astropy,
+# because if they do, the conda version of Astropy will get installed. If that
 # happens, then that version will take precendence over the latest developer
-# version of pyoof that gets installed just before the documentation build,
+# version of Astropy that gets installed just before the documentation build,
 # and Sphinx will pick up only the older stable conda package.
 
 name: pyoof
@@ -13,3 +13,6 @@ dependencies:
   - scipy
   - pytest
   - astropy
+  # - pip:
+  #   - sphinx-gallery>=0.1.12
+  #   - jplephem
