@@ -442,8 +442,6 @@ def radiation_pattern(
     >>> resolution = 2 ** 8
     >>> # then the x and y array will be defined
     >>> x = np.linspace(-5 * pr, 5 * pr, resolution)
-    >>> x.size
-    512
     """
 
     # Arrays to generate (field) radiation pattern
