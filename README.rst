@@ -121,7 +121,7 @@ To use the pyoof package is straight forward. First define your observational da
         box_factor=5,                          # box_size = 5 * pr, pixel resolution
         )
 
-For the impatient :hushed:, see the Jupyter notebook example, `oof_holography.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_.
+For the impatient :hushed: , see the Jupyter notebook example, `oof_holography.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_.
 
 License
 =======
