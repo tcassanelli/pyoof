@@ -36,16 +36,6 @@ def e_rs(phase):
     Where :math:`\delta_\\mathrm{rms}` corresponds to the root-mean-squared
     deviation. The Python function uses the key **phase** because the term
     :math:`4\pi\delta_\\mathrm{rms}/\lambda` corresponds to the phase error.
-
-    Examples
-    --------
-    .. doctest-skip::
-
-        >>> import numpy as np
-        >>> from pyoof import aperture
-        >>> phase = np.array([1, 2, 3])
-        >>> aperture.e_rs(phase)
-        0.0094035625514951975
     """
 
     rms_rad = rms(phase)  # rms value in radians
@@ -432,20 +422,6 @@ def radiation_pattern(
 
         F(u, v) = \\mathcal{F} \\left[ \\underline{E_\\mathrm{a}}(x, y)
         \\right].
-
-    Examples
-    --------
-    To define the **box_factor** it is required to know the primary dish,
-    ``pr``, of the telescope. Then a good value for an FFT would be
-
-    .. doctest-skip::
-
-        >>> import numpy as np
-        >>> pr = 50  # m, Effelsberg primary dish radius
-        >>> box_factor = 5
-        >>> resolution = 2 ** 8
-        >>> # then the x and y array will be defined
-        >>> x = np.linspace(-5 * pr, 5 * pr, resolution)
     """
 
     # Arrays to generate (field) radiation pattern
