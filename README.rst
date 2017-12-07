@@ -106,8 +106,8 @@ To use the pyoof package is straight forward. First define your observational da
     effelsberg = [
         telgeometry.block_effelsberg,  # Blockage distribution
         telgeometry.opd_effelsberg,    # OPD function
-        50.,                            # primary dish radius
-        'effelsberg'                   # telescope name
+        50.,                           # Primary dish radius
+        'effelsberg'                   # Telescope name
         ]
 
     pyoof.fit_beam(
@@ -121,6 +121,8 @@ To use the pyoof package is straight forward. First define your observational da
         box_factor=5,                          # box_size = 5 * pr, pixel resolution
         )
 
+For the impatient :hushed:, see the Jupyter notebook example, `oof_holography.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_.
+
 License
 =======
 
@@ -131,4 +133,4 @@ Contact
 
 If you have any questions about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
 
-- tcassanelli *_at_* gmail.com
+- tcassanelli  *_at_*  gmail.com
