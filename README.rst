@@ -17,14 +17,14 @@ pyoof
 
 pyoof is a Python package that contains all needed tools to perform out-of-focus (OOF) holography on astronomical beam maps for single-dish radio telescopes. It is based on the original OOF holography papers,
 
-* [Out-of-focus holography at the Green Bank Telescope](https://www.aanda.org/articles/aa/ps/2007/14/aa5765-06.ps.gz)
-* [Measurement of antenna surfaces from in- and out-of-focus beam maps using astronomical sources](https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz)
+* `Out-of-focus holography at the Green Bank Telescope <https://www.aanda.org/articles/aa/ps/2007/14/aa5765-06.ps.gz>`_
+* `Measurement of antenna surfaces from in- and out-of-focus beam maps using astronomical sources <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_
 
-and [software](https://github.com/bnikolic/oof) developed by [Bojan Nikolic](http://www.mrao.cam.ac.uk/~bn204/oof/).
+and `software <https://github.com/bnikolic/oof>`_ developed by `Bojan Nikolic <http://www.mrao.cam.ac.uk/~bn204/oof/>`_.
 
 The pyoof package calculates the aperture phase distribution map from a set of beam maps (telescope observations), at a relatively good signal-to-noise as described by B. Nikolic. By using a nonlinear least squares minimization, a convenient set of polynomials coefficients can be found to represent the aperture distribution. Once this is calculated the aberrations on the primary dish are known.
 
-We are currently testing the pyoof package at the [Effelsberg radio telescope](https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope) :satellite:.
+We are currently testing the pyoof package at the `Effelsberg radio telescope <https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope>`_ :satellite:.
 
 Project Status
 ==============
@@ -45,7 +45,7 @@ grateful for feedback. Note, that work on the documentation is still ongoing.
 Installation
 ============
 
-The easiest and more convenient way to install the pyoof package is via `pip`
+The easiest and more convenient way to install the pyoof package is via ``pip``
 
 .. code-block:: bash
 
@@ -57,6 +57,7 @@ The installation is also possible from the source. Clone the GitHub repository a
 
     python setup.py install
 
+From the source you can install developer versions, be aware of that.
 I believe in the future :smile:, so please install Python 3.
 Unfortunately, a windows version of the package is currently not available.
 
@@ -81,7 +82,11 @@ pyoof has the following strict requirements:
 - `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later
 
 - `matplotlib <http://matplotlib.org/>`__ 1.5 or later: To provide plotting
-  functionality that `~pyoof.pathprof.helper` enhances.
+  functionality.
+
+- `PyYAML <http://pyyaml.org>`__ 3.11 or later.
+
+For future versions dependencies will be reduced.
 
 Usage
 =====
@@ -91,23 +96,29 @@ To use the pyoof package is straight forward. First define your observational da
 .. code-block:: python
 
     import pyoof
+    from pyoof import aperture, telgeometry
 
-    oofh_data = 'path/to/file.fits'
-    pyoof.extract_data_pyoof(oofh_data)
+    # Extracting observation data and important information
+    oofh_data = 'path/to/file.fits'  # fits file with special format
+    data_info, data_obs = pyoof.extract_data_pyoof(oofh_data)
+
+    # Effelsberg telescope definition
+    effelsberg = [
+        telgeometry.block_effelsberg,  # Blockage distribution
+        telgeometry.opd_effelsberg,    # OPD function
+        50.,                            # primary dish radius
+        'effelsberg'                   # telescope name
+        ]
 
     pyoof.fit_beam(
-        data_info=data_info,
-        data_obs=[beam_data, u_data, v_data],
-        method='trf',  # optimization algorithm 'trf', 'lm' or 'dogbox'
-        order_max=5,  # it will fit from 1 to order_max
-        illumination=illumination['pedestal'],
-        telescope=telescope['effelsberg'],
-        config_params_file=None,  # default or add path config_file.yaml
-        fit_previous=True,  # True is recommended
-        resolution=2**8,  # standard is 2 ** 8
-        box_factor=5,  # box_size = 5 * pr, better pixel resolution
-        make_plots=False,  # store plots in sub-directory
-        verbose=0  # short output string
+        data_info=data_info,                   # information
+        data_obs=[beam_data, u_data, v_data],  # observed beam
+        method='trf',                          # opt. algorithm 'trf', 'lm' or 'dogbox'
+        order_max=5,                           # it will fit from 1 to order_max
+        illum_func=aperture.illum_pedestal,    # or illum_gauss
+        telescope=effelsberg,                  # telescope properties
+        resolution=2 ** 8,                     # standard is 2 ** 8
+        box_factor=5,                          # box_size = 5 * pr, pixel resolution
         )
 
 License
@@ -118,6 +129,6 @@ pyoof is licensed under a 3-clause BSD style license - see the LICENSE.rst file.
 Contact
 =======
 
-If you have any questions :confused:, about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
+If you have any questions about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
 
-- *tcassanelli@gmail.com*
+- tcassanelli *_at_* gmail.com

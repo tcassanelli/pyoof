@@ -116,7 +116,7 @@ setup(name=PACKAGENAME,
       scripts=scripts,
       install_requires=[
         s.strip() for s in metadata.get(
-            'install_requires', 'astropy').split(',')
+            'install_requires').split(',')
             ],
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
