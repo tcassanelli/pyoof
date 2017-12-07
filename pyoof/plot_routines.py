@@ -306,22 +306,6 @@ def plot_phase(K_coeff, notilt, pr, title):
     fig : `~matplotlib.figure.Figure`
         Aperture phase distribution parametrized in terms of the Zernike
         circle polynomials, and represented for the telescope's primary dish.
-
-    Examples
-    --------
-    To use `~pyoof.plot_phase` is straight forward, just simply replace the
-    Zernike circle polynomial coefficients in the function,
-
-    .. doctest-skip::
-
-        >>> import numpy as np
-        >>> import matplotlib.pyplot as plt
-        >>> from pyoof import plot_phase
-        >>> pr = 50.  # primary relfector m
-        >>> n = 5  # order polynomial
-        >>> N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
-        >>> K_coeff = np.random.normal(0., .1, N_K_coeff)  # random coeff.
-        >>> fig = plot_phase(K_coeff=K_coeff, notilt=True, pr=pr, title='')
     """
 
     if notilt:
