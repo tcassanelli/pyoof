@@ -1,5 +1,7 @@
 .. pyoof-zernike:
 
+:tocdepth: 2
+
 ********************************************
 Zernike circle polynomials (`pyoof.zernike`)
 ********************************************
@@ -66,8 +68,8 @@ The order of the :math:`K_{n\ell}` coefficients will vary from the order of the 
 .. warning::
     The order of magnitude of the Zernike circle polynomial coefficients (:math:`K_{n\ell}`) will vary on what conventions are used to generate them. There are some conventions that require a normalization constant.
 
-Getting started
-===============
+Using `~pyoof.zernike`
+======================
 
 To use the polynomials from the `~pyoof.zernike` is really easy. First import the sub-package and start using the default structure::
 
@@ -112,7 +114,7 @@ To plot the polynomials first it is required to construct a grid.
 .. note::
     At the time of using the function `~pyoof.zernike.U` make sure that the radius is normalized by its maximum. The Zernike circle polynomials are only orthonormal under the unitary circle. It is to avoid the use of extra constants, use :math:`\varrho / \varrho_\text{max}`.
 
-For more in-depth example of their usage go to the Jupyter notebook `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_.
+For a more in-depth example of their usage go to the Jupyter notebook `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_.
 
 
 An example of wavefront (aberration) distribution could be the following,
@@ -121,7 +123,7 @@ An example of wavefront (aberration) distribution could be the following,
 
     W(x, y) = U^0_0 + \frac{1}{10}\cdot U^{-1}_1 + \frac{1}{5} \cdot U^{2}_4
 
-Then a plot of such function will be
+Then a plot of such function will be,
 
 .. plot::
     :include-source:

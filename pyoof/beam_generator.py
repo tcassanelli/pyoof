@@ -13,14 +13,57 @@ __all__ = ['beam_generator']
 
 
 def beam_generator(
-    params, freq, d_z, telgeo, illum_func, noise, resolution, box_factor
+    params, wavel, d_z, illum_func, telgeo, noise, resolution, box_factor
         ):
     """
     Routine to generate data and test the pyoof package algorithm. It has the
-    default setting for the pyoof package OOF holography input.
+    default setting for the pyoof fits file input.
+
+    Parameters
+    ----------
+    params : `~numpy.ndarray`
+        Two stacked arrays, the illumination and Zernike circle polynomials
+        coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
+    wavel : `float`
+        Wavelength, :math:`\\lambda`, in meters.
+    d_z : `list`
+        Radial offset :math:`d_z`, added to the sub-reflector in meters. This
+        characteristic measurement adds the classical interference pattern to
+        the beam maps, normalized squared (field) radiation pattern, which is
+        an out-of-focus property. The radial offset list must be as follows,
+        ``d_z = [d_z-, 0., d_z+]`` all of them in meters.
+    illum_func : `function`
+        Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
+        with the key **I_coeff**. The illumination functions available are
+        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+    telgeo : `list`
+        List that contains the blockage distribution, optical path difference
+        (OPD) function, and the primary radius (`float`) in meters. The list
+        must have the following order, ``telego = [block_dist, opd_func, pr]``.
+    noise : `float`
+        Noise amplitude added to the generated data. The noise comes from a
+        random Gaussian, see `~numpy.random.normal`.
+    resolution : `int`
+        Fast Fourier Transform resolution for a rectangular grid. The input
+        value has to be greater or equal to the telescope resolution and with
+        power of 2 for faster FFT processing. It is recommended a value higher
+        than ``resolution = 2 ** 8``.
+    box_factor : `int`
+        Related to the FFT resolution (**resolution** key), defines the image
+        pixel size level. It depends on the primary radius, ``pr``, of the
+        telescope, e.g. a ``box_factor = 5`` returns ``x = np.linspace(-5 *
+        pr, 5 * pr, resolution)``, an array to be used in the FFT2
+        (`~numpy.fft.fft2`).
+
+    Returns
+    -------
+    pyoof_fits : `~astropy.io.fits.hdu.hdulist.HDUList`
+        The output fits file is stored in the directory ``'data_generated/'``.
+        Every time the function is executed a new file will be stored. The
+        file is ready to use for the `~pyoof` package.
     """
 
-    wavel = light_speed / freq  # wavelength
+    freq = light_speed / wavel  # Hz frequency
     bw = 1.22 * wavel / (2 * telgeo[2])  # Beamwidth
     size_in_bw = 8 * bw
     plim_u = [-size_in_bw, size_in_bw]  # radians
@@ -77,15 +120,11 @@ def beam_generator(
         power_noise = (
             np.array(P) + np.random.normal(0., noise, np.array(P).shape)
             )
-    # power_norm = [P[i] / P[i].max() for i in range(3)]
-    # power_noise = (
-    #     np.array(power_norm) +
-    #     np.random.normal(0., noise, np.array(power_norm).shape)
-    #     )
+    power_norm = [power_noise[i] / power_noise[i].max() for i in range(3)]
 
     u_to_save = [u[i].flatten() for i in range(3)]
     v_to_save = [v[i].flatten() for i in range(3)]
-    p_to_save = [power_noise[i].flatten() for i in range(3)]
+    p_to_save = [power_norm[i].flatten() for i in range(3)]
 
     # Writing default fits file for OOF observations
     table_hdu0 = fits.BinTableHDU.from_columns([

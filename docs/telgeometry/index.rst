@@ -1,5 +1,7 @@
 .. pyoof-telgeometry:
 
+:tocdepth: 2
+
 ****************************************
 Telescope geometry (`pyoof.telgeometry`)
 ****************************************
@@ -11,8 +13,8 @@ Introduction
 
 To apply the OOF holography to any type of antenna or radio telescope it is necessary to use their geometrical aspects. These properties include the type of telescope, Cassegrain, Gregorian, etc, and how/where is the sub/reflector located in the aperture plane (if there is any). The type of the telescope will give information about the optical path carried every time OOF observations are performed and the location of the sub-reflector will give a truncation over the aperture plane.
 
-Getting started
-===============
+Using `~pyoof.telgeometry`
+==========================
 
 Using the telescope geometry functions is straight forward, simply by defining a meshed array and replacing them in the function.
 
@@ -70,7 +72,7 @@ Same as before the OPD function for the Effelsberg telescope is already made,
 
     fig, ax = plt.subplots()
 
-    labels = ['$d_z^-$', '$d_z$', '$d_z^+$']
+    labels = ['$\\delta(r ;d_z^-)$', '$\\delta(r ;0)$', '$\\delta(r ;d_z^+)$']
     for i in range(3):
         ax.plot(x, delta[i], label=labels[i])
 

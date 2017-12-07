@@ -12,26 +12,43 @@ __all__ = [
 
 def opd_effelsberg(x, y, d_z):
     """
-    Optical path difference (OPD) function. Given by the geometry of the
-    telescope and radial offset parameter (d_z). This function is specific
-    for the Effelsberg telescope.
+    Optical path difference (OPD) function, :math:`\\delta(x,y;d_z)`. Given by
+    the geometry of the telescope and radial offset parameter, :math:`d_z`.
+    This function is specific for the Effelsberg telescope.
 
     Parameters
     ----------
-    x : ndarray
-        Grid value for the x variable in meters.
-    y : ndarray
-        Grid value for the y variable in meters.
-    d_z : float
-        Radial offset added to the sub-reflector in meters. This
+    x : `~numpy.ndarray`
+        Grid value for the :math:`x` variable in meters.
+    y : `~numpy.ndarray`
+        Grid value for the :math:`y` variable in meters.
+    d_z : `float`
+        Radial offset, :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is
-        an out-of-focus property. It is usually of the order of 1e-2 m.
+        an out-of-focus property. It is usually of the order of centimeters.
 
     Returns
     -------
-    opd : ndarray
-        Optical path difference function.
+    opd : `~numpy.ndarray`
+        Optical path difference function, :math:`\\delta(x,y;d_z)`.
+
+    Notes
+    -----
+    For a Gregorian configuration, and with the dish diameter of Effelsberg,
+    the OPD function becomes,
+
+    .. math::
+        \\delta(x,;d_z) = d_z\\left( \\frac{1-a^2}{1+a^2} +
+        \\frac{1-b^2}{1+b^2} \\right),
+
+    .. math::
+        a = \\frac{\\sqrt{x^2+y^2}}{2F_\\mathrm{p}}, \\qquad b =
+        \\frac{\\sqrt{x^2+y^2}}{2F_\\mathrm{eff}},
+
+    where :math:`F_\\mathrm{p}=30` m corresponds to the parabola focal length
+    and :math:`F_\\mathrm{eff}=387.4` m, the effective or total focal length.
+
     """
 
     # Cassegrain/Gregorian (at focus) telescope
@@ -48,23 +65,25 @@ def opd_effelsberg(x, y, d_z):
 
 def opd_manual(Fp, F):
     """
-    Optical path difference (OPD) function. Given by geometry of the telescope
-    and defocus parameter. For Cassegrain/Gregorian geometries. Primary and
-    total (or effective) foci are required. In the aperture function delta is
-    transformed to radians
+    Optical path difference (OPD) function, :math:`\\delta(x, yd_z)`. Given by
+    geometry of the telescope and defocus parameter, :math:`d_z`. For
+    Cassegrain/Gregorian geometries. Primary and total (or effective) foci are
+    required, :math:`F_\\mathrm{p}` and :math:`F_\\mathrm{eff}`, respectively.
 
     Parameters
     ----------
-    Fp : float
-        Focus primary reflector (main) in meters.
-    F : float
-        Effective or total focus for the telescope mirror configuration.
+    Fp : `float`
+        Focus primary reflector, :math:`F_\\mathrm{p}`, in meters.
+    F : `float`
+        Effective or total focus for the telescope mirror configuration,
+        :math:`F_\\mathrm{eff}`, in meters.
 
     Returns
     -------
-    opd_func : function
-        It returns the function opd_func(x, y, d_z), which depends only on the
-        grid and radial offset values. For arguments see opd_effelsberg.
+    opd_func : `function`
+        It returns the function ``opd_func(x, y, d_z)``, which depends only on
+        the grid and radial offset values, similar to
+        `~pyoof.telgeometry.opd_effelsberg`.
     """
 
     def opd_func(x, y, d_z):
@@ -84,22 +103,22 @@ def opd_manual(Fp, F):
 
 def block_effelsberg(x, y):
     """
-    Truncation in the aperture (amplitude) distribution, given by the
-    telescope's structure; i.e. support legs, sub-reflector and shade effect
-    as seen from the secondary focus of the Effelsberg telecope.
+    Truncation in the aperture (amplitude) distribution, :math:`B(x, y)`,
+    given by the telescope's structure; i.e. support legs, sub-reflector and
+    shade effect as seen from the secondary focus of the Effelsberg telescope.
 
     Parameters
     ----------
-    x : ndarray
-        Grid value for the x variable in meters.
-    y : ndarray
-        Grid value for the y variable in meters.
+    x : `~numpy.ndarray`
+        Grid value for the :math:`x` variable in meters.
+    y : `~numpy.ndarray`
+        Grid value for the :math:`y` variable in meters.
 
     Returns
     -------
-    block : ndarray
-        Aperture (amplitude) distribution truncation. Values that are zero
-        correspond to blocked values.
+    block : `~numpy.ndarray`
+        Aperture (amplitude) distribution truncation, :math:`B(x, y)`. Values
+        that are zero correspond to blocked values.
     """
 
     # Default Effelsberg geometry
@@ -157,29 +176,30 @@ def block_effelsberg(x, y):
 
 def block_manual(pr, sr, a, L):
     """
-    Truncation for the aperture (amplitude) distribution, manual set up for
-    the primary radius (pr), sub-reflector radius (sr), half-width of a
-    support leg (a) and length of the support leg (L) measured from the edge
-    of the sr. It has been considered 4 support legs. To exclude sr, a or L
-    set them to zero.
+    Truncation for the aperture (amplitude) distribution, :math:`B(x, y)`,
+    manual set up for the primary radius (**pr**), sub-reflector radius
+    (**sr**), half-width of a support leg (**a**) and length of the support
+    leg (**L**) measured from the edge of the sub-reflector radius. It has
+    been considered 4 support legs. To exclude **sr**, **a** or **L** set them
+    to zero.
 
     Parameters
     ----------
-    pr : float
-        Primary reflector radius.
-    sr : float
-        Sub-reflector radius.
-    a : float
-        Half-width of a support leg.
-    L : float
+    pr : `float`
+        Primary reflector radius, in meters.
+    sr : `float`
+        Sub-reflector radius, in meters.
+    a : `float`
+        Half-width of a support leg, in meters.
+    L : `float`
         Length of a support leg, measured from the edge of the sub-reflector
-        towards its end.
+        towards its end, in meters.
 
     Returns
     -------
-    block_func : function
-        It returns the function block_func(x, y), which depends only on the
-        grid values. For arguments see block_effelsberg.
+    block_func : `function`
+        It returns the function ``block_func(x, y)``, which depends only on the
+        grid values, similar to `~pyoof.telgeometry.block_effelsberg`.
     """
 
     def block_func(x, y):

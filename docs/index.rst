@@ -1,5 +1,5 @@
 
-:tocdepth: 3
+:tocdepth: 2
 
 *******************
 pyoof Documentation
@@ -29,6 +29,7 @@ Among the basic operations that the `~pyoof` package does, there are: constructi
 
 OOF holography parameters
 =========================
+
 The OOF holography makes use of several constants, distributions and functions, and some of them are related to each other. Please keep in mind their mathematical symbols and what they represent.
 
 Aperture distribution: :math:`\underline{E_\text{a}}(x, y)` (`~pyoof.aperture.aperture`)
@@ -133,7 +134,7 @@ Getting Started
 ===============
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     install
     Tutorials <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/>
@@ -222,8 +223,7 @@ The main function in the `~pyoof` package is `~pyoof.fit_beam`. This function do
 
 Following the same example as before, it is possible to make a simple preview of the file, using `~pyoof.extract_data_pyoof`.
 
-.. plot::
-    :include-source:
+.. code-block:: python
 
     import pyoof
     from scipy import interpolate
@@ -248,7 +248,7 @@ Following the same example as before, it is possible to make a simple preview of
         u_ng = np.linspace(u_data[i].min(), u_data[i].max(), 300)
         v_ng = np.linspace(v_data[i].min(), v_data[i].max(), 300)
 
-        beam_ng = interpolate.griddata(
+        beam_ng = interpolate.griddata(  # new grid beam map
             # coordinates of grid points to interpolate from.
             points=(u_data[i], v_data[i]),
             values=beam_data[i],
@@ -261,10 +261,10 @@ Following the same example as before, it is possible to make a simple preview of
         ax[i].imshow(beam_ng, extent=extent, vmin=vmin, vmax=vmax)
         ax[i].contour(u_ng, v_ng, beam_ng, 10)
 
-The properties of the receiver and the telescope can be found in the sub-packages `~pyoof.aperture` and `~pyoof.telgeometry`. These are important geometrical aspects that will make the nonlinear least squares minimization process more precise. An example on how to gather the properties of each telescope and receiver are below::
+The properties of the receiver and the telescope can be found in the sub-packages `~pyoof.aperture` and `~pyoof.telgeometry`. These are important geometrical aspects that will make the nonlinear least squares minimization process more precise. An example on how to gather the properties of a telescope is below::
 
     pr = 50. # primary reflector radius m
-    # telescope = [blockage, delta, pr, name]
+    # telescope = [block_dist, opd_func, pr, name]
     telescope = dict(
         effelsberg=[
             telgeometry.block_effelsberg,
@@ -278,12 +278,9 @@ The properties of the receiver and the telescope can be found in the sub-package
             pr,
             'manual'
             ]
-            )
         )
-    illumination = dict(
-        gaussian=[aperture.illum_gauss, 'gaussian', 'sigma_dB'],
-        pedestal=[aperture.illum_pedestal, 'pedestal', 'c_dB']
-        )
+
+Besides this an illumination function must be selected, to fulfill the receiver properties. The illumination functions can be found on the `~pyoof.aperture` package. Currently there are two made functions, `pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
 
 .. note::
     The blockage distribution, ``block_dist``, and the OPD function, ``opd_func`` can be manually created or using the standard manual functions, `~pyoof.telgeometry.block_manual` and `~pyoof.telgeometry.opd_manual`.
@@ -291,21 +288,23 @@ The properties of the receiver and the telescope can be found in the sub-package
 .. warning::
     The geometrical aspects of the telescope, such as blockage distribution and OPD function, are fundamental for a good fit in the nonlinear squares minimization. If they are not properly estimated there will be a great difference in the final aperture phase distribution.
 
-After creating the basic structure, the core function, `~pyoof.fit_beam`, can be executed::
+After creating the basic structure, the core function, `~pyoof.fit_beam`, can be executed,
+
+.. code-block:: python
 
     pyoof.fit_beam(
-        data_info=data_info,  # pyoof.extract_data_pyoof(oofh_data)
-        data_obs=[beam_data, u_data, v_data],
-        method='trf',  # optimization algorithm 'trf', 'lm' or 'dogbox'
-        order_max=5,  # it will fit from 1 to order_max
-        illumination=illumination['pedestal'],
-        telescope=telescope['effelsberg'],
-        config_params_file=None,  # default or add path config_file.yaml
-        fit_previous=True,  # True is recommended
-        resolution=2**8,  # standard is 2 ** 8
-        box_factor=5,  # box_size = 5 * pr, better pixel resolution
-        make_plots=False,  # store plots in sub-directory
-        verbose=0  # short output string
+        data_info=data_info,                   # information
+        data_obs=[beam_data, u_data, v_data],  # observed beam
+        method='trf',                          # opt. algorithm 'trf', 'lm' or 'dogbox'
+        order_max=5,                           # it will fit from 1 to order_max
+        illum_func=illum_pedestal,             # or illum_gauss
+        telescope=telescope['effelsberg'],     # [block_dist, opd_func, pr, name]
+        resolution=2**8,                       # standard is 2 ** 8
+        box_factor=5,                          # box_size = 5 * pr, pixel resolution
+        fit_previous=True,                     # default
+        config_params_file=None,               # default
+        make_plots=True,                       # default
+        verbose=2                              # default
         )
 
 This will show the main properties of the fit as well as its progress. The key ``order_max`` is the maximum order to be fitted in the process. It starts from the polynomial order one until order five. If ``fit_previous=True``, then the algorithm will use coefficients from the previous order (:math:`n`) as the initial coefficients for the next order (:math:`n+1`), this feature is strongly recommended. The keys ``method`` and ``verbose`` are related to the least squares minimization package (`~scipy.optimize.least_squares`). The ``box_factor`` and ``resolution`` are necessary to perform a good FFT2 (more information about this will be updated).
@@ -339,7 +338,7 @@ Available modules
 =================
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     aperture/index
     telgeometry/index

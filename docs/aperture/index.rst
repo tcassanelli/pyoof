@@ -1,5 +1,7 @@
 .. pyoof-aperture:
 
+:tocdepth: 2
+
 ***************************
 Aperture (`pyoof.aperture`)
 ***************************

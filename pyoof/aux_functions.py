@@ -5,59 +5,87 @@
 import os
 from astropy.io import fits
 import numpy as np
+from astropy.io import ascii
 from scipy.constants import c as light_speed
+from .aperture import illum_gauss, illum_pedestal
 
 __all__ = [
     'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
-    'store_data_csv', 'uv_ratio', 'open_fits_pyoof'
+    'store_data_csv', 'uv_ratio', 'illum_strings'
     ]
 
 
-def open_fits_pyoof(hdulist, name):
+def illum_strings(illum_func):
+    """
+    It assigns string labels to the illumination function. The `~pyoof` package
+    has two standard illumination functions, `~pyoof.aperture.illum_pedestal`
+    and `~pyoof.aperture.illum_gauss`.
 
-    freq = hdulist[0].header['FREQ']
-    wavel = hdulist[0].header['WAVEL']
-    meanel = hdulist[0].header['MEANEL']
-    obs_object = hdulist[0].header['OBJECT']
-    obs_date = hdulist[0].header['DATE_OBS']
+    Parameters
+    ----------
+    illum_func : `function`
+        Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
+        with ``I_coeff``. The illumination functions available are
+        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
 
-    beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
-    u_data = [hdulist[i].data['U'] for i in range(1, 4)]
-    v_data = [hdulist[i].data['V'] for i in range(1, 4)]
-    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)]
+    Returns
+    -------
+    illum_name : `str`
+        String with the illumination function name.
+    taper_name : `str`
+        String with the illumination function taper.
+    """
 
-    data_file = [name, '.']
-    data_info = data_file + [obs_object, obs_date, freq, wavel, d_z, meanel]
-    data_obs = [beam_data, u_data, v_data]
+    # adding illumination function information
+    if illum_func == illum_pedestal:
+        illum_name = 'pedestal'
+        taper_name = 'c_dB'
+    elif illum_func == illum_gauss:
+        illum_name = 'gauss'
+        taper_name = 'sigma_dB'
+    else:
+        illum_name = 'manual'
+        taper_name = 'taper_dB'
 
-    return data_info, data_obs
+    return illum_name, taper_name
 
 
 def extract_data_pyoof(pathfits):
     """
-    Extracts data from the pyoof default fits file OOF holography
-    observations, ready to use for the least squares minimization. The fits
-    file has to have the following keys on its PrimaryHDU header: 'FREQ',
-    'WAVEL', 'MEANEL', 'OBJECT' and 'DATE_OBS'. Besides this three BinTableHDU
-    are required for the data itself; MINUS OOF, ZERO OOF and PLUS OOF. The
-    BinTableHDU header has to have the 'DZ' key which includes the radial
-    offset. Finally the BinTableHDU has the data files 'U', 'V' and 'BEAM',
-    which is the x- and y-axis position in radians and the 'BEAM' in a flat
-    array, in mJy.
+    Extracts data from the `~pyoof` default fits file OOF holography
+    observations, ready to use for the least squares minimization (see
+    `~pyoof.fit_beam`). The fits file has to have the following keys on its
+    PrimaryHDU header: ``'FREQ'``, ``'WAVEL'``, ``'MEANEL'``, ``'OBJECT'`` and
+    ``'DATE_OBS'``. Besides this three BinTableHDU are required for the data
+    itself; ``MINUS OOF``, ``ZERO OOF`` and ``PLUS OOF``. The BinTableHDU
+    header has to have the ``'DZ'`` key which includes the radial offset,
+    :math:`d_z`. Finally the BinTableHDU has the data files ``'U'``, ``'V'``
+    and ``'BEAM'``, which is the :math:`x`- and :math:`y`-axis position in
+    radians and the ``'BEAM'`` in a flat array, in mJy.
 
     Parameters
     ----------
-    pathfits : str
+    pathfits : `str`
         Path to the fits file that contains the three beam maps pre-calibrated,
-        plus some other important parameter for the fit.
+        using the correct PrimaryHDU and the three BinTableHDU (``MINUS OOF``,
+        ``ZERO OOF`` and ``PLUS OOF``).
 
     Returns
     -------
-    data_info : list
-        It contains all extra data besides the beam map.
-    data_obs : list
-        It contains beam maps and x-, y-axis data for the least squares
-        minimization.
+    data_info : `list`
+        It contains all extra data besides the beam map. The output
+        corresponds to a list,
+        ``[name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel]``.
+        These are, name of the fits file, paht of the fits file, observed
+        object, observation date, frequency, wavelength, radial offset and
+        mean elevation, respectively.
+    data_obs : `list`
+        It contains beam maps and :math:`x`-, and :math:`y`-axis
+        (:math:`uv`-plane in Fourier space) data for the least squares
+        minimization (see `~pyoof.fit_beam`). The list has the following order
+        ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
+        observations, minus, zero and plus out-of-focus, in a flat array.
+        ``u_data`` and ``v_data`` are the beam axes in a flat array.
     """
 
     hdulist = fits.open(pathfits)  # open fits file, pyoof format
@@ -93,21 +121,31 @@ def extract_data_pyoof(pathfits):
 def extract_data_effelsberg(pathfits):
     """
     Extracts data from the Effelsberg OOF holography observations, ready to
-    use for the least squares minimization.
+    use for the least squares minimization. This function will only work for
+    the Effelsberg telescope beam maps.
 
     Parameters
     ----------
-    pathfits : str
+    pathfits : `str`
         Path to the fits file that contains the three beam maps pre-calibrated,
-        plus some other important parameter for the fit.
+        from the Effelsberg telescope.
 
     Returns
     -------
-    data_info : list
-        It contains all extra data besides the beam map.
-    data_obs : list
-        It contains beam maps and x-, y-axis data for the least squares
-        minimization.
+    data_info : `list`
+        It contains all extra data besides the beam map. The output
+        corresponds to a list,
+        ``[name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel]``.
+        These are, name of the fits file, paht of the fits file, observed
+        object, observation date, frequency, wavelength, radial offset and
+        mean elevation, respectively.
+    data_obs : `list`
+        It contains beam maps and :math:`x`-, and :math:`y`-axis
+        (:math:`uv`-plane in Fourier space) data for the least squares
+        minimization (see `~pyoof.fit_beam`). The list has the following order
+        ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
+        observations, minus, zero and plus out-of-focus, in a flat array.
+        ``u_data`` and ``v_data`` are the beam axes in a flat array.
     """
 
     # Opening fits file with astropy
@@ -148,7 +186,7 @@ def extract_data_effelsberg(pathfits):
     # name of the fit file to fit
     name = os.path.split(pathfits)[1][:-5]
 
-    data_info = [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel]
+    data_info = [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel]
     data_obs = [beam_data, u_data, v_data]
 
     return data_info, data_obs
@@ -156,17 +194,17 @@ def extract_data_effelsberg(pathfits):
 
 def str2LaTeX(python_string):
     """
-    Function that solves the underscore problem in a python string to LaTeX,
-    it changes it from _ -> \_ symbol. Useful in matplotlib plots.
+    Function that solves the underscore problem in a python string to
+    :math:`\LaTeX` string.
 
     Parameters
     ----------
-    python_string : str
+    python_string : `str`
         String that needs to be changed.
 
     Returns
     -------
-    LaTeX_string : str
+    LaTeX_string : `str`
         String with the new underscore symbol.
     """
 
@@ -180,24 +218,25 @@ def str2LaTeX(python_string):
     return LaTeX_string
 
 
-def store_data_csv(name, order, name_dir, save_to_csv):
+def store_data_csv(name, name_dir, order, save_to_csv):
     """
     Stores all important information in a csv file after the least squares
-    minimization has finished. It will be saved in the 'pyoof_out/name'
-    directory.
+    minimization has finished, `~pyoof.fit_beam`. All data will be stores in
+    the ``pyoof_out/name`` directory, with ``name`` the name of the fits file.
 
     Parameters
     ----------
-    name : str
+    name : `str`
         File name of the fits file to be optimized.
-    order : int
-        Maximum order of the Zernike circle polynomials coefficients.
-    name_dir : str
-        Directory of the analyzed fits file.
-    save_to_csv : list
-        It contains all data that will be stored.
-        save_to_csv = [beam_data, u_data, v_data, res_optim, jac_optim,
-        grad_optim, phase, cov_ptrue, corr_ptrue]
+    name_dir : `str`
+        Path to store all the csv files. The files will depend on the order of
+        the Zernike circle polynomial.
+    order : `int`
+        Order used for the Zernike circle polynomial, :math:`n`.
+    save_to_csv : `list`
+        It contains all data that will be stored. The list must have the
+        following order, ``[beam_data, u_data, v_data, res_optim, jac_optim,
+        grad_optim, phase, cov_ptrue, corr_ptrue]``.
     """
 
     headers = [
@@ -227,10 +266,59 @@ def store_data_csv(name, order, name_dir, save_to_csv):
             )
 
 
+def store_data_ascii(
+    name, name_dir, taper_name, order, params_solution, params_init
+        ):
+    """
+    Stores in an ascii format the parameters found by the least squares
+    minimization (see `~pyoof.fit_beam`).
+
+    Parameters
+    ----------
+    name : `str`
+        File name of the fits file to be optimized.
+    name_dir : `str`
+        Path to store all the csv files. The files will depend on the order of
+        the Zernike circle polynomial.
+    taper_name : `str`
+        Name of the illumination function taper.
+    order : `int`
+        Order used for the Zernike circle polynomial, :math:`n`.
+    params_solution : `~numpy.ndarray`
+        Contains the best fitted parameters, the illumination function
+        coefficients, ``I_coeff`` and the Zernike circle polynomial
+        coefficients, ``K_coeff`` in one array.
+    params_init : `~numpt.ndarray`
+        Contains the initial parameters used in the least squares minimization
+        to start finding the best fitted combination of them.
+    """
+
+    n = order
+    N_K_coeff = (n + 1) * (n + 2) // 2
+
+    # Making nice table :)
+    ln = [(j, i) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
+    L = np.array(ln)[:, 0]
+    N = np.array(ln)[:, 1]
+
+    params_names = ['i_amp', taper_name, 'x_0', 'y_0']
+    for i in range(N_K_coeff):
+        params_names.append('K({}, {})'.format(N[i], L[i]))
+
+    # To store fit information and found parameters in ascii file
+    ascii.write(
+        table=[params_names, params_solution, params_init],
+        output=name_dir + '/fitpar_n' + str(n) + '.csv',
+        names=['parname', 'parfit', 'parinit'],
+        comment='Fitted parameters ' + name
+        )
+
+
 def uv_ratio(u, v):
     """
     Calculates the aspect ratio for the 3 power pattern plots, plus some
-    corrections for the text on it.
+    corrections for the text on it. Used in the `function` `~pyoof.plot_beam`
+    and `~pyoof.plot_data`
 
     Parameters
     ----------
@@ -241,9 +329,9 @@ def uv_ratio(u, v):
 
     Returns
     -------
-    plot_width : float
+    plot_width : `float`
         Width for the power pattern figure.
-    plot_height : float
+    plot_height : `float`
         Height for the power pattern figure.
     """
 
