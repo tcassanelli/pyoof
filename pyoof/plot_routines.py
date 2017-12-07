@@ -312,14 +312,16 @@ def plot_phase(K_coeff, notilt, pr, title):
     To use `~pyoof.plot_phase` is straight forward, just simply replace the
     Zernike circle polynomial coefficients in the function,
 
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
-    >>> import pyoof
-    >>> pr = 50  # primary relfector m
-    >>> n = 5  # order polynomial
-    >>> N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
-    >>> K_coeff = np.random.normal(0., .1, N_K_coeff)  # random coeff.
-    >>> fig = pyoof.plot_phase(K_coeff=K_coeff, notilt=True, pr=pr, title='')
+    .. doctest-skip::
+
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> from pyoof import plot_phase
+        >>> pr = 50.  # primary relfector m
+        >>> n = 5  # order polynomial
+        >>> N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
+        >>> K_coeff = np.random.normal(0., .1, N_K_coeff)  # random coeff.
+        >>> fig = plot_phase(K_coeff=K_coeff, notilt=True, pr=pr, title='')
     """
 
     if notilt:
