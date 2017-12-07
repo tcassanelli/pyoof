@@ -7,21 +7,23 @@ Requirements
 
 pyoof has the following strict requirements:
 
-- `Python <http://www.python.org/>`__ 3.5 or later
+- `Python <http://www.python.org/>`__ 3.5 or later.
 
 - `setuptools <https://pythonhosted.org/setuptools/>`__: Used for the package
   installation.
 
-- `NumPy <http://www.numpy.org/>`__ 1.11 or later
+- `NumPy <http://www.numpy.org/>`__ 1.11 or later.
 
-- `SciPy <https://scipy.org/>`__: 0.15 or later
+- `SciPy <https://scipy.org/>`__: 0.15 or later.
 
-- `astropy <http://www.astropy.org/>`__: 1.3 or later (2.0 recommended)
+- `astropy <http://www.astropy.org/>`__: 1.3 or later (2.0 recommended).
 
-- `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later
+- `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later.
 
 - `matplotlib <http://matplotlib.org/>`__ 1.5 or later: To provide plotting
-  functionality that `~pyoof.pathprof.helper` enhances.
+  functionality.
+
+- `PyYAML <http://pyyaml.org>`__ 3.11 or later.
 
 
 Installing pyoof
@@ -30,7 +32,7 @@ Installing pyoof
 Using pip
 ---------
 
-To install pyoof with `pip <http://www.pip-installer.org/en/latest/>`__, simply run
+To install pyoof with `pip <https://pip.pypa.io/en/stable/>`__, simply run
 
 .. code-block:: bash
 

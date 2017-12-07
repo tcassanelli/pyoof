@@ -10,14 +10,14 @@ from numpy.testing import assert_equal, assert_allclose
 import pyoof
 
 
-def test_e_rse():
+def test_e_rs():
 
     with NumpyRNGContext(0):
         phase = np.sort(np.random.uniform(-2.5, 2.5, (5, 5)))
 
-    e_rse = pyoof.aperture.e_rse(phase)
+    e_rs = pyoof.aperture.e_rs(phase)
 
-    assert_allclose(e_rse, 0.110794937514)
+    assert_allclose(e_rs, 0.110794937514)
 
 
 def test_illum_pedestal():

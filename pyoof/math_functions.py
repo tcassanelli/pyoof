@@ -91,16 +91,16 @@ def co_matrices(res, jac, n_pars):
         minimization), residual understood as data - model.
     jac : `~numpy.ndarray`
         Last Jacobian matrix evaluation from a fit procedure.
-    n_pars: int
+    n_pars : `int`
         Total number of parameters in the model (only the ones that have been
         fitted). It is related to the degrees of freedom.
 
     Returns
     -------
     cov : `~numpy.ndarray`
-        Variance-Covariance matrix. Dimensions :math:`n \times p`.
+        Variance-Covariance matrix. Dimensions :math:`n \\times p`.
     corr : `~numpy.ndarray`
-        Correlation matrix. Dimensions :math:`n \times p`.
+        Correlation matrix. Dimensions :math:`n \\times p`.
     """
 
     m = res.size  # Number of data points used in the fit
@@ -124,9 +124,9 @@ def line_equation(P1, P2, x):
 
     Parameters
     ----------
-    P1 : tuple
+    P1 : `tuple`
         First point that belongs to the desired linear equation.
-    P2 : tuple
+    P2 : `tuple`
         Second point that belongs to the desired linear equation.
     x : `~numpy.ndarray`
         Data points from the :math:`x`-axis.
@@ -145,18 +145,18 @@ def line_equation(P1, P2, x):
     return y
 
 
-def rms(x):
+def rms(phase):
     """
     Computes the root-mean-square value from a aperture phase distribution
-    map, :math:`\varphi(x, y)`.
+    map, :math:`\\varphi(x, y)`.
 
     Parameters
     ----------
-    x : `~numpy.ndarray`
-        One or two dimensional array for the phase distribution.
+    phase : `~numpy.ndarray`
+        One or two dimensional array for the aperture phase distribution.
     """
 
     # To remove elements out limit radius
-    nonzero_values = x[np.nonzero(x)]
+    nonzero_values = phase[np.nonzero(phase)]
 
     return np.sqrt(np.sum(np.square(nonzero_values)) / nonzero_values.size)
