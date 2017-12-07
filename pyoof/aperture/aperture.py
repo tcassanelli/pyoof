@@ -39,11 +39,13 @@ def e_rs(phase):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from pyoof import aperture
-    >>> phase = np.array([1, 2, 3])
-    >>> aperture.e_rs(phase)
-    0.0094035625514951975
+    .. doctest-skip::
+
+        >>> import numpy as np
+        >>> from pyoof import aperture
+        >>> phase = np.array([1, 2, 3])
+        >>> aperture.e_rs(phase)
+        0.0094035625514951975
     """
 
     rms_rad = rms(phase)  # rms value in radians
@@ -436,12 +438,14 @@ def radiation_pattern(
     To define the **box_factor** it is required to know the primary dish,
     ``pr``, of the telescope. Then a good value for an FFT would be
 
-    >>> import numpy as np
-    >>> pr = 50  # m, Effelsberg primary dish radius
-    >>> box_factor = 5
-    >>> resolution = 2 ** 8
-    >>> # then the x and y array will be defined
-    >>> x = np.linspace(-5 * pr, 5 * pr, resolution)
+    .. doctest-skip::
+
+        >>> import numpy as np
+        >>> pr = 50  # m, Effelsberg primary dish radius
+        >>> box_factor = 5
+        >>> resolution = 2 ** 8
+        >>> # then the x and y array will be defined
+        >>> x = np.linspace(-5 * pr, 5 * pr, resolution)
     """
 
     # Arrays to generate (field) radiation pattern
