@@ -10,18 +10,18 @@ import sys
 import ah_bootstrap
 from setuptools import setup
 
+from astropy_helpers.setup_helpers import (
+    register_commands, get_debug_option, get_package_info
+    )
+from astropy_helpers.git_helpers import get_git_devstr
+from astropy_helpers.version_helpers import generate_version_py
+
 # A dirty hack to get around some early import/configurations ambiguities
 if sys.version_info[0] >= 3:
     import builtins
 else:
     import __builtin__ as builtins
 builtins._ASTROPY_SETUP_ = True
-
-from astropy_helpers.setup_helpers import (
-    register_commands, get_debug_option, get_package_info
-    )
-from astropy_helpers.git_helpers import get_git_devstr
-from astropy_helpers.version_helpers import generate_version_py
 
 # Get some values from the setup.cfg
 try:
@@ -83,8 +83,10 @@ if not RELEASE:
 cmdclassd = register_commands(PACKAGENAME, VERSION, RELEASE)
 
 # Freeze build information in version.py
-generate_version_py(PACKAGENAME, VERSION, RELEASE,
-                    get_debug_option(PACKAGENAME))
+generate_version_py(
+    PACKAGENAME, VERSION, RELEASE,
+    get_debug_option(PACKAGENAME)
+    )
 
 # Treat everything in scripts except README* as a script to be installed
 scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
@@ -110,22 +112,23 @@ if conf.has_section('entry_points'):
         entry_points['console_scripts'].append('{0} = {1}'.format(
             entry_point[0], entry_point[1]))
 
-setup(name=PACKAGENAME,
-      version=VERSION,
-      description=DESCRIPTION,
-      scripts=scripts,
-      install_requires=[
-        s.strip() for s in metadata.get(
-            'install_requires').split(',')
-            ],
-      author=AUTHOR,
-      author_email=AUTHOR_EMAIL,
-      license=LICENSE,
-      url=URL,
-      long_description=LONG_DESCRIPTION,
-      cmdclass=cmdclassd,
-      zip_safe=False,
-      use_2to3=False,
-      entry_points=entry_points,
-      **package_info
+setup(
+    name=PACKAGENAME,
+    version=VERSION,
+    description=DESCRIPTION,
+    scripts=scripts,
+    install_requires=[
+        s.strip() for s in metadata.get('install_requires', 'astropy').split(
+            ',')
+        ],
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    license=LICENSE,
+    url=URL,
+    long_description=LONG_DESCRIPTION,
+    cmdclass=cmdclassd,
+    zip_safe=False,
+    use_2to3=False,
+    entry_points=entry_points,
+    **package_info
     )
