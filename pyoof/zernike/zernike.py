@@ -45,6 +45,16 @@ def R(n, m, rho):
         \\right)^{\\frac{n-m}{2}} \\right\},
 
     Which can also be expressed as a polynomial sum.
+
+    Examples
+    --------
+    To start using the radial polynomials simply call the package.
+
+    >>> import numpy as np
+    >>> from pyoof import zernike
+    >>> r = np.linspace(-1, 1, 5)  # only orthogonal under unitary circle
+    >>> zernike.R(n=4, m=2, rho=r)
+    array([ 1. , -0.5,  0. , -0.5,  1. ])
     """
 
     a = (n + m) // 2
@@ -99,6 +109,19 @@ def U(n, l, rho, theta):
 
         U^\ell_n(\\varrho, \\vartheta) = R^m_n(\\varrho) \\cdot \sin
         m\\vartheta \\qquad \\ell < 0.
+
+    Examples
+    --------
+    Same as the radial polynomials, just start with the package and then apply
+    the order, :math:`n`, and angular dependence, :math:`\\ell`, on the
+    function.
+
+    >>> import numpy as np
+    >>> from pyoof import zernike, cart2pol
+    >>> x = np.linspace(-1, 1, 5)
+    >>> r, t = cart2pol(x, x)  # polar coordinates
+    >>> zernike.U(n=4, l=-2, rho=r, theta=t)
+    array([ 10. ,  -0.5,   0. ,  -0.5,  10. ])
     """
 
     if not isinstance(l, int):

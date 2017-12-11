@@ -10,18 +10,18 @@ import sys
 import ah_bootstrap
 from setuptools import setup
 
-from astropy_helpers.setup_helpers import (
-    register_commands, get_debug_option, get_package_info
-    )
-from astropy_helpers.git_helpers import get_git_devstr
-from astropy_helpers.version_helpers import generate_version_py
-
 # A dirty hack to get around some early import/configurations ambiguities
 if sys.version_info[0] >= 3:
     import builtins
 else:
     import __builtin__ as builtins
 builtins._ASTROPY_SETUP_ = True
+
+from astropy_helpers.setup_helpers import (
+    register_commands, get_debug_option, get_package_info
+    )
+from astropy_helpers.git_helpers import get_git_devstr
+from astropy_helpers.version_helpers import generate_version_py
 
 # Get some values from the setup.cfg
 try:
@@ -83,14 +83,14 @@ if not RELEASE:
 cmdclassd = register_commands(PACKAGENAME, VERSION, RELEASE)
 
 # Freeze build information in version.py
-generate_version_py(
-    PACKAGENAME, VERSION, RELEASE,
-    get_debug_option(PACKAGENAME)
-    )
+generate_version_py(PACKAGENAME, VERSION, RELEASE,
+                    get_debug_option(PACKAGENAME))
 
 # Treat everything in scripts except README* as a script to be installed
-scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
-           if not os.path.basename(fname).startswith('README')]
+scripts = [
+    fname for fname in glob.glob(os.path.join('scripts', '*')) if not
+    os.path.basename(fname).startswith('README')
+    ]
 
 
 # Get configuration information from all of the various subpackages.
