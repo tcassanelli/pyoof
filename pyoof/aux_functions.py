@@ -11,7 +11,7 @@ from .aperture import illum_gauss, illum_pedestal
 
 __all__ = [
     'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
-    'store_data_csv', 'uv_ratio', 'illum_strings'
+    'store_data_csv', 'uv_ratio', 'illum_strings', 'store_data_ascii'
     ]
 
 

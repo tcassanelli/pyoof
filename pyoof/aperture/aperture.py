@@ -36,6 +36,17 @@ def e_rs(phase):
     Where :math:`\delta_\\mathrm{rms}` corresponds to the root-mean-squared
     deviation. The Python function uses the key **phase** because the term
     :math:`4\pi\delta_\\mathrm{rms}/\lambda` corresponds to the phase error.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> pr = 50  # m, Effelsberg primary dish radius
+    >>> box_factor = 5
+    >>> resolution = 2 ** 8
+    >>> # then the x and y array will be defined
+    >>> x = np.linspace(-5 * pr, 5 * pr, resolution)
+    >>> x.size
+    256
     """
 
     rms_rad = rms(phase)  # rms value in radians
@@ -239,6 +250,21 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     .. math::
         \\varphi(x, y) = 2\pi \\cdot W(x, y) = 2\pi \\cdot \\sum_{n, \\ell}
         K_{n\\ell}U^\\ell_n(\\varrho, \\vartheta).
+
+    Examples
+    --------
+    To use compute the aperture phase distribution, :math:`\\varphi(x, y)`,
+    first a set of coefficients need to be generated, ``K_coeff``, then simply
+    execute the `~pyoof.aperture.phase` function.
+
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> from pyoof import aperture
+    >>> pr = 50  # primary relfector m
+    >>> n = 5  # order polynomial
+    >>> N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
+    >>> K_coeff = np.random.normal(0., .1, N_K_coeff)
+    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, notilt=True, pr=50.)
     """
 
     _K_coeff = K_coeff.copy()
