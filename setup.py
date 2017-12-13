@@ -92,7 +92,6 @@ scripts = [
     os.path.basename(fname).startswith('README')
     ]
 
-
 # Get configuration information from all of the various subpackages.
 # See the docstring for setup_helpers.update_package_files for more
 # details.

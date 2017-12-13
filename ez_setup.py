@@ -135,8 +135,9 @@ def _do_download(version, download_base, to_dir, download_delay):
     tp = 'setuptools-{version}-{py_desig}.egg'
     egg = os.path.join(to_dir, tp.format(**locals()))
     if not os.path.exists(egg):
-        archive = download_setuptools(version, download_base,
-            to_dir, download_delay)
+        archive = download_setuptools(
+            version, download_base, to_dir, download_delay
+            )
         _build_egg(egg, archive, to_dir)
     sys.path.insert(0, egg)
 
