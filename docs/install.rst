@@ -31,7 +31,7 @@ Installing pyoof
 
 .. note::
 
-    Currently the package installation is not working without a prior installation of the `miniconda <https://conda.io/miniconda.html>`_ distribution (or anaconda distribution). In the mean time pease install miniconda and follow the instructions below.
+    Currently the package installation is not working without a prior installation of the `miniconda <https://conda.io/miniconda.html>`_ distribution (or anaconda distribution). In the mean time please install miniconda and follow the instructions below.
 
 Using pip
 ---------

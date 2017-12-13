@@ -45,9 +45,7 @@ grateful for feedback. Note, that work on the documentation is still ongoing.
 Installation
 ============
 
-.. note::
-
-    Currently the package installation is not working without a prior installation of the `miniconda <https://conda.io/miniconda.html>`_ distribution (or anaconda distribution). In the mean time pease install miniconda and follow the instructions below.
+**Note**: Currently the package installation is not working without a prior installation of the `miniconda <https://conda.io/miniconda.html>`_ distribution (or anaconda distribution). In the mean time please install miniconda and follow the instructions below.
 
 The easiest and more convenient way to install the pyoof package is via ``pip``
 
@@ -116,7 +114,7 @@ To use the pyoof package is straight forward. First define your observational da
 
     pyoof.fit_beam(
         data_info=data_info,                   # information
-        data_obs=[beam_data, u_data, v_data],  # observed beam
+        data_obs=data_obs,                     # observed beam
         method='trf',                          # opt. algorithm 'trf', 'lm' or 'dogbox'
         order_max=5,                           # it will fit from 1 to order_max
         illum_func=aperture.illum_pedestal,    # or illum_gauss
