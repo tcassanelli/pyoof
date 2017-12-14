@@ -40,7 +40,7 @@ box_factor = 5
 
 
 # Generating temp file with pyoof fits and pyoof_out
-@pytest.fixture()
+@pytest.fixture
 def oof_work_dir(tmpdir_factory):
 
     tdir = str(tmpdir_factory.mktemp('OOF'))
@@ -81,19 +81,21 @@ def oof_work_dir(tmpdir_factory):
 
     return tdir
 
+@pytest.mark.usefixtures("oof_work_dir")
+class TestClass(object):
 
-def test_fit_beam(oof_work_dir):
+    def test_fit_beam(self, oof_work_dir):
 
-    # To see if we are in the right temp directory
-    print(os.listdir(oof_work_dir))
+        # To see if we are in the right temp directory
+        print(os.listdir(oof_work_dir))
 
-    # lets compare the params from the last order
-    params = ascii.read(
-        os.path.join(
-            oof_work_dir, 'pyoof_out', 'test000-000',
-            'fitpar_n{}.csv'.format(n))
-        )
+        # lets compare the params from the last order
+        params = ascii.read(
+            os.path.join(
+                oof_work_dir, 'pyoof_out', 'test000-000',
+                'fitpar_n{}.csv'.format(n))
+            )
 
-    parfit = params['parfit']
+        parfit = params['parfit']
 
-    assert_array_almost_equal(parfit, params_true, decimal=2)
+        assert_array_almost_equal(parfit, params_true, decimal=2)
