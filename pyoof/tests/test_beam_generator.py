@@ -37,7 +37,9 @@ def test_beam_generator():
         illum_func=pyoof.aperture.illum_pedestal,
         noise=0,
         resolution=2 ** 8,
-        box_factor=5
+        box_factor=5,
+        save=False,
+        work_dir=None
         )
 
     beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]

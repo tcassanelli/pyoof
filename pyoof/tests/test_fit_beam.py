@@ -81,8 +81,9 @@ def oof_work_dir(tmpdir_factory):
 
     return tdir
 
+
 @pytest.mark.usefixtures("oof_work_dir")
-class TestClass(object):
+class TestFitBeam(object):
 
     def test_fit_beam(self, oof_work_dir):
 
