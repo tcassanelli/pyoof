@@ -40,7 +40,7 @@ box_factor = 5
 
 
 # Generating temp file with pyoof fits and pyoof_out
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def oof_work_dir(tmpdir_factory):
 
     tdir = str(tmpdir_factory.mktemp('OOF'))
