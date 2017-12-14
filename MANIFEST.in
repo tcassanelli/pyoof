@@ -48,5 +48,6 @@ include pyoof/data/example0.fits      # example fits
 
 # Data for pytest
 include pyoof/tests/data/*.npy
+include pyoof/tests/data/beam_generator.fits
 include pyoof/aperture/tests/data/*.npy
 include pyoof/aperture/tests/data/*.npz
