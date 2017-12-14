@@ -105,7 +105,7 @@ To use the pyoof package is straight forward. First define your observational da
     data_info, data_obs = pyoof.extract_data_pyoof(oofh_data)
 
     # Effelsberg telescope definition
-    effelsberg = [
+    effelsberg_telescope = [
         telgeometry.block_effelsberg,  # Blockage distribution
         telgeometry.opd_effelsberg,    # OPD function
         50.,                           # Primary dish radius
@@ -118,7 +118,7 @@ To use the pyoof package is straight forward. First define your observational da
         method='trf',                          # opt. algorithm 'trf', 'lm' or 'dogbox'
         order_max=5,                           # it will fit from 1 to order_max
         illum_func=aperture.illum_pedestal,    # or illum_gauss
-        telescope=effelsberg,                  # telescope properties
+        telescope=effelsberg_telescope,        # telescope properties
         resolution=2 ** 8,                     # standard is 2 ** 8
         box_factor=5,                          # box_size = 5 * pr, pixel resolution
         )

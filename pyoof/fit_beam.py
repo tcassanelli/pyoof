@@ -161,7 +161,8 @@ def residual(
         Two stacked arrays, the illumination and Zernike circle polynomials
         coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
     idx : `list`
-        List of the positions for the removed parameters for the least squares minimization in the ``params`` array.
+        List of the positions for the removed parameters for the least squares
+        minimization in the ``params`` array.
         on.
     N_K_coeff : `int`
         Total number of Zernike circle polynomials coefficients to fit. It is
@@ -261,8 +262,8 @@ def params_complete(params, idx, N_K_coeff, config_params):
     This function fills the missing parameters not used in the lease squares
     minimization, they are required to compute the correct aperture
     distribution, :math:`\\underline{E_\\mathrm{a}}(x, y)`. By default the
-    following parameters are excluded ``i_amp``, ``x0``, ``y0``, ``K(0, 0)``. The
-    parameter selection is done by default or by adding a
+    following parameters are excluded ``i_amp``, ``x0``, ``y0``, ``K(0, 0)``.
+    The parameter selection is done by default or by adding a
     ``config_params.yml`` file to the `~pyoof.fit_beam` function.
 
     Parameters
@@ -324,7 +325,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
 def fit_beam(
     data_info, data_obs, method, order_max, illum_func, telescope, resolution,
     box_factor, fit_previous=True, config_params_file=None, make_plots=True,
-    verbose=2
+    verbose=2, work_dir=None
         ):
     """
     Computes the Zernike circle polynomial coefficients, ``K_coeff``, and the
@@ -392,6 +393,9 @@ def fit_beam(
     verbose : `int`
         {0, 1, 2} Level of algorithm verbosity. 0 work silent, 1 display
         termination report, 2, display progress during iteration (default).
+    work_dir : `str`
+        Default is `None`, it will store the ``pyoof_out/`` folder in the fits
+        file current directory, for other provide the desired path.
     """
 
     start_time = time.time()
@@ -402,6 +406,9 @@ def fit_beam(
     # All observed data needed to fit the beam
     [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
+
+    if work_dir is None:
+        work_dir = pthto
 
     illum_name, taper_name = illum_strings(illum_func)
 
@@ -444,12 +451,11 @@ def fit_beam(
         pass
 
     # Storing files in pyoof_out directory
-    # pthto: path or directory where the fits file is located
-    if not os.path.exists(pthto + '/pyoof_out'):
-        os.makedirs(pthto + '/pyoof_out')
+    if not os.path.exists(os.path.join(work_dir, 'pyoof_out')):
+        os.makedirs(os.path.join(work_dir, 'pyoof_out'))
 
     for j in ["%03d" % i for i in range(101)]:
-        name_dir = pthto + '/pyoof_out/' + name + '-' + str(j)
+        name_dir = os.path.join(work_dir, 'pyoof_out', name + '-' + str(j))
         if not os.path.exists(name_dir):
             os.makedirs(name_dir)
             break
@@ -465,7 +471,7 @@ def fit_beam(
     for order in range(1, order_max + 1):
 
         if not verbose == 0:
-            print('\n... Fit order ' + str(order) + ' ... \n')
+            print('\n... Fit order {} ... \n'.format(order))
 
         # Setting limits for plotting fitted beam
         plim_u = [np.min(u_data[0]), np.max(u_data[0])]  # radians
@@ -481,7 +487,11 @@ def fit_beam(
         # Looking for result parameters lower order
         if fit_previous and n != 1:
             N_K_coeff_previous = n * (n + 1) // 2
-            path_params_previous = name_dir + '/fitpar_n' + str(n - 1) + '.csv'
+
+            path_params_previous = os.path.join(
+                name_dir, 'fitpar_n{}.csv'.format(n - 1)
+                )
+
             params_to_add = N_K_coeff - N_K_coeff_previous
 
             if os.path.exists(path_params_previous):
@@ -587,7 +597,7 @@ def fit_beam(
 
         # Storing files in directory
         if not verbose == 0:
-            print('... Saving data ... \n')
+            print('\n... Saving data ... \n')
 
         store_data_ascii(
             name=name,
@@ -600,7 +610,9 @@ def fit_beam(
 
         # Printing the results from saved ascii file
         if not verbose == 0:
-            print(ascii.read(name_dir + '/fitpar_n' + str(n) + '.csv'))
+            print(
+                ascii.read(os.path.join(name_dir, 'fitpar_n{}.csv'.format(n)))
+                )
 
         if n == 1:
             pyoof_info = dict(
@@ -618,7 +630,9 @@ def fit_beam(
                 opt_method=method
                 )
 
-            with open(name_dir + '/pyoof_info.yml', 'w') as outfile:
+            with open(
+                os.path.join(name_dir, 'pyoof_info.yml'), 'w'
+                    ) as outfile:
                 outfile.write('# pyoof relevant information\n')
                 yaml.dump(pyoof_info, outfile, default_flow_style=False)
 

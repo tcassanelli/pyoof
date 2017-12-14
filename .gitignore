@@ -23,3 +23,9 @@ notebooks/fft_resolution_test.ipynb
 notebooks/pyoof_out
 data_generated/
 
+# Coverage
+htmlcov/
+.coverage
+
+# testing with miniconda
+mpy3_test.sh

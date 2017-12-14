@@ -97,7 +97,6 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
     .. math::
 
         C=10^{\\frac{c_\\mathrm{dB}}{20}}.
-
     """
 
     i_amp, c_dB, x0, y0 = I_coeff

@@ -248,9 +248,9 @@ def store_data_csv(name, name_dir, order, save_to_csv):
 
     fnames = [
         '/beam_data.csv', '/u_data.csv', '/v_data.csv',
-        '/res_n' + str(order) + '.csv', '/jac_n' + str(order) + '.csv',
-        '/grad_n' + str(order) + '.csv', '/phase_n' + str(order) + '.csv',
-        '/cov_n' + str(order) + '.csv', '/corr_n' + str(order) + '.csv'
+        '/res_n{}.csv'.format(order), '/jac_n{}.csv'.format(order),
+        '/grad_n{}.csv'.format(order), '/phase_n{}.csv'.format(order),
+        '/cov_n{}.csv'.format(order), '/corr_n{}.csv'.format(order)
         ]
 
     if order != 1:
@@ -308,7 +308,7 @@ def store_data_ascii(
     # To store fit information and found parameters in ascii file
     ascii.write(
         table=[params_names, params_solution, params_init],
-        output=name_dir + '/fitpar_n' + str(n) + '.csv',
+        output=name_dir + '/fitpar_n{}.csv'.format(n),
         names=['parname', 'parfit', 'parinit'],
         comment='Fitted parameters ' + name
         )

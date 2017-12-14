@@ -13,7 +13,8 @@ __all__ = ['beam_generator']
 
 
 def beam_generator(
-    params, wavel, d_z, illum_func, telgeo, noise, resolution, box_factor
+    params, wavel, d_z, illum_func, telgeo, noise, resolution, box_factor,
+    save=True, work_dir=None
         ):
     """
     Routine to generate data and test the pyoof package algorithm. It has the
@@ -54,14 +55,24 @@ def beam_generator(
         telescope, e.g. a ``box_factor = 5`` returns ``x = np.linspace(-5 *
         pr, 5 * pr, resolution)``, an array to be used in the FFT2
         (`~numpy.fft.fft2`).
+    save : `bool`
+        If `True`, it stores the fits file in the ``'data_generated/'``
+        directory.
+    work_dir : `str`
+        Default is `None`, it will store the fits file in the current
+        directory, for other provide the desired path.
 
     Returns
     -------
     pyoof_fits : `~astropy.io.fits.hdu.hdulist.HDUList`
         The output fits file is stored in the directory ``'data_generated/'``.
-        Every time the function is executed a new file will be stored. The
-        file is ready to use for the `~pyoof` package.
+        Every time the function is executed a new file will be stored (with
+        increased numbering). The file is ready to use for the `~pyoof`
+        package.
     """
+
+    if work_dir is None:
+        work_dir = os.getcwd()
 
     freq = light_speed / wavel  # Hz frequency
     bw = 1.22 * wavel / (2 * telgeo[2])  # Beamwidth
@@ -150,12 +161,13 @@ def beam_generator(
     table_hdu2.update_ext_name('PLUS OOF')
 
     # storing data
-    current_path = os.getcwd()
-    if not os.path.exists(current_path + '/data_generated'):
-        os.makedirs(current_path + '/data_generated')
+    if not os.path.exists(os.path.join(work_dir, 'data_generated')):
+        os.makedirs(os.path.join(work_dir, 'data_generated'))
 
     for j in ["%03d" % i for i in range(101)]:
-        name_file = current_path + '/data_generated/test{}.fits'.format(j)
+        name_file = os.path.join(
+            work_dir, 'data_generated', 'test{}.fits'.format(j)
+            )
         if not os.path.exists(name_file):
 
             prihdr = fits.Header()

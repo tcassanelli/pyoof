@@ -211,7 +211,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     title : `str`
         Figure title.
     res_mode : `bool`
-        If ``True`` the beam map will not be normalized. This feature is used
+        If `True` the beam map will not be normalized. This feature is used
         to compare the residual outputs from the least squares minimization
         (`~pyoof.fit_beam`).
 
@@ -340,7 +340,7 @@ def plot_phase(K_coeff, notilt, pr, title):
     return fig
 
 
-def plot_variance(matrix, order, diag, cbtitle, title):
+def plot_variance(matrix, order, diag, illumination, cbtitle, title):
     """
     Variance-Covariance matrix or Correlation matrix figure. It returns
     the triangle figure with a color amplitude value for each element. Used to
@@ -356,6 +356,9 @@ def plot_variance(matrix, order, diag, cbtitle, title):
         Order used for the Zernike circle polynomial, :math:`n`.
     diag : `bool`
         If `True` it will plot the matrix diagonal.
+    illumination : `str`
+        Name of the illumination function used in the least squares
+        minimization.
     cbtitle : `str`
         Color bar title.
     title : `str`
@@ -372,13 +375,19 @@ def plot_variance(matrix, order, diag, cbtitle, title):
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
+    if illumination == 'pedestal':
+        taper_name = '$c_\\mathrm{dB}$'
+    elif illumination == 'gauss':
+        taper_name = '$\\sigma_\\mathrm{dB}$'
+    else:
+        taper_name = '$\\mathrm{taper}_\\mathrm{dB}$'
+
     params_names = [
-        '$A_{E_\mathrm{a}}$', '$\mathrm{taper}_\mathrm{dB}$', '$x_0$', '$y_0$'
+        '$A_{E_\mathrm{a}}$', taper_name, '$x_0$', '$y_0$'
         ]
     for i in range(N_K_coeff):
         params_names.append('$K_{' + str(N[i]) + '\,' + str(L[i]) + '}$')
     params_names = np.array(params_names)
-
     params_used = [int(i) for i in matrix[:1][0]]
     _matrix = matrix[1:]
 
@@ -478,7 +487,7 @@ def plot_fit_path(
         chosen in **angle** key. The `~numpy.ndarray` must be in the following
         order, ``plim_rad = np.array([umin, umax, vmin, vmax])``.
     save : `bool`
-        If ``True``, it stores all plots in the ``'pyoof_out/directory'``
+        If `True`, it stores all plots in the ``'pyoof_out/directory'``
         directory.
 
     Returns
@@ -511,33 +520,34 @@ def plot_fit_path(
     else:
         pass
 
-    if not os.path.exists(path_pyoof + '/plots'):
-        os.makedirs(path_pyoof + '/plots')
+    path_plot = os.path.join(path_pyoof, 'plots')
 
-    path_plot = path_pyoof + '/plots'
+    if not os.path.exists(path_plot):
+        os.makedirs(path_plot)
 
-    # Info
+    # Reading least squares minimization output
     n = order
-    fitpar = ascii.read(path_pyoof + '/fitpar_n' + str(n) + '.csv')
+    fitpar = ascii.read(os.path.join(path_pyoof, 'fitpar_n{}.csv'.format(n)))
     K_coeff = np.array(fitpar['parfit'])[4:]
 
-    with open(path_pyoof + '/pyoof_info.yml', 'r') as inputfile:
+    with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
         pyoof_info = yaml.load(inputfile)
 
     obs_object = pyoof_info['obs_object']
     meanel = round(pyoof_info['meanel'], 2)
+    illumination = pyoof_info['illumination']
 
     # Residual
-    res = np.genfromtxt(path_pyoof + '/res_n' + str(n) + '.csv')
+    res = np.genfromtxt(os.path.join(path_pyoof, 'res_n{}.csv'.format(n)))
 
     # Data
-    u_data = np.genfromtxt(path_pyoof + '/u_data.csv')
-    v_data = np.genfromtxt(path_pyoof + '/v_data.csv')
-    beam_data = np.genfromtxt(path_pyoof + '/beam_data.csv')
+    u_data = np.genfromtxt(os.path.join(path_pyoof, 'u_data.csv'))
+    v_data = np.genfromtxt(os.path.join(path_pyoof, 'v_data.csv'))
+    beam_data = np.genfromtxt(os.path.join(path_pyoof, 'beam_data.csv'))
 
     # Covariance and Correlation matrix
-    cov = np.genfromtxt(path_pyoof + '/cov_n' + str(n) + '.csv')
-    corr = np.genfromtxt(path_pyoof + '/corr_n' + str(n) + '.csv')
+    cov = np.genfromtxt(os.path.join(path_pyoof, 'cov_n{}.csv'.format(n)))
+    corr = np.genfromtxt(os.path.join(path_pyoof, 'corr_n{}.csv'.format(n)))
 
     if n == 1:
         fig_data = plot_data(
@@ -590,7 +600,8 @@ def plot_fit_path(
         order=n,
         title='{} variance-covariance matrix $n={}$'.format(obs_object, n),
         cbtitle='$\sigma_{ij}^2$',
-        diag=True
+        diag=True,
+        illumination=illumination
         )
 
     fig_corr = plot_variance(
@@ -598,15 +609,18 @@ def plot_fit_path(
         order=n,
         title='{} correlation matrix $n={}$'.format(obs_object, n),
         cbtitle='$\\rho_{ij}$',
-        diag=True
+        diag=True,
+        illumination=illumination
         )
 
     if save:
-        fig_beam.savefig(path_plot + '/fitbeam_n{}.pdf'.format(n))
-        fig_phase.savefig(path_plot + '/fitphase_n{}.pdf'.format(n))
-        fig_res.savefig(path_plot + '/residual_n{}.pdf'.format(n))
-        fig_cov.savefig(path_plot + '/cov_n{}.pdf'.format(n))
-        fig_corr.savefig(path_plot + '/corr_n{}.pdf'.format(n))
+        fig_beam.savefig(os.path.join(path_plot, 'fitbeam_n{}.pdf'.format(n)))
+        fig_phase.savefig(
+            os.path.join(path_plot, 'fitphase_n{}.pdf'.format(n))
+            )
+        fig_res.savefig(os.path.join(path_plot, 'residual_n{}.pdf'.format(n)))
+        fig_cov.savefig(os.path.join(path_plot, 'cov_n{}.pdf'.format(n)))
+        fig_corr.savefig(os.path.join(path_plot, 'corr_n{}.pdf'.format(n)))
 
         if n == 1:
-            fig_data.savefig(path_plot + '/obsbeam.pdf')
+            fig_data.savefig(os.path.join(path_plot, 'obsbeam.pdf'))

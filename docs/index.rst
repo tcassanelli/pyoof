@@ -264,6 +264,7 @@ Following the same example as before, it is possible to make a simple preview of
 The properties of the receiver and the telescope can be found in the sub-packages `~pyoof.aperture` and `~pyoof.telgeometry`. These are important geometrical aspects that will make the nonlinear least squares minimization process more precise. An example on how to gather the properties of a telescope is below::
 
     pr = 50. # primary reflector radius m
+
     # telescope = [block_dist, opd_func, pr, name]
     telescope = dict(
         effelsberg=[
@@ -272,7 +273,7 @@ The properties of the receiver and the telescope can be found in the sub-package
             pr,
             'effelsberg'
             ]
-        manual=[
+        manual = [
             telgeometry.block_manual(pr=50, sr=3.25, a=1, L=50-3.25),
             telgeometry.opd_manual(Fp=30, F=387),
             pr,
@@ -304,7 +305,8 @@ After creating the basic structure, the core function, `~pyoof.fit_beam`, can be
         fit_previous=True,                     # default
         config_params_file=None,               # default
         make_plots=True,                       # default
-        verbose=2                              # default
+        verbose=2,                             # default
+        work_dir=None                          # default
         )
 
 This will show the main properties of the fit as well as its progress. The key ``order_max`` is the maximum order to be fitted in the process. It starts from the polynomial order one until order five. If ``fit_previous=True``, then the algorithm will use coefficients from the previous order (:math:`n`) as the initial coefficients for the next order (:math:`n+1`), this feature is strongly recommended. The keys ``method`` and ``verbose`` are related to the least squares minimization package (`~scipy.optimize.least_squares`). The ``box_factor`` and ``resolution`` are necessary to perform a good FFT2 (more information about this will be updated).
