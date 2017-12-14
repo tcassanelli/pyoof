@@ -54,6 +54,7 @@ def oof_work_dir(tmpdir_factory):
         noise=noise_level,
         resolution=resolution,
         box_factor=box_factor,
+        save=True,
         work_dir=tdir
         )
 
