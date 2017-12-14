@@ -54,7 +54,7 @@ def oof_work_dir(tmpdir_factory):
         noise=noise_level,
         resolution=resolution,
         box_factor=box_factor,
-        work_dir=tdir,
+        work_dir=tdir
         )
 
     print('files directory: ', tdir)
@@ -86,7 +86,6 @@ def test_fit_beam(oof_work_dir):
 
     # To see if we are in the right temp directory
     print(os.listdir(oof_work_dir))
-
 
     # lets compare the params from the last order
     params = ascii.read(
