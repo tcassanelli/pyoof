@@ -14,7 +14,7 @@ __all__ = ['beam_generator']
 
 def beam_generator(
     params, wavel, d_z, illum_func, telgeo, noise, resolution, box_factor,
-    save=True, work_dir=None
+    work_dir=None
         ):
     """
     Routine to generate data and test the pyoof package algorithm. It has the
@@ -55,9 +55,6 @@ def beam_generator(
         telescope, e.g. a ``box_factor = 5`` returns ``x = np.linspace(-5 *
         pr, 5 * pr, resolution)``, an array to be used in the FFT2
         (`~numpy.fft.fft2`).
-    save : `bool`
-        If `True`, it stores the fits file in the ``'data_generated/'``
-        directory.
     work_dir : `str`
         Default is `None`, it will store the fits file in the current
         directory, for other provide the desired path.
@@ -156,10 +153,6 @@ def beam_generator(
         fits.Column(name='BEAM', format='E', array=p_to_save[2])
         ])
 
-    table_hdu0.update_ext_name('MINUS OOF')
-    table_hdu1.update_ext_name('ZERO OOF')
-    table_hdu2.update_ext_name('PLUS OOF')
-
     # storing data
     if not os.path.exists(os.path.join(work_dir, 'data_generated')):
         os.makedirs(os.path.join(work_dir, 'data_generated'))
@@ -185,6 +178,10 @@ def beam_generator(
 
             for i in range(3):
                 pyoof_fits[i + 1].header['DZ'] = d_z[i]
+
+            pyoof_fits[1].name = 'MINUS OOF'
+            pyoof_fits[2].name = 'ZERO OOF'
+            pyoof_fits[3].name = 'PLUS OOF'
 
             pyoof_fits.writeto(name_file, clobber=True)
 

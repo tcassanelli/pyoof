@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 from astropy.utils.misc import NumpyRNGContext
-from numpy.testing import assert_equal, assert_allclose
+from numpy.testing import assert_allclose
 import pyoof
 
 

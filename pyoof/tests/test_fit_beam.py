@@ -6,14 +6,12 @@ import pytest
 import os
 import numpy as np
 from astropy.io import ascii
-from astropy.utils.data import get_pkg_data_filename
-from astropy.utils.misc import NumpyRNGContext
 from numpy.testing import assert_array_almost_equal, assert_allclose
 import pyoof
 
 
 # Initial fits file configuration
-n = 4                                           # initial order
+n = 3                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
 c_dB = np.random.randint(-21, -10)              # illumination taper
 I_coeff = np.array([1, c_dB, 0, 0])             # illumination coefficients
@@ -43,7 +41,7 @@ box_factor = 5
 @pytest.fixture
 def oof_work_dir(tmpdir_factory):
 
-    tdir = str(tmpdir_factory.mktemp('OOF'))
+    tdir = str(tmpdir_factory.mktemp('pyoof'))
 
     pyoof.beam_generator(
         params=params_true,
@@ -54,14 +52,13 @@ def oof_work_dir(tmpdir_factory):
         noise=noise_level,
         resolution=resolution,
         box_factor=box_factor,
-        save=True,
         work_dir=tdir
         )
 
     print('files directory: ', tdir)
 
     # Reading the generated data
-    pathfits = os.path.join(tdir, 'data_generated/test000.fits')
+    pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
     data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
 
     pyoof.fit_beam(
@@ -83,21 +80,17 @@ def oof_work_dir(tmpdir_factory):
     return tdir
 
 
-@pytest.mark.usefixtures("oof_work_dir")
-class TestFitBeam(object):
+def test_fit_beam(oof_work_dir):
 
-    def test_fit_beam(self, oof_work_dir):
+    # To see if we are in the right temp directory
+    print('temp directory: ', os.listdir(oof_work_dir))
 
-        # To see if we are in the right temp directory
-        print(os.listdir(oof_work_dir))
+    # lets compare the params from the last order
+    fit_pars = os.path.join(
+        oof_work_dir, 'pyoof_out', 'test000-000',
+        'fitpar_n{}.csv'.format(n)
+        )
 
-        # lets compare the params from the last order
-        params = ascii.read(
-            os.path.join(
-                oof_work_dir, 'pyoof_out', 'test000-000',
-                'fitpar_n{}.csv'.format(n))
-            )
+    params = ascii.read(fit_pars)['parfit']
 
-        parfit = params['parfit']
-
-        assert_array_almost_equal(parfit, params_true, decimal=2)
+    assert_array_almost_equal(params, params_true, decimal=2)

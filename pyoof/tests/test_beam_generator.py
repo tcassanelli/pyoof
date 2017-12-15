@@ -3,11 +3,11 @@
 
 # Author: Tomas Cassanelli
 import pytest
+import os
 import numpy as np
 from astropy.utils.data import get_pkg_data_filename
-from numpy.testing import assert_equal, assert_allclose
+from numpy.testing import assert_allclose
 import pyoof
-
 
 # Initial fits file configuration
 n = 7                                    # initial order
@@ -27,9 +27,13 @@ effelsberg_telescope = [
     ]
 
 
-def test_beam_generator():
+# Generating temp file with pyoof fits
+@pytest.fixture
+def oof_work_dir(tmpdir_factory):
 
-    hdulist = pyoof.beam_generator(
+    tdir = str(tmpdir_factory.mktemp('pyoof'))
+
+    pyoof.beam_generator(
         params=np.hstack((I_coeff, K_coeff)),
         wavel=wavel,
         d_z=d_z,
@@ -38,20 +42,23 @@ def test_beam_generator():
         noise=0,
         resolution=2 ** 8,
         box_factor=5,
-        save=False,
-        work_dir=None
+        work_dir=tdir
         )
 
-    beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
-    u_data = [hdulist[i].data['U'] for i in range(1, 4)]
-    v_data = [hdulist[i].data['V'] for i in range(1, 4)]
+    print('files directory: ', tdir)
 
-    data_obs_true = pyoof.extract_data_pyoof(
+    return tdir
+
+
+def test_beam_generator(oof_work_dir):
+
+    data_info, data_obs = pyoof.extract_data_pyoof(
+        os.path.join(oof_work_dir, 'data_generated', 'test000.fits')
+        )
+
+    data_info_true, data_obs_true = pyoof.extract_data_pyoof(
         get_pkg_data_filename('data/beam_generator.fits')
-        )[1]
+        )
 
-    [beam_data_true, u_data_true, v_data_true] = data_obs_true
-
-    assert_allclose(beam_data, beam_data_true)
-    assert_allclose(u_data, u_data_true)
-    assert_allclose(v_data, v_data_true)
+    assert_allclose(data_obs, data_obs_true)
+    assert data_info[2:] == data_info_true[2:]
