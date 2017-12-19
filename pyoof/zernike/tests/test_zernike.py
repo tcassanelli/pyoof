@@ -25,8 +25,17 @@ def test_R():
 
 def test_U():
 
-    _U = pyoof.zernike.U(n=7, l=-5, rho=r, theta=t)
+    _U_cos = pyoof.zernike.U(n=7, l=-5, rho=r, theta=t)
+    _U_sin = pyoof.zernike.U(n=7, l=5, rho=r, theta=t)
 
-    U_true = np.load(get_pkg_data_filename('data/U.npy'))
+    U_cos_true = np.load(get_pkg_data_filename('data/Ucos.npy'))
+    U_sin_true = np.load(get_pkg_data_filename('data/Usin.npy'))
 
-    assert_allclose(_U, U_true)
+    with pytest.raises(TypeError):
+        pyoof.zernike.U(n=7.1, l=-5, rho=r, theta=t)
+
+    with pytest.raises(TypeError):
+        pyoof.zernike.U(n=7, l=-5.1, rho=r, theta=t)
+
+    assert_allclose(_U_cos, U_cos_true)
+    assert_allclose(_U_sin, U_sin_true)
