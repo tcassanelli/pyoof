@@ -79,7 +79,7 @@ pyoof has the following strict requirements:
 
 - `SciPy <https://scipy.org/>`__: 0.15 or later
 
-- `astropy <http://www.astropy.org/>`__: 1.3 or later (2.0 recommended)
+- `astropy <http://www.astropy.org/>`__: 2.4 or later.
 
 - `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later
 

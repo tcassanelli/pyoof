@@ -318,7 +318,7 @@ The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, whe
 * `cov_n#.csv`: Covariance matrix evaluated at the last residual from the least squares minimization, order `#`.
 * `fitpar_n#.csv`: Estimated parameters from the least squares minimization, order `#`. These correspond to the illumination coefficients, ``I_coeff``, and the Zernike circle polynomial coefficients, ``K_coeff``. They are gathered as ``params_solution = I_coeff + K_coeff``. Be aware that some coefficients can be fixed, or excluded from the optimization, such as the illumination offset (:math:`x_0, y_0`) or the illumination amplitude (:math:`A_{E_\text{a}}`). The default configuration is in `config_params.yml` (package directory). You can also provide your own configuration set up.
 * `grad_n#.csv`: Gradient of the last residual evaluation, order `#`.
-* `phase_n#.csv`: Aperture phase distribution (phase error), in radians, for the primary dish, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in the `~pyoof.fit_beam`.
+* `phase_n#.csv`: Aperture phase distribution (phase error), in radians, for the primary dish, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in `~pyoof.fit_beam`.
 * `pyoof_info.yml`: It contains information about the fit and observation parameters.
 * `res_n#.csv`: Last evaluation of the residual from the least squares minimization, order `#`.
 * `u_data.csv`: :math:`x`-axis vector which contains position coordinates for `beam_data.csv`, in radians.
