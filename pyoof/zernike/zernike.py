@@ -121,7 +121,7 @@ def U(n, l, rho, theta):
     >>> x = np.linspace(-1, 1, 5)
     >>> r, t = cart2pol(x, x)  # polar coordinates
     >>> zernike.U(n=4, l=-2, rho=r, theta=t)
-    array([ 10. ,  -0.5,   0. ,  -0.5,  10. ])
+    array([10. , -0.5,  0. , -0.5, 10. ])
     """
 
     if not isinstance(l, int):

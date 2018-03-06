@@ -59,10 +59,12 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
     Ea[xx ** 2 + yy ** 2 > pr ** 2] = 0  # circle shape
 
     fig, ax = plt.subplots()
+
     ax.imshow(Ea, extent=[-pr, pr] * 2, cmap='viridis')
     ax.set_xlabel('$x$ m')
     ax.set_ylabel('$y$ m')
     ax.set_title('Illumination function')
+
 
 The `~pyoof.aperture` only uses standard Python libraries, but what needs special consideration are the Python functions with the parameter ``K_coeff``, coming up.
 
@@ -105,6 +107,7 @@ One basic example is to plot :math:`W(x, y)` with a random set of Zernike circle
     ax.set_ylabel('$y$ m')
     ax.set_xlabel('$x$ m')
 
+
 Aperture phase distribution :math:`\varphi(x, y)`
 -------------------------------------------------
 
@@ -128,6 +131,7 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
     levels = np.linspace(-2, 2, 9)
 
     fig, ax = plt.subplots(ncols=2)
+    fig.subplots_adjust(wspace=0.6)
 
     for data, i in zip([phi_notilt, phi_tilt], range(2)):
         ax[i].imshow(
@@ -140,7 +144,6 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
     ax[0].set_title('$\\varphi(x, y)$ no-tilt')
     ax[1].set_title('$\\varphi(x, y)$')
 
-    fig.tight_layout()
 
 To study the aberration in the aperture phase distribution, first it is necessary to remove some telescope effects. These are the tilt terms and are related to the telescope's pointing and become irrelevant. The tilt terms also represent the average slope in the :math:`x` and :math:`y` directions. In the Zernike circle polynomials the tilt terms are :math:`K^1_1` and :math:`K^{-1}_1`. To erase their dependence they are set to zero.
 
@@ -189,6 +192,8 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
     extent = [-pr, pr] * 2
 
     fig, axes = plt.subplots(ncols=3, nrows=2)
+    fig.subplots_adjust(hspace=0.05, wspace=0.8)
+
     ax = axes.flat
 
     for i in range(3):
@@ -199,19 +204,18 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
         ax[i].contour(xx, yy, Ea[i].real, cmap='viridis')
         ax[i + 3].contour(xx, yy, Ea[i].imag, cmap='viridis')
 
-    ax[0].set_title('Aperture real $d_z^-$')
-    ax[1].set_title('Aperture real $d_z$')
-    ax[2].set_title('Aperture real $d_z^+$')
-    ax[3].set_title('Aperture imag $d_z^-$')
-    ax[4].set_title('Aperture imag $d_z$')
-    ax[5].set_title('Aperture imag $d_z^+$')
+    ax[0].set_title('Aper real $d_z^-$')
+    ax[1].set_title('Aper real $d_z$')
+    ax[2].set_title('Aper real $d_z^+$')
+    ax[3].set_title('Aper imag $d_z^-$')
+    ax[4].set_title('Aper imag $d_z$')
+    ax[5].set_title('Aper imag $d_z^+$')
 
     # Turn off tick labels
     for _ax in ax:
         _ax.set_yticklabels([])
         _ax.set_xticklabels([])
 
-    fig.tight_layout()
 
 As mentioned before the aperture distribution is complex, which also depends on the radial offset added to defocus the telescope. Depending on that its shape in the real and imaginary parts will change. In general, the aperture distribution will not be used for the OOF holography study, only the power pattern and phase error will be used for visual inspection.
 
