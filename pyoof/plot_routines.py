@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
 from astropy.io import ascii
 from astropy.utils.data import get_pkg_data_filename
+import warnings
 import os
 import yaml
 from .aperture import radiation_pattern, phase
@@ -154,9 +155,10 @@ def plot_beam(
             u_angle[i].min(), u_angle[i].max(),
             v_angle[i].min(), v_angle[i].max()
             ]
+        levels = np.linspace(power_norm[i].min(), power_norm[i].max(), 10)
 
-        im = ax[i].imshow(power_norm[i], extent=extent, vmin=0, vmax=1)
-        ax[i].contour(u_angle[i], v_angle[i], power_norm[i], 10)
+        im = ax[i].imshow(X=power_norm[i], extent=extent, vmin=0, vmax=1)
+        ax[i].contour(u_angle[i], v_angle[i], power_norm[i], levels=levels)
 
         divider = make_axes_locatable(ax[i])
         cax = divider.append_axes("right", size="3%", pad=0.03)
@@ -256,9 +258,10 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
             method='cubic'
             )
 
+        levels = np.linspace(beam_ng.min(), beam_ng.max(), 10)
         extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
-        im = ax[i].imshow(beam_ng, extent=extent, vmin=vmin, vmax=vmax)
-        ax[i].contour(u_ng, v_ng, beam_ng, 10)
+        im = ax[i].imshow(X=beam_ng, extent=extent, vmin=vmin, vmax=vmax)
+        ax[i].contour(u_ng, v_ng, beam_ng, levels=levels)
 
         divider = make_axes_locatable(ax[i])
         cax = divider.append_axes("right", size="3%", pad=0.03)
@@ -316,14 +319,18 @@ def plot_phase(K_coeff, notilt, pr, title):
         cbartitle = '$\\varphi(x, y)$ amplitude rad'
 
     extent = [-pr, pr, -pr, pr]
+    levels = np.linspace(-2, 2, 9)
+
     _x, _y, _phase = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
 
     fig, ax = plt.subplots(figsize=(6, 5.8))
 
-    levels = np.linspace(-2, 2, 9)
+    im = ax.imshow(X=_phase, extent=extent)
 
-    im = ax.imshow(_phase, extent=extent)
-    ax.contour(_x, _y, _phase, levels=levels, colors='k', alpha=0.3)
+    # Partial solution for contour Warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        ax.contour(_x, _y, _phase, levels=levels, colors='k', alpha=0.3)
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.03)

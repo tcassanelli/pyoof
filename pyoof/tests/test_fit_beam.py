@@ -25,7 +25,7 @@ d_z = [plus_minus, 0, -plus_minus]              # radial offset
 
 params_true = np.hstack((I_coeff, K_coeff))
 
-noise_level = 1e1                               # noise added to gen data
+noise_level = .03                               # noise added to gen data
 
 effelsberg_telescope = [
     pyoof.telgeometry.block_effelsberg,         # blockage distribution

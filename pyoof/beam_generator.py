@@ -121,18 +121,20 @@ def beam_generator(
         v.append(v_trim)
         P.append(power_trim)
 
+    P_norm = [P[i] / P[i].max() for i in range(3)]
+
     # adding noise!
     if noise == 0:
-        power_noise = np.array(P)
+        power_noise = np.array(P_norm)
     else:
         power_noise = (
-            np.array(P) + np.random.normal(0., noise, np.array(P).shape)
+            np.array(P_norm) +
+            np.random.normal(0., noise, np.array(P_norm).shape)
             )
-    power_norm = [power_noise[i] / power_noise[i].max() for i in range(3)]
 
     u_to_save = [u[i].flatten() for i in range(3)]
     v_to_save = [v[i].flatten() for i in range(3)]
-    p_to_save = [power_norm[i].flatten() for i in range(3)]
+    p_to_save = [power_noise[i].flatten() for i in range(3)]
 
     # Writing default fits file for OOF observations
     table_hdu0 = fits.BinTableHDU.from_columns([
@@ -183,7 +185,7 @@ def beam_generator(
             pyoof_fits[2].name = 'ZERO OOF'
             pyoof_fits[3].name = 'PLUS OOF'
 
-            pyoof_fits.writeto(name_file, clobber=True)
+            pyoof_fits.writeto(name_file)
 
             break
 
