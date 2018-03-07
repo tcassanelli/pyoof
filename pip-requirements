@@ -1,5 +1,5 @@
 setuptools
-numpy >= 1.14
+numpy >= 1.5
 scipy >= 0.15
 astropy >= 2.4
 pytest >= 2.6
