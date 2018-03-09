@@ -131,7 +131,7 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
     levels = np.linspace(-2, 2, 9)
 
     fig, ax = plt.subplots(ncols=2)
-    #fig.subplots_adjust(wspace=0.6)
+    fig.subplots_adjust(wspace=0.6)
 
     for data, i in zip([phi_notilt, phi_tilt], range(2)):
         ax[i].imshow(
@@ -192,7 +192,7 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
     extent = [-pr, pr] * 2
 
     fig, axes = plt.subplots(ncols=3, nrows=2)
-    #fig.subplots_adjust(hspace=0.05, wspace=0.8)
+    fig.subplots_adjust(hspace=0.05, wspace=0.8)
 
     ax = axes.flat
 
