@@ -44,7 +44,7 @@ env:
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='pip wheel scipy astropy pytest matplotlib pyyaml'
+        - CONDA_DEPENDENCIES='pip wheel scipy pytest matplotlib pyyaml'
 
         # List other runtime dependencies for the package that are available as
         # pip packages here.
@@ -55,7 +55,7 @@ env:
         # are in astropy-ci-extras. If your package uses either of these,
         # add the channels to CONDA_CHANNELS along with any other channels
         # you want to use.
-        - CONDA_CHANNELS='astropy-ci-extras astropy conda-forge'
+        # - CONDA_CHANNELS='astropy-ci-extras astropy conda-forge'
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
