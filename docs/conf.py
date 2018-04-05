@@ -46,7 +46,8 @@ from sphinx_astropy.conf import *
 
 # Use the astropy style when building docs
 from astropy import visualization
-plot_rcparams = visualization.astropy_mpl_docs_style
+# plot_rcparams = visualization.astropy_mpl_docs_style
+plot_rcparams = visualization.mpl_style
 plot_apply_rcparams = True
 plot_html_show_source_link = False
 plot_formats = ['png', 'svg', 'pdf']
