@@ -39,7 +39,8 @@ except ImportError:
             sys.path.insert(1, a_h_path)
 
 # Load all of the global Astropy configuration
-from astropy_helpers.sphinx.conf import *
+# from astropy_helpers.sphinx.conf import *. DEPRECATED
+from sphinx_astropy.conf import *
 
 # import astropy
 
