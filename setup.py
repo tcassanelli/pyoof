@@ -117,7 +117,7 @@ setup(
     description=DESCRIPTION,
     scripts=scripts,
     install_requires=[
-        s.strip() for s in metadata.get('install_requires', 'astropy').split(
+        s.strip() for s in metadata.get('install_requires').split(
             ',')
         ],
     author=AUTHOR,
