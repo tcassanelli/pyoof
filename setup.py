@@ -36,7 +36,7 @@ metadata = dict(conf.items('metadata'))
 PACKAGENAME = metadata.get('package_name', 'pyoof')
 DESCRIPTION = metadata.get('description', 'pyoof')
 AUTHOR = metadata.get('author', 'Tomas Cassanelli')
-AUTHOR_EMAIL = metadata.get('author_email', 'tcassanelli@gmail.com')
+AUTHOR_EMAIL = metadata.get('author_email', 'tcassanelli@protonmail.com')
 LICENSE = metadata.get('license', 'BSD')
 URL = metadata.get('url', 'https://github.com/tcassanelli/pyoof')
 
