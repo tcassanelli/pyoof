@@ -38,19 +38,26 @@ except ImportError:
         if os.path.isdir(a_h_path):
             sys.path.insert(1, a_h_path)
 
-# Load all of the global Astropy configuration
-# from astropy_helpers.sphinx.conf import *. DEPRECATED
-from sphinx_astropy.conf import *
+import astropy
 
-# import astropy
+try:
+    from sphinx_astropy.conf.v1 import *  # noqa
+except ImportError:
+    print('ERROR: the documentation requires the sphinx-astropy package to be installed')
+    sys.exit(1)
 
-# Use the astropy style when building docs
-from astropy import visualization
-plot_rcparams = visualization.astropy_mpl_style
-# plot_rcparams = visualization.mpl_style
+plot_rcparams = {}
+plot_rcparams['figure.figsize'] = (6, 6)
+plot_rcparams['savefig.facecolor'] = 'none'
+plot_rcparams['savefig.bbox'] = 'tight'
+plot_rcparams['axes.labelsize'] = 'large'
+plot_rcparams['figure.subplot.hspace'] = 0.5
+
 plot_apply_rcparams = True
 plot_html_show_source_link = False
 plot_formats = ['png', 'svg', 'pdf']
+# Don't use the default - which includes a numpy and matplotlib import
+plot_pre_code = ""
 
 # Get configuration information from setup.cfg
 try:
