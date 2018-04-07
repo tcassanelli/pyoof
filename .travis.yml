@@ -36,7 +36,10 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='coveralls sphinx-astropy pytest-mpl'
+
+        # Adding this line after updating astropy-helpers
+        - PIP_DEPENDENCIES='coveralls sphinx-astropy'
+        
         - EVENT_TYPE='pull_request push'
 
         - TWINE_USERNAME=tcassanelli
