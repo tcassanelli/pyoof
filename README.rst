@@ -132,11 +132,11 @@ pyoof is licensed under a 3-clause BSD style license - see the LICENSE.rst file.
 
 Improvements future versions
 ============================
-- [ ] Including plot tests for `plot_routines.py` code
-- [ ] Reduce the size of the test files
-- [ ] Include automatic setup for the FFT resolution `pyoof.fit_beam(resolution)`
-- [ ] Include cosine taper illumination function
-- [ ] Add interpolation for possible actuator correction (sub-module)
+* Including plot tests for `plot_routines.py` code
+* Reduce the size of the test files
+* Include automatic setup for the FFT resolution `pyoof.fit_beam(resolution)`
+* Include cosine taper illumination function
+* Add actuator correction (sub-module) and its translation from phase error
 
 Contact
 =======

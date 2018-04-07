@@ -47,7 +47,7 @@ except ImportError:
     sys.exit(1)
 
 plot_rcparams = {}
-plot_rcparams['figure.figsize'] = (6, 6)
+plot_rcparams['figure.figsize'] = (6, 8)
 plot_rcparams['savefig.facecolor'] = 'none'
 plot_rcparams['savefig.bbox'] = 'tight'
 plot_rcparams['axes.labelsize'] = 'large'
