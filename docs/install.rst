@@ -9,14 +9,14 @@ pyoof has the following strict requirements:
 
 - `Python <http://www.python.org/>`__ 3.5 or later.
 
-- `setuptools <https://pythonhosted.org/setuptools/>`__: Used for the package
-  installation.
+- `setuptools <https://pypi.python.org/pypi/setuptools>`__: Used for the
+  package installation.
 
 - `NumPy <http://www.numpy.org/>`__ 1.11 or later.
 
 - `SciPy <https://scipy.org/>`__: 0.15 or later.
 
-- `astropy <http://www.astropy.org/>`__: 2.4 or later.
+- `Astropy <http://www.astropy.org/>`__: 2.4 or later.
 
 - `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later.
 
@@ -25,6 +25,7 @@ pyoof has the following strict requirements:
 
 - `PyYAML <http://pyyaml.org>`__ 3.11 or later.
 
+For future versions dependencies will be reduced.
 
 Installing pyoof
 ================

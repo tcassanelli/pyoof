@@ -28,7 +28,6 @@ We are currently testing the pyoof package at the `Effelsberg radio telescope <h
 
 Project Status
 ==============
-
 .. image:: https://travis-ci.org/tcassanelli/pyoof.svg?branch=master
     :target: https://travis-ci.org/tcassanelli/pyoof
     :alt: Pyoof's Travis CI Status
@@ -44,7 +43,6 @@ grateful for feedback. Note, that work on the documentation is still ongoing.
 
 Installation
 ============
-
 **Note**: Currently the package installation is not working without a prior installation of the `miniconda <https://conda.io/miniconda.html>`_ distribution (or anaconda distribution). In the mean time please install miniconda and follow the instructions below.
 
 The easiest and more convenient way to install the pyoof package is via ``pip``
@@ -63,25 +61,41 @@ From the source you can install developer versions, be aware of that.
 I believe in the future :smile:, so please install Python 3.
 Unfortunately, a windows version of the package is currently not available.
 
+Troubleshooting
+---------------
+If you are a macOS user using `miniconda3 <https://conda.io/miniconda.html>`_, you may encounter the following statement once you run pyoof::
+
+    >>> import pyoof  # or import matplotlib.pyplot as plt
+    ...
+    RuntimeError: Python is not installed as a framework. The Mac OS X backend will not be able to function correctly if Python is not installed as a framework. See the Python documentation for more information on installing Python as a framework on Mac OS X. Please either reinstall Python as a framework, or try one of the other backends. If you are using (Ana)Conda please install python.app and replace the use of 'python' with 'pythonw'. See 'Working with Matplotlib on OSX' in the Matplotlib FAQ for more information.
+
+This is a known issue that is solved by changing the default `matplotlib backend <https://matplotlib.org/faq/usage_faq.html#what-is-a-backend>`_.
+Searching for the ``matplotlibrc`` file and modifying it with ``backend: TkAgg``. To look into the matplotlib dependencies use the following code::
+
+    >>> import os
+    >>> import matplotlib
+    >>> print(os.path.dirname(matplotlib.__file__))
+
+Then open and modify ``mpl-data/matplotlibrc``.
+
 Dependencies
 ============
-
 So far the pyoof package uses the common Python packages, it is recommended to install the `anaconda <https://www.anaconda.com>`_ distribution first, although using `pip` is also fine.
 
 pyoof has the following strict requirements:
 
-- `Python <http://www.python.org/>`__ 3.5 or later
+- `Python <http://www.python.org/>`__ 3.5 or later.
 
-- `setuptools <https://pythonhosted.org/setuptools/>`__: Used for the package
-  installation.
+- `setuptools <https://pypi.python.org/pypi/setuptools>`__: Used for the
+  package installation.
 
-- `NumPy <http://www.numpy.org/>`__ 1.11 or later
+- `NumPy <http://www.numpy.org/>`__ 1.11 or later.
 
-- `SciPy <https://scipy.org/>`__: 0.15 or later
+- `SciPy <https://scipy.org/>`__: 0.15 or later.
 
-- `astropy <http://www.astropy.org/>`__: 2.4 or later.
+- `Astropy <http://www.astropy.org/>`__: 2.4 or later.
 
-- `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later
+- `pytest <https://pypi.python.org/pypi/pytest>`__ 2.6 or later.
 
 - `matplotlib <http://matplotlib.org/>`__ 1.5 or later: To provide plotting
   functionality.
@@ -92,7 +106,6 @@ For future versions dependencies will be reduced.
 
 Usage
 =====
-
 To use the pyoof package is straight forward. First define your observational data in the established fits file format and then execute!
 
 .. code-block:: python
@@ -127,20 +140,18 @@ For the impatient :hushed: , see the Jupyter notebook example, `oof_holography.i
 
 License
 =======
-
-pyoof is licensed under a 3-clause BSD style license - see the LICENSE.rst file.
+pyoof is licensed under a 3-clause BSD style license - see the `LICENSE <https://github.com/tcassanelli/pyoof/blob/master/LICENSE.rst>`_ file.
 
 Improvements future versions
 ============================
 * Including plot tests for `plot_routines.py` code
 * Reduce the size of the test files
-* Include automatic setup for the FFT resolution `pyoof.fit_beam(resolution)`
+* Include automatic setup for the FFT resolution ``pyoof.fit_beam(resolution)``
 * Include cosine taper illumination function
 * Add actuator correction (sub-module) and its translation from phase error
 
 Contact
 =======
-
 If you have any questions about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
 
 - tcassanelli  *_at_*  protonmail.com
