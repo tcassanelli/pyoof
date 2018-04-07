@@ -91,6 +91,26 @@ the system-wide Python installation.
 
 .. _testing_installed_pyoof:
 
+Troubleshooting
+---------------
+If you are a macOS user using `miniconda3 <https://conda.io/miniconda.html>`_, you may encounter the following statement once you run pyoof
+
+.. doctest-skip::
+    >>> import pyoof  # or import matplotlib.pyplot as plt
+    RuntimeError: Python is not installed as a framework. The Mac OS X
+    backend ...
+
+This is a known issue that is solved by changing the default `matplotlib backend <https://matplotlib.org/faq/usage_faq.html#what-is-a-backend>`_.
+Searching for the ``matplotlibrc`` file and modifying it with ``backend: TkAgg``. To look into the matplotlib dependencies use the following code
+
+.. doctest-skip::
+    >>> import os
+    >>> import matplotlib
+    >>> print(os.path.dirname(matplotlib.__file__))
+    some/path/
+
+Then open and modify ``some/path/mpl-data/matplotlibrc``.
+
 Testing an installed pyoof
 --------------------------
 

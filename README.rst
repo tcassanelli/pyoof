@@ -57,26 +57,9 @@ The installation is also possible from the source. Clone the GitHub repository a
 
     python setup.py install
 
-From the source you can install developer versions, be aware of that.
+From the source you can install developer versions, be aware of that. For further installation details and troubleshooting visit the documentation `Installation <http://pyoof.readthedocs.io/en/latest/install.html>`_.
 I believe in the future :smile:, so please install Python 3.
 Unfortunately, a windows version of the package is currently not available.
-
-Troubleshooting
----------------
-If you are a macOS user using `miniconda3 <https://conda.io/miniconda.html>`_, you may encounter the following statement once you run pyoof::
-
-    >>> import pyoof  # or import matplotlib.pyplot as plt
-    ...
-    RuntimeError: Python is not installed as a framework. The Mac OS X backend will not be able to function correctly if Python is not installed as a framework. See the Python documentation for more information on installing Python as a framework on Mac OS X. Please either reinstall Python as a framework, or try one of the other backends. If you are using (Ana)Conda please install python.app and replace the use of 'python' with 'pythonw'. See 'Working with Matplotlib on OSX' in the Matplotlib FAQ for more information.
-
-This is a known issue that is solved by changing the default `matplotlib backend <https://matplotlib.org/faq/usage_faq.html#what-is-a-backend>`_.
-Searching for the ``matplotlibrc`` file and modifying it with ``backend: TkAgg``. To look into the matplotlib dependencies use the following code::
-
-    >>> import os
-    >>> import matplotlib
-    >>> print(os.path.dirname(matplotlib.__file__))
-
-Then open and modify ``mpl-data/matplotlibrc``.
 
 Dependencies
 ============

@@ -87,7 +87,7 @@ To plot the polynomials first it is required to construct a grid.
 .. plot::
     :include-source:
 
-    import matplotlib.pyplot
+    import matplotlib.pyplot as plt
     import numpy as np
     from pyoof import zernike, cart2pol
 
@@ -128,7 +128,7 @@ Then a plot of such function will be,
 .. plot::
     :include-source:
 
-    import matplotlib.pyplot
+    import matplotlib.pyplot as plt
     import numpy as np
     from pyoof import zernike, cart2pol
 
