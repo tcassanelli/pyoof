@@ -137,4 +137,4 @@ Contact
 =======
 If you have any questions about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
 
-- tcassanelli  *_at_*  protonmail.com
+- tcassanelli  *at*  protonmail.com
