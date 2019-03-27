@@ -31,11 +31,11 @@ def e_rs(phase):
 
     .. math::
         \\varepsilon_\\mathrm{rs} =
-        \\mathrm{e}^{-(4\pi\delta_\\mathrm{rms}/\lambda)^2}.
+        \\mathrm{e}^{-(4\\pi\\delta_\\mathrm{rms}/\\lambda)^2}.
 
-    Where :math:`\delta_\\mathrm{rms}` corresponds to the root-mean-squared
+    Where :math:`\\delta_\\mathrm{rms}` corresponds to the root-mean-squared
     deviation. The Python function uses the key **phase** because the term
-    :math:`4\pi\delta_\\mathrm{rms}/\lambda` corresponds to the phase error.
+    :math:`4\\pi\\delta_\\mathrm{rms}/\\lambda` corresponds to the phase error.
 
     Examples
     --------

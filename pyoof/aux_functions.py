@@ -195,7 +195,7 @@ def extract_data_effelsberg(pathfits):
 def str2LaTeX(python_string):
     """
     Function that solves the underscore problem in a python string to
-    :math:`\LaTeX` string.
+    :math:`\\LaTeX` string.
 
     Parameters
     ----------
