@@ -6,7 +6,8 @@ import os
 from astropy.io import fits
 import numpy as np
 from astropy.io import ascii
-from scipy.constants import c as light_speed
+from astropy import units as apu
+from astropy.constants import c as light_speed
 from .aperture import illum_gauss, illum_pedestal
 
 __all__ = [
@@ -149,37 +150,25 @@ def extract_data_effelsberg(pathfits):
     """
 
     # Opening fits file with astropy
-    try:
-        # main fits file with the OOF holography format
-        hdulist = fits.open(pathfits)
 
-        # Observation frequency
-        freq = hdulist[0].header['FREQ']  # Hz
-        wavel = light_speed / freq
+    pos = [3, 1, 2]  # standard postions for the pyoof software
 
-        # Mean elevation
-        meanel = hdulist[0].header['MEANEL']  # Degrees
-        obs_object = hdulist[0].header['OBJECT']  # observed object
-        obs_date = hdulist[0].header['DATE_OBS']  # observation date
-        d_z = [hdulist[i].header['DZ'] for i in range(1, 4)][::-1]
+    # main fits file with the OOF holography format
+    hdulist = fits.open(pathfits)
 
-        beam_data = [hdulist[i].data['fnu'] for i in range(1, 4)][::-1]
-        u_data = [hdulist[i].data['DX'] for i in range(1, 4)][::-1]
-        v_data = [hdulist[i].data['DY'] for i in range(1, 4)][::-1]
+    # Observation frequency
+    freq = hdulist[0].header['FREQ'] * apu.Hz  # Hz
+    wavel = light_speed / freq
 
-    except FileNotFoundError:
-        print('Fits file does not exists in directory: ' + pathfits)
-    except NameError:
-        print('Fits file does not have the OOF holography format')
+    # Mean elevation
+    meanel = hdulist[0].header['MEANEL'] * apu.deg  # Degrees
+    obs_object = hdulist[0].header['OBJECT']         # observed object
+    obs_date = hdulist[0].header['DATE_OBS']         # observation date
+    d_z = np.array([hdulist[i].header['DZ'] for i in pos]) * apu.m
 
-    else:
-        pass
-
-    # Permuting the position to provide same as main_functions
-    beam_data.insert(1, beam_data.pop(2))
-    u_data.insert(1, u_data.pop(2))
-    v_data.insert(1, v_data.pop(2))
-    d_z.insert(1, d_z.pop(2))
+    beam_data = [hdulist[i].data['fnu'] for i in pos]
+    u_data = [hdulist[i].data['DX'] * apu.rad for i in pos]
+    v_data = [hdulist[i].data['DY'] * apu.rad for i in pos]
 
     # path or directory where the fits file is located
     pthto = os.path.split(pathfits)[0]
@@ -310,7 +299,8 @@ def store_data_ascii(
         table=[params_names, params_solution, params_init],
         output=name_dir + '/fitpar_n{}.csv'.format(n),
         names=['parname', 'parfit', 'parinit'],
-        comment='Fitted parameters ' + name
+        comment='Fitted parameters ' + name,
+        overwrite=True
         )
 
 

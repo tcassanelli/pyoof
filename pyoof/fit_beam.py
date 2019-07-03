@@ -5,13 +5,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import ascii
+from astropy import units as apu
 from astropy.utils.data import get_pkg_data_filename
 from scipy import interpolate, optimize
 import os
 import time
 import yaml
 from .aperture import radiation_pattern, phase
-from .math_functions import wavevector2radians, co_matrices
+from .math_functions import co_matrices
 from .plot_routines import plot_fit_path
 from .aux_functions import store_data_csv, illum_strings, store_data_ascii
 
@@ -115,9 +116,9 @@ def residual_true(
 
         if interp:
 
-            # Generated beam u and v: wave-vectors -> degrees -> radians
-            u_rad = wavevector2radians(u, wavel)
-            v_rad = wavevector2radians(v, wavel)
+            # Generated beam u and v: wave-vectors -> radians
+            u_rad = u * wavel * apu.rad
+            v_rad = u * wavel * apu.rad
 
             # The calculated beam needs to be transformed!
             intrp = interpolate.RegularGridInterpolator(
@@ -128,6 +129,7 @@ def residual_true(
 
             # input interpolation function is the real beam grid
             beam_model.append(intrp(np.array([u_data[i], v_data[i]]).T))
+            # TODO: fix this, there must be a nicer way to do it
 
         else:
             beam_model.append(power_norm)
@@ -411,44 +413,38 @@ def fit_beam(
         work_dir = pthto
 
     illum_name, taper_name = illum_strings(illum_func)
+    telgeo, tel_name = telescope[:3], telescope[3]
 
-    try:
-        telgeo, tel_name = telescope[:3], telescope[3]
-
-        # Calling default configuration file from the pyoof package
-        if config_params_file is None:
-            config_params_pyoof = get_pkg_data_filename(
-                'data/config_params.yml'
-                )
-
-            with open(config_params_pyoof, 'r') as yaml_config:
-                config_params = yaml.load(yaml_config)
-        else:
-            with open(config_params_file, 'r') as yaml_config:
-                config_params = yaml.load(yaml_config)
-
-        # Generating specific exceptions
-        if not callable(illum_func):
-            raise ValueError('illum_func must be a function')
-
-        if not (
-            callable(telescope[0]) and callable(telescope[1]) and
-            isinstance(telescope[2], float) and isinstance(telescope[3], str)
-                ):
-            raise ValueError(
-                'telescope has to be a list [func, func, float, str]'
-                )
-
-    except ValueError as error:
-        print(error.args)
-    except NameError:
-        print(
-            'Configuration file .yml does not exist in path: ' +
-            config_params_file
-            )
-
+    # Calling default configuration file from the pyoof package
+    if config_params_file is None:
+        config_params_pyoof = get_pkg_data_filename('data/config_params.yml')
+        with open(config_params_pyoof, 'r') as yaml_config:
+            config_params = yaml.safe_load(yaml_config)
     else:
-        pass
+        with open(config_params_file, 'r') as yaml_config:
+            config_params = yaml.safe_load(yaml_config)
+
+    #     # Generating specific exceptions
+    #     if not callable(illum_func):
+    #         raise ValueError('illum_func must be a function')
+
+    #     if not (
+    #         callable(telescope[0]) and callable(telescope[1]) and
+    #         isinstance(telescope[2], float) and isinstance(telescope[3], str)
+    #             ):
+    #         raise ValueError(
+    #             'telescope has to be a list [func, func, float, str]'
+    #             )
+
+    # except ValueError as error:
+    #     print(error.args)
+    # except NameError:
+    #     print(
+    #         'Configuration file .yml does not exist in path: ' +
+    #         config_params_file
+    #         )
+    # else:
+    #     pass
 
     # Storing files in pyoof_out directory
     if not os.path.exists(os.path.join(work_dir, 'pyoof_out')):
@@ -460,13 +456,17 @@ def fit_beam(
             os.makedirs(name_dir)
             break
 
-    print('Maximum order to be fitted: ', order_max)
-    print('Telescope name: ', tel_name)
-    print('File name: ', name)
-    print('Obs frequency: ', freq, 'Hz')
-    print('Obs Wavelength : ', np.round(wavel, 4), 'm')
-    print('d_z (out-of-focus): ', np.round(d_z, 4), 'm')
-    print('Illumination to be fitted: ', illum_name)
+    print(
+        'Maximum order to be fitted: {}'.format(order_max),
+        'Telescope name: {}'.format(tel_name),
+        'File name: {}'.format(name),
+        'Obs frequency: {}'.format(freq.to(apu.GHz)),
+        'Obs Wavelength: {}'.format(wavel.to(apu.cm)),
+        'Mean elevation {}'.format(meanel.to(apu.deg)),
+        'd_z (out-of-focus): {}'.format(d_z.to(apu.cm)),
+        'Illumination to be fitted: {}'.format(illum_name),
+        sep="\n"
+        )
 
     for order in range(1, order_max + 1):
 
@@ -474,9 +474,9 @@ def fit_beam(
             print('\n... Fit order {} ... \n'.format(order))
 
         # Setting limits for plotting fitted beam
-        plim_u = [np.min(u_data[0]), np.max(u_data[0])]  # radians
-        plim_v = [np.min(v_data[0]), np.max(v_data[0])]  # radians
-        plim_rad = np.array(plim_u + plim_v)
+        plim_u = [u_data[0].min(), u_data[0].max()]  # radians
+        plim_v = [v_data[0].min(), v_data[0].max()]  # radians
+        plim_rad = plim_u + plim_v
 
         # Beam normalization
         beam_data_norm = [beam_data[i] / beam_data[i].max() for i in range(3)]
@@ -517,26 +517,26 @@ def fit_beam(
         idx = config_params['params_excluded']  # exclude params from fit
         # [0, 1, 2, 3, 4] = [i_amp, c_dB, x0, y0, K(0, 0)]
         # or 'None' to include all
+
         params_init_true = np.delete(params_init, idx)
 
-        if method == 'lm':  # see scipy.optimize.least_squares
-            bounds = tuple([
-                -np.ones(params_init_true.shape) * np.inf,
-                np.ones(params_init_true.shape) * np.inf
-                ])
+        # if method == 'lm':  # see scipy.optimize.least_squares
+        #     bounds = tuple([
+        #         -np.ones(params_init_true.shape) * np.inf,
+        #         np.ones(params_init_true.shape) * np.inf
+        #         ])
 
-        else:
-            bounds_min = np.array(
-                config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
-                )
-            bounds_max = np.array(
-                config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
-                )
+        # else:
+        bounds_min = np.array(
+            config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
+            )
+        bounds_max = np.array(
+            config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
+            )
 
-            bounds_min_true = np.delete(bounds_min, idx)
-            bounds_max_true = np.delete(bounds_max, idx)
-
-            bounds = tuple([bounds_min_true, bounds_max_true])
+        bounds_min_true = np.delete(bounds_min, idx)
+        bounds_max_true = np.delete(bounds_max, idx)
+        bounds = tuple([bounds_min_true, bounds_max_true])
 
         if not verbose == 0:
             print('Parameters to fit: {}\n'.format(len(params_init_true)))
@@ -620,21 +620,19 @@ def fit_beam(
                 name=name,
                 obs_object=obs_object,
                 obs_date=obs_date,
-                d_z=d_z,
-                wavel=wavel,
-                frequency=freq,
+                d_z=d_z.to(apu.m).value.tolist(),
+                wavel=wavel.to(apu.m).value,
+                frequency=freq.to(apu.Hz).value,
                 illumination=illum_name,
-                meanel=meanel,
+                meanel=meanel.to(apu.deg).value,
                 fft_resolution=resolution,
                 box_factor=box_factor,
                 opt_method=method
                 )
 
-            with open(
-                os.path.join(name_dir, 'pyoof_info.yml'), 'w'
-                    ) as outfile:
-                outfile.write('# pyoof relevant information\n')
-                yaml.dump(pyoof_info, outfile, default_flow_style=False)
+            with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:
+                outf.write('# pyoof relevant information\n')
+                yaml.dump(pyoof_info, outf, default_flow_style=False)
 
         # To store large files in csv format
         save_to_csv = [

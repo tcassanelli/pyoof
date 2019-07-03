@@ -3,6 +3,7 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
+from astropy import units as apu
 from ..math_functions import line_equation
 
 __all__ = [
@@ -52,8 +53,8 @@ def opd_effelsberg(x, y, d_z):
     """
 
     # Cassegrain/Gregorian (at focus) telescope
-    Fp = 30  # Focus primary reflector m
-    F = 387.39435  # Total focus Gregorian telescope m
+    Fp = 30 * apu.m               # Focus primary reflector m
+    F = 387.39435 * apu.m         # Total focus Gregorian telescope m
     r = np.sqrt(x ** 2 + y ** 2)  # polar coordinates radius
     a = r / (2 * Fp)
     b = r / (2 * F)
@@ -101,7 +102,7 @@ def opd_manual(Fp, F):
     return opd_func
 
 
-def block_effelsberg(x, y):
+def block_effelsberg(x, y, alpha=10 * apu.rad):
     """
     Truncation in the aperture (amplitude) distribution, :math:`B(x, y)`,
     given by the telescope's structure; i.e. support legs, sub-reflector and
@@ -122,14 +123,13 @@ def block_effelsberg(x, y):
     """
 
     # Default Effelsberg geometry
-    pr = 50  # Primary reflector radius
-    sr = 3.25  # Sub-reflector radius
-
-    L = 20   # Length support structure (from the edge of the sr)
-    a = 1  # Half-width support structure
+    pr = 50 * apu.m    # Primary reflector radius
+    sr = 3.25 * apu.m  # Sub-reflector radius
+    L = 20 * apu.m     # Length support structure (from the edge of the sr)
+    a = 1 * apu.m      # Half-width support structure
 
     # Angle shade effect in aperture plane
-    alpha = np.radians(10)  # triangle angle
+    # alpha = np.radians(10)  # triangle angle
 
     block = np.zeros(x.shape)  # or y.shape same
     block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1

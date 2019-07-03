@@ -292,7 +292,7 @@ def plot_phase(K_coeff, notilt, pr, title):
     ----------
     K_coeff : `~numpy.ndarray`
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
-        only one Zernike circle polynomial, :math:`U^\ell_n(\\varrho,
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     notilt : `bool`
         Boolean to include or exclude the tilt coefficients in the aperture

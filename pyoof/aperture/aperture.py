@@ -3,6 +3,7 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
+from astropy import units as apu
 from ..math_functions import cart2pol, rms
 from ..zernike import U
 
@@ -51,7 +52,8 @@ def e_rs(phase):
 
     rms_rad = rms(phase)  # rms value in radians
 
-    return np.exp(-rms_rad ** 2)
+    with apu.set_enabled_equivalencies(apu.dimensionless_angles()):
+        return np.exp(-rms_rad ** 2)
 
 
 def illum_pedestal(x, y, I_coeff, pr, q=2):
@@ -59,8 +61,7 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
     Illumination function, :math:`E_\\mathrm{a}(x, y)`, parabolic taper on a
     pedestal, sometimes called apodization, taper or window. Represents the
     distribution of light in the primary reflector. The illumination reduces
-    the side lobes in the FT and it is a property of the
-    receiver.
+    the side lobes in the FT and it is a (feed) receiver property.
 
     Parameters
     ----------
@@ -101,7 +102,14 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
 
     i_amp, c_dB, x0, y0 = I_coeff
 
-    c = 10 ** (c_dB / 20.)  # c_dB has to be negative, bounds given [-8, -25]
+    # workaround for units dB
+    if type(c_dB) == apu.quantity.Quantity:
+        c = 10 ** (c_dB / 20. / apu.dB)
+    else:
+        c = 10 ** (c_dB / 20.)
+
+    # c_dB has to be negative, bounds given [-8, -25]
+
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
 
     # Parabolic taper on a pedestal
@@ -164,14 +172,14 @@ def wavefront(rho, theta, K_coeff):
     Parameters
     ----------
     rho : `~numpy.ndarray`
-        Values for the radial component. :math:`\sqrt{x^2 + y^2} /
+        Values for the radial component. :math:`\\sqrt{x^2 + y^2} /
         \\varrho_\\mathrm{max}` normalized by its maximum radius.
     theta : `~numpy.ndarray`
-        Values for the angular component. :math:`\\vartheta = \mathrm{arctan}(
+        Values for the angular component. :math:`\\vartheta = \\mathrm{arctan}(
         y / x)`.
     K_coeff : `~numpy.ndarray`
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
-        only one Zernike circle polynomial, :math:`U^\ell_n(\\varrho,
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`. The coefficients are between :math:`[-2, 2]`.
 
     Returns
@@ -217,7 +225,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     ----------
     K_coeff : `~numpy.ndarray`
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
-        only one Zernike circle polynomial, :math:`U^\ell_n(\\varrho,
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     notilt : `bool`
         Boolean to include or exclude the tilt coefficients in the aperture
@@ -247,7 +255,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     through the expression,
 
     .. math::
-        \\varphi(x, y) = 2\pi \\cdot W(x, y) = 2\pi \\cdot \\sum_{n, \\ell}
+        \\varphi(x, y) = 2\\pi \\cdot W(x, y) = 2\\pi \\cdot \\sum_{n, \\ell}
         K_{n\\ell}U^\\ell_n(\\varrho, \\vartheta).
 
     Examples
@@ -284,7 +292,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     W = wavefront(rho=r_norm, theta=t, K_coeff=_K_coeff)
     W[(x_grid ** 2 + y_grid ** 2 > pr ** 2)] = 0
 
-    phi = W * 2 * np.pi  # Aperture phase distribution in radians
+    phi = W * 2 * np.pi * apu.rad  # Aperture phase distribution in radians
 
     return x, y, phi
 
@@ -308,7 +316,7 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
         Grid value for the :math:`y` variable in meters.
     K_coeff : `~numpy.ndarray`
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
-        only one Zernike circle polynomial, :math:`U^\ell_n(\\varrho,
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     I_coeff : `~numpy.ndarray`
         List which contains 4 parameters, the illumination amplitude,
@@ -345,8 +353,8 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 
     .. math::
         \\underline{E_\\mathrm{a}}(x, y) = B(x, y)\\cdot E_\\mathrm{a}(x, y)
-        \\cdot \\mathrm{e}^{\\mathrm{i} \{\\varphi(x, y) +
-        \\frac{2\pi}{\lambda}\\delta(x,y;d_z)\}}.
+        \\cdot \\mathrm{e}^{\\mathrm{i} \\{\\varphi(x, y) +
+        \\frac{2\\pi}{\\lambda}\\delta(x,y;d_z)\\}}.
 
     Where it does represent a complex number, with phase: aperture phase
     distribution, plus OPD function and amplitude the blockage distribution
@@ -368,9 +376,11 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
     Ea = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)  # Illumination function
 
     # Transformation: wavefront (aberration) distribution -> phase error
-    phi = (W + delta / wavel) * 2 * np.pi  # phase error plus the OPD function
+    phi = (W + delta / wavel) * 2 * np.pi * apu.rad
+    # phase error plus the OPD function
 
-    E = B * Ea * np.exp(phi * 1j)  # Aperture distribution
+    with apu.set_enabled_equivalencies(apu.dimensionless_angles()):
+        E = B * Ea * np.exp(phi * 1j)  # Aperture distribution
 
     return E
 
@@ -388,7 +398,7 @@ def radiation_pattern(
     ----------
     K_coeff : `~numpy.ndarray`
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
-        only one Zernike circle polynomial, :math:`U^\ell_n(\\varrho,
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     I_coeff : `~numpy.ndarray`
         List which contains 4 parameters, the illumination amplitude,
@@ -454,7 +464,7 @@ def radiation_pattern(
     box_size = pr * box_factor
 
     x = np.linspace(-box_size, box_size, resolution)
-    y = x
+    y = x.copy()
     x_grid, y_grid = np.meshgrid(x, y)
 
     dx = x[1] - x[0]
@@ -477,6 +487,12 @@ def radiation_pattern(
 
     # wave-vectors in 1 / m
     u, v = np.fft.fftfreq(x.size, dx), np.fft.fftfreq(y.size, dy)
-    u_shift, v_shift = np.fft.fftshift(u), np.fft.fftshift(v)
+
+    # workaround units
+    if type(x) == apu.quantity.Quantity:
+        u_shift = np.fft.fftshift(u) * u.unit
+        v_shift = np.fft.fftshift(v) * v.unit
+    else:
+        u_shift, v_shift = np.fft.fftshift(u), np.fft.fftshift(v)
 
     return u_shift, v_shift, F_shift
