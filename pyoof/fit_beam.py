@@ -297,7 +297,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
     """
 
     # Fixed values for parameters, in case they're excluded, see idx
-    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_params['params_fixed']
+    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_params['fixed']
 
     # N_K_coeff number of Zernike circle polynomials coefficients
     if params.size != (4 + N_K_coeff):
@@ -325,7 +325,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
 
 
 def fit_beam(
-    data_info, data_obs, method, order_max, illum_func, telescope, resolution,
+    data_info, data_obs, order_max, illum_func, telescope, resolution,
     box_factor, fit_previous=True, config_params_file=None, make_plots=True,
     verbose=2, work_dir=None
         ):
@@ -352,10 +352,6 @@ def fit_beam(
         ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
         observations, minus, zero and plus out-of-focus, in a flat array.
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
-    method : `str`
-        Least squares minimization algorithm, it can be ``'trf'``, ``'lm'`` or
-        ``'dogbox'``. ``'lm'`` does not handle bounds, see documentation
-        `~scipy.optimize.least_squares`.
     order_max : `int`
         Maximum order used for the Zernike circle polynomials, :math:`n`, least
         squares minimization. If ``order_max = 3``, it will do the
@@ -424,28 +420,6 @@ def fit_beam(
         with open(config_params_file, 'r') as yaml_config:
             config_params = yaml.safe_load(yaml_config)
 
-    #     # Generating specific exceptions
-    #     if not callable(illum_func):
-    #         raise ValueError('illum_func must be a function')
-
-    #     if not (
-    #         callable(telescope[0]) and callable(telescope[1]) and
-    #         isinstance(telescope[2], float) and isinstance(telescope[3], str)
-    #             ):
-    #         raise ValueError(
-    #             'telescope has to be a list [func, func, float, str]'
-    #             )
-
-    # except ValueError as error:
-    #     print(error.args)
-    # except NameError:
-    #     print(
-    #         'Configuration file .yml does not exist in path: ' +
-    #         config_params_file
-    #         )
-    # else:
-    #     pass
-
     # Storing files in pyoof_out directory
     if not os.path.exists(os.path.join(work_dir, 'pyoof_out')):
         os.makedirs(os.path.join(work_dir, 'pyoof_out'))
@@ -492,51 +466,30 @@ def fit_beam(
                 name_dir, 'fitpar_n{}.csv'.format(n - 1)
                 )
 
-            params_to_add = N_K_coeff - N_K_coeff_previous
+            params_to_add = np.ones(N_K_coeff - N_K_coeff_previous) * 0.1
+            params_previous = ascii.read(path_params_previous)['parfit']
+            params_init = np.hstack((params_previous, params_to_add))
 
-            if os.path.exists(path_params_previous):
-                params_init = np.hstack(
-                    (ascii.read(path_params_previous)['parfit'],
-                        np.ones(params_to_add) * 0.1)
-                    )
-                if not verbose == 0:
-                    print('Initial params: n={} fit'.format(n - 1))
-            else:
-                print(
-                    '\n ERROR: There is no previous parameters file fitpar_n' +
-                    str(n - 1) + '.csv in directory \n'
-                    )
+            if not verbose == 0:
+                print('Initial params: n={} fit'.format(n - 1))
         else:
-            params_init = np.array(
-                config_params['params_init'] + [0.1] * (N_K_coeff - 1)
-                )
-            print('Initial params: default')
+            params_init = config_params['init'] + [0.1] * (N_K_coeff - 1)
+            print('Initial parameters: default')
             # i_amp, sigma_r, x0, y0, K(n, l)
             # Giving an initial value of 0.1 for each coeff
 
-        idx = config_params['params_excluded']  # exclude params from fit
+        idx = config_params['excluded']  # exclude params from fit
         # [0, 1, 2, 3, 4] = [i_amp, c_dB, x0, y0, K(0, 0)]
         # or 'None' to include all
 
         params_init_true = np.delete(params_init, idx)
 
-        # if method == 'lm':  # see scipy.optimize.least_squares
-        #     bounds = tuple([
-        #         -np.ones(params_init_true.shape) * np.inf,
-        #         np.ones(params_init_true.shape) * np.inf
-        #         ])
+        bound_min = config_params['bound_min'] + [-5] * (N_K_coeff - 1)
+        bound_max = config_params['bound_max'] + [5] * (N_K_coeff - 1)
 
-        # else:
-        bounds_min = np.array(
-            config_params['params_bounds_min'] + [-5] * (N_K_coeff - 1)
-            )
-        bounds_max = np.array(
-            config_params['params_bounds_max'] + [5] * (N_K_coeff - 1)
-            )
-
-        bounds_min_true = np.delete(bounds_min, idx)
-        bounds_max_true = np.delete(bounds_max, idx)
-        bounds = tuple([bounds_min_true, bounds_max_true])
+        bound_min_true = np.delete(bound_min, idx)
+        bound_max_true = np.delete(bound_max, idx)
+        bounds = tuple([bound_min_true, bound_max_true])
 
         if not verbose == 0:
             print('Parameters to fit: {}\n'.format(len(params_init_true)))
@@ -561,7 +514,6 @@ def fit_beam(
                 config_params    # Coeff configuration for minimization (dict)
                 ),
             bounds=bounds,
-            method=method,
             verbose=verbose,
             max_nfev=None
             )
@@ -573,20 +525,17 @@ def fit_beam(
             N_K_coeff=N_K_coeff,
             config_params=config_params
             )
-        params_init = params_init               # Initial parameters used
         res_optim = res_lsq.fun.reshape(3, -1)  # Optimum residual solution
         jac_optim = res_lsq.jac                 # Last Jacobian matrix
         grad_optim = res_lsq.grad               # Last Gradient
 
-        cov, corr = co_matrices(
+        cov, cor = co_matrices(
             res=res_lsq.fun,
             jac=res_lsq.jac,
-            n_pars=params_init_true.size  # number of parameters fitted
+            n_pars=params_init_true.size        # number of parameters fitted
             )
         cov_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), cov))
-        corr_ptrue = np.vstack(
-            (np.delete(np.arange(N_K_coeff + 4), idx), corr)
-            )
+        cor_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), cor))
 
         # Final phase from fit in the telescope's primary reflector
         _phase = phase(
@@ -627,7 +576,6 @@ def fit_beam(
                 meanel=meanel.to(apu.deg).value,
                 fft_resolution=resolution,
                 box_factor=box_factor,
-                opt_method=method
                 )
 
             with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:
@@ -637,7 +585,7 @@ def fit_beam(
         # To store large files in csv format
         save_to_csv = [
             beam_data, u_data, v_data, res_optim, jac_optim, grad_optim,
-            _phase, cov_ptrue, corr_ptrue
+            _phase, cov_ptrue, cor_ptrue
             ]
 
         store_data_csv(
