@@ -92,9 +92,9 @@ def residual_true(
         squares minimization `~scipy.optimize.least_squares` package.
     """
 
-    I_coeff = params[:4]
-    K_coeff = params[4:]
+    I_coeff, K_coeff = params[:4], params[4:]
 
+    # TODO: change this to a numpy array instead of list
     beam_model = []
     for i in range(3):
 
@@ -115,14 +115,13 @@ def residual_true(
         power_norm = power_pattern / power_pattern.max()
 
         if interp:
-
-            # Generated beam u and v: wave-vectors -> radians
-            u_rad = u * wavel * apu.rad
-            v_rad = u * wavel * apu.rad
+            # # Generated beam u and v: wave-vectors -> radians
+            # u_rad = u * wavel  # radians
+            # v_rad = v * wavel  # radians
 
             # The calculated beam needs to be transformed!
             intrp = interpolate.RegularGridInterpolator(
-                points=(u_rad, v_rad),  # points defining grid
+                points=(u, v),  # points defining grid
                 values=power_norm.T,    # data in grid
                 method='linear'         # linear or nearest
                 )
@@ -130,14 +129,13 @@ def residual_true(
             # input interpolation function is the real beam grid
             beam_model.append(intrp(np.array([u_data[i], v_data[i]]).T))
             # TODO: fix this, there must be a nicer way to do it
+            # units are lost when concatenating with np.array([])
 
         else:
             beam_model.append(power_norm)
 
-    beam_model_all = np.hstack((beam_model[0], beam_model[1], beam_model[2]))
-    beam_data_all = np.hstack(
-        (beam_data_norm[0], beam_data_norm[1], beam_data_norm[2])
-        )
+    beam_model_all = np.hstack(beam_model)
+    beam_data_all = np.hstack(beam_data_norm)
 
     # Residual = data - model
     _residual_true = beam_data_all - beam_model_all
@@ -439,7 +437,7 @@ def fit_beam(
         'Mean elevation {}'.format(meanel.to(apu.deg)),
         'd_z (out-of-focus): {}'.format(d_z.to(apu.cm)),
         'Illumination to be fitted: {}'.format(illum_name),
-        sep="\n"
+        sep='\n', end='\n'
         )
 
     for order in range(1, order_max + 1):
@@ -448,9 +446,12 @@ def fit_beam(
             print('\n... Fit order {} ... \n'.format(order))
 
         # Setting limits for plotting fitted beam
-        plim_u = [u_data[0].min(), u_data[0].max()]  # radians
-        plim_v = [v_data[0].min(), v_data[0].max()]  # radians
-        plim_rad = plim_u + plim_v
+        plim = np.array([
+            u_data[0].min().to_value(apu.rad),
+            u_data[0].max().to_value(apu.rad),
+            v_data[0].min().to_value(apu.rad),
+            v_data[0].max().to_value(apu.rad)
+            ]) * u_data[0].unit
 
         # Beam normalization
         beam_data_norm = [beam_data[i] / beam_data[i].max() for i in range(3)]
@@ -489,7 +490,6 @@ def fit_beam(
 
         bound_min_true = np.delete(bound_min, idx)
         bound_max_true = np.delete(bound_max, idx)
-        bounds = tuple([bound_min_true, bound_max_true])
 
         if not verbose == 0:
             print('Parameters to fit: {}\n'.format(len(params_init_true)))
@@ -511,9 +511,9 @@ def fit_beam(
                 resolution,      # FFT2 resolution for a rectangular grid
                 box_factor,      # Image pixel size level
                 True,            # Grid interpolation
-                config_params    # Coeff configuration for minimization (dict)
+                config_params    # Params configuration for minimization (dict)
                 ),
-            bounds=bounds,
+            bounds=tuple([bound_min_true, bound_max_true]),
             verbose=verbose,
             max_nfev=None
             )
@@ -529,6 +529,7 @@ def fit_beam(
         jac_optim = res_lsq.jac                 # Last Jacobian matrix
         grad_optim = res_lsq.grad               # Last Gradient
 
+        # covariance and correlation
         cov, cor = co_matrices(
             res=res_lsq.fun,
             jac=res_lsq.jac,
@@ -569,11 +570,11 @@ def fit_beam(
                 name=name,
                 obs_object=obs_object,
                 obs_date=obs_date,
-                d_z=d_z.to(apu.m).value.tolist(),
-                wavel=wavel.to(apu.m).value,
-                frequency=freq.to(apu.Hz).value,
+                d_z=d_z.to_value(apu.m).tolist(),
+                wavel=wavel.to_value(apu.m),
+                frequency=freq.to_value(apu.Hz),
                 illumination=illum_name,
-                meanel=meanel.to(apu.deg).value,
+                meanel=meanel.to_value(apu.deg),
                 fft_resolution=resolution,
                 box_factor=box_factor,
                 )
@@ -599,14 +600,15 @@ def fit_beam(
             if not verbose == 0:
                 print('\n... Making plots ...')
 
-            plot_fit_path(  # Making all relevant plots
+            # Making all relevant plots
+            plot_fit_path(
                 path_pyoof=name_dir,
                 order=n,
                 telgeo=telgeo,
                 illum_func=illum_func,
-                plim_rad=plim_rad,
+                plim=plim,
                 save=True,
-                angle='degrees',
+                angle=apu.deg,
                 resolution=resolution,
                 box_factor=box_factor
                 )

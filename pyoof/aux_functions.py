@@ -3,9 +3,9 @@
 
 # Author: Tomas Cassanelli
 import os
-from astropy.io import fits
 import numpy as np
-from astropy.io import ascii
+from scipy.constants import golden
+from astropy.io import ascii, fits
 from astropy import units as apu
 from astropy.constants import c as light_speed
 from .aperture import illum_gauss, illum_pedestal
@@ -325,8 +325,9 @@ def uv_ratio(u, v):
         Height for the power pattern figure.
     """
 
-    ratio = (v.max() - v.min()) / (3 * (u.max() - u.min()))
-    width = 14
-    height = width * (ratio) + 0.2
+    ratio = (v.max() - v.min()) / (u.max() - u.min()) * 30
+
+    width = ratio
+    height = width / 5
 
     return width, height

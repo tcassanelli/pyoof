@@ -4,9 +4,12 @@
 # Author: Tomas Cassanelli
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import ImageGrid
+from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
 from astropy.io import ascii
+from astropy import units as apu
 from astropy.utils.data import get_pkg_data_filename
 import warnings
 import os
@@ -24,7 +27,7 @@ plt.style.use(get_pkg_data_filename('data/pyoof.mplstyle'))
 
 
 def plot_beam(
-    params, d_z, wavel, illum_func, telgeo, resolution, box_factor, plim_rad,
+    params, d_z, wavel, illum_func, telgeo, resolution, box_factor, plim,
     angle, title
         ):
     """
@@ -66,11 +69,11 @@ def plot_beam(
         telescope, e.g. a ``box_factor = 5`` returns ``x = np.linspace(-5 *
         pr, 5 * pr, resolution)``, an array to be used in the FFT2
         (`~numpy.fft.fft2`).
-    plim_rad : `~numpy.ndarray`
+    plim : `~numpy.ndarray`
         Contains the maximum values for the :math:`u` and :math:`v`
         wave-vectors, it can be in degrees or radians depending which one is
         chosen in **angle** key. The `~numpy.ndarray` must be in the following
-        order, ``plim_rad = np.array([umin, umax, vmin, vmax])``.
+        order, ``plim = np.array([umin, umax, vmin, vmax])``.
     angle : `str`
         Angle unit, it can be ``'degrees'`` or ``'radians'``.
     title : `str`
@@ -101,81 +104,74 @@ def plot_beam(
             box_factor=box_factor
             )
 
-        u.append(_u)
-        v.append(_v)
+        u.append(_u)  # radians
+        v.append(_v)  # radians
         F.append(_F)
 
-    u = np.array(u)
-    v = np.array(v)
     power_pattern = np.abs(F) ** 2
-    power_norm = np.array(
-        [power_pattern[i] / power_pattern[i].max() for i in range(3)]
-        )
+    power_norm = [power_pattern[i] / power_pattern[i].max() for i in range(3)]
 
     # Limits, they need to be transformed to degrees
-    if plim_rad is None:
-        pr = telgeo[2]  # primary reflector radius
-        bw = 1.22 * wavel / (2 * pr)  # Beamwidth radians
-        size_in_bw = bw * 8
+    if plim is None:
+        pr = telgeo[2]                          # primary reflector radius
+        bw = 1.22 * apu.rad * wavel / (2 * pr)  # Beamwidth radians
+        s_bw = bw * 8                           # size-beamwidth ratio radians
 
         # Finding central point for shifted maps
         uu, vv = np.meshgrid(_u, _v)
         u_offset = uu[power_norm[1] == power_norm[1].max()][0]
         v_offset = vv[power_norm[1] == power_norm[1].max()][0]
 
-        u_offset = wavevector2radians(u_offset, wavel)
-        v_offset = wavevector2radians(v_offset, wavel)
+        plim = np.array([
+            (-s_bw + u_offset).to_value(apu.rad),
+            (s_bw + u_offset).to_value(apu.rad),
+            (-s_bw + v_offset).to_value(apu.rad),
+            (s_bw + v_offset).to_value(apu.rad)
+            ]) * apu.rad
 
-        plim_rad = [
-            -size_in_bw + u_offset, size_in_bw + u_offset,
-            -size_in_bw + v_offset, size_in_bw + v_offset
-            ]
-
-    if angle == 'degrees':
-        plim_angle = np.degrees(plim_rad)
-        u_angle = wavevector2degrees(u, wavel)
-        v_angle = wavevector2degrees(v, wavel)
-    if angle == 'radians':
-        plim_angle = plim_rad
-        u_angle = wavevector2radians(u, wavel)
-        v_angle = wavevector2radians(v, wavel)
-
-    plim_u, plim_v = plim_angle[:2], plim_angle[2:]
+    plim = plim.to_value(angle)
+    plim_u, plim_v = plim[:2], plim[2:]
 
     subtitle = [
         '$P_{\\textrm{\\scriptsize{norm}}}(u,v)$ $d_z=' +
-        str(round(d_z[i], 3)) + '$ m' for i in range(3)
+        str(round(d_z[i].to_value(apu.cm), 3)) + '$ cm' for i in range(3)
         ]
 
-    fig, ax = plt.subplots(ncols=3, figsize=uv_ratio(plim_u, plim_v))
+    fig = plt.figure(figsize=uv_ratio(plim_u, plim_v), constrained_layout=True)
+    gs = GridSpec(
+        nrows=1, ncols=4, figure=fig, width_ratios=[.295, .295, .295, .01]
+        )
+    ax = [plt.subplot(gs[i]) for i in range(4)]
+    ax[1].set_yticklabels([])
+    ax[2].set_yticklabels([])
 
     for i in range(3):
 
         extent = [
-            u_angle[i].min(), u_angle[i].max(),
-            v_angle[i].min(), v_angle[i].max()
+            u[i].to_value(angle).min(), u[i].to_value(angle).max(),
+            v[i].to_value(angle).min(), v[i].to_value(angle).max()
             ]
         levels = np.linspace(power_norm[i].min(), power_norm[i].max(), 10)
 
         im = ax[i].imshow(X=power_norm[i], extent=extent, vmin=0, vmax=1)
-        ax[i].contour(u_angle[i], v_angle[i], power_norm[i], levels=levels)
-
-        divider = make_axes_locatable(ax[i])
-        cax = divider.append_axes("right", size="3%", pad=0.03)
-        cb = fig.colorbar(im, cax=cax)
-        cb.formatter.set_powerlimits((0, 0))
-        cb.ax.yaxis.set_offset_position('left')
-        cb.update_ticks()
+        ax[i].contour(
+            u[i].to_value(angle),
+            v[i].to_value(angle),
+            power_norm[i],
+            levels=levels
+            )
 
         ax[i].set_title(subtitle[i])
-        ax[i].set_ylabel('$v$ ' + angle)
-        ax[i].set_xlabel('$u$ ' + angle)
+        ax[i].set_xlabel('$u$ {}'.format(angle))
+
+        # limits don't work with astropy units
         ax[i].set_ylim(*plim_v)
         ax[i].set_xlim(*plim_u)
-        ax[i].grid('off')
+        ax[i].grid(False)
 
+    ax[0].set_ylabel('$v$ {}'.format(angle))
+    fig.colorbar(im, cax=ax[3], use_gridspec=True)
     fig.suptitle(title)
-    fig.tight_layout()
 
     return fig
 
@@ -229,29 +225,41 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         # Power pattern normalization
         beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
     # input u and v are in radians
-    uv_title = angle
 
-    if angle == 'degrees':
-        u_data, v_data = np.degrees(u_data), np.degrees(v_data)
+    # u_data = u_data.to(angle)
+    # v_data = u_data.to(angle)
 
     vmin = np.min(beam_data)
     vmax = np.max(beam_data)
 
     subtitle = [
-        '$P_{\\textrm{\\scriptsize{norm}}}^{\\textrm{\\scriptsize{obs}}}' +
-        '(u,v)$ $d_z={}$ m'.format(round(d_z[i], 3)) for i in range(3)
+        '$P_{\\textrm{\\scriptsize{norm}}}(u,v)$ $d_z=' +
+        str(round(d_z[i].to_value(apu.cm), 3)) + '$ cm' for i in range(3)
         ]
 
-    fig, ax = plt.subplots(ncols=3, figsize=uv_ratio(u_data[0], v_data[0]))
+    # fig, ax = plt.subplots(ncols=3, figsize=uv_ratio(u_data[0], v_data[0]))
+
+    fig = plt.figure(
+        figsize=uv_ratio(u_data[0], v_data[0]),
+        constrained_layout=True
+        )
+    gs = GridSpec(
+        nrows=1, ncols=4, figure=fig, width_ratios=[.295, .295, .295, .01]
+        )
+    ax = [plt.subplot(gs[i]) for i in range(4)]
+    ax[1].set_yticklabels([])
+    ax[2].set_yticklabels([])
 
     for i in range(3):
         # new grid for beam_data
-        u_ng = np.linspace(u_data[i].min(), u_data[i].max(), 300)
-        v_ng = np.linspace(v_data[i].min(), v_data[i].max(), 300)
+        u_ng = np.linspace(
+            u_data[i].to(angle).min(), u_data[i].to(angle).max(), 300)
+        v_ng = np.linspace(
+            v_data[i].to(angle).min(), v_data[i].to(angle).max(), 300)
 
         beam_ng = interpolate.griddata(
             # coordinates of grid points to interpolate from.
-            points=(u_data[i], v_data[i]),
+            points=(u_data[i].to(angle), v_data[i].to(angle)),
             values=beam_data[i],
             # coordinates of grid points to interpolate to.
             xi=tuple(np.meshgrid(u_ng, v_ng)),
@@ -259,25 +267,33 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
             )
 
         levels = np.linspace(beam_ng.min(), beam_ng.max(), 10)
-        extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
+        extent = [
+            u_ng.to_value(angle).min(), u_ng.to_value(angle).max(),
+            v_ng.to_value(angle).min(), v_ng.to_value(angle).max()
+            ]
+
         im = ax[i].imshow(X=beam_ng, extent=extent, vmin=vmin, vmax=vmax)
-        ax[i].contour(u_ng, v_ng, beam_ng, levels=levels)
+        ax[i].contour(
+            u_ng.to_value(angle),
+            v_ng.to_value(angle),
+            beam_ng, levels=levels
+            )
 
-        divider = make_axes_locatable(ax[i])
-        cax = divider.append_axes("right", size="3%", pad=0.03)
+        # divider = make_axes_locatable(ax[i])
+        # cax = divider.append_axes("right", size="3%", pad=0.03)
+        # cb = fig.colorbar(im, cax=cax)
+        # cb.formatter.set_powerlimits((0, 0))
+        # cb.ax.yaxis.set_offset_position('left')
+        # cb.update_ticks()
 
-        cb = fig.colorbar(im, cax=cax)
-        cb.formatter.set_powerlimits((0, 0))
-        cb.ax.yaxis.set_offset_position('left')
-        cb.update_ticks()
-
-        ax[i].set_ylabel('$v$ ' + uv_title)
-        ax[i].set_xlabel('$u$ ' + uv_title)
+        ax[i].set_xlabel('$u$ {}'.format(angle))
         ax[i].set_title(subtitle[i])
-        ax[i].grid('off')
+        ax[i].grid(False)
 
+    ax[0].set_ylabel('$v$ {}'.format(angle))
+    fig.colorbar(im, cax=ax[3], use_gridspec=True)
     fig.suptitle(title)
-    fig.tight_layout()
+    # fig.tight_layout()
 
     return fig
 
@@ -318,19 +334,25 @@ def plot_phase(K_coeff, notilt, pr, title):
     else:
         cbartitle = '$\\varphi(x, y)$ amplitude rad'
 
-    extent = [-pr, pr, -pr, pr]
-    levels = np.linspace(-2, 2, 9)
-
+    extent = [-pr.to_value(apu.m), pr.to_value(apu.m)] * 2
+    levels = np.linspace(-2, 2, 9)  # radians
     _x, _y, _phase = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
 
     fig, ax = plt.subplots(figsize=(6, 5.8))
 
-    im = ax.imshow(X=_phase, extent=extent)
+    im = ax.imshow(X=_phase.to_value(apu.rad), extent=extent)
 
     # Partial solution for contour Warning
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ax.contour(_x, _y, _phase, levels=levels, colors='k', alpha=0.3)
+        ax.contour(
+            _x.to_value(apu.m),
+            _y.to_value(apu.m),
+            _phase.to_value(apu.rad),
+            levels=levels,
+            colors='k',
+            alpha=0.3
+            )
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.03)
@@ -340,7 +362,7 @@ def plot_phase(K_coeff, notilt, pr, title):
     ax.set_title(title)
     ax.set_ylabel('$y$ m')
     ax.set_xlabel('$x$ m')
-    ax.grid('off')
+    ax.grid(False)
 
     fig.tight_layout()
 
@@ -456,7 +478,7 @@ def plot_variance(matrix, order, diag, illumination, cbtitle, title):
 
 def plot_fit_path(
     path_pyoof, order, illum_func, telgeo, resolution, box_factor, angle,
-    plim_rad, save
+    plim, save
         ):
     """
     Plot all important figures after a least squares minimization.
@@ -488,11 +510,11 @@ def plot_fit_path(
         (`~numpy.fft.fft2`).
     angle : `str`
         Angle unit, it can be ``'degrees'`` or ``'radians'``.
-    plim_rad : `~numpy.ndarray`
+    plim : `~numpy.ndarray`
         Contains the maximum values for the :math:`u` and :math:`v`
         wave-vectors, it can be in degrees or radians depending which one is
         chosen in **angle** key. The `~numpy.ndarray` must be in the following
-        order, ``plim_rad = np.array([umin, umax, vmin, vmax])``.
+        order, ``plim = np.array([umin, umax, vmin, vmax])``.
     save : `bool`
         If `True`, it stores all plots in the ``'pyoof_out/directory'``
         directory.
@@ -538,19 +560,22 @@ def plot_fit_path(
     K_coeff = np.array(fitpar['parfit'])[4:]
 
     with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
-        pyoof_info = yaml.load(inputfile)
+        pyoof_info = yaml.safe_load(inputfile)
 
     obs_object = pyoof_info['obs_object']
     meanel = round(pyoof_info['meanel'], 2)
     illumination = pyoof_info['illumination']
 
-    # Residual
+    # Beam and residual
+    beam_data = np.genfromtxt(os.path.join(path_pyoof, 'beam_data.csv'))
     res = np.genfromtxt(os.path.join(path_pyoof, 'res_n{}.csv'.format(n)))
 
-    # Data
-    u_data = np.genfromtxt(os.path.join(path_pyoof, 'u_data.csv'))
-    v_data = np.genfromtxt(os.path.join(path_pyoof, 'v_data.csv'))
-    beam_data = np.genfromtxt(os.path.join(path_pyoof, 'beam_data.csv'))
+    # fixing astropy units
+    u_data = np.genfromtxt(os.path.join(path_pyoof, 'u_data.csv')) * apu.rad
+    v_data = np.genfromtxt(os.path.join(path_pyoof, 'v_data.csv')) * apu.rad
+
+    wavel = pyoof_info['wavel'] * apu.m
+    d_z = np.array(pyoof_info['d_z']) * apu.m
 
     # Covariance and Correlation matrix
     cov = np.genfromtxt(os.path.join(path_pyoof, 'cov_n{}.csv'.format(n)))
@@ -561,8 +586,8 @@ def plot_fit_path(
             u_data=u_data,
             v_data=v_data,
             beam_data=beam_data,
-            d_z=pyoof_info['d_z'],
-            title='{} observed power pattern $\\alpha={}$ degrees'.format(
+            d_z=d_z,
+            title='{} observed power pattern $\\alpha={}$ deg'.format(
                 obs_object, meanel),
             angle=angle,
             res_mode=False
@@ -572,11 +597,11 @@ def plot_fit_path(
         params=np.array(fitpar['parfit']),
         title='{} fit power pattern  $n={}$ $\\alpha={}$ degrees'.format(
             obs_object, n, meanel),
-        d_z=pyoof_info['d_z'],
-        wavel=pyoof_info['wavel'],
+        d_z=d_z,
+        wavel=wavel,
         illum_func=illum_func,
         telgeo=telgeo,
-        plim_rad=plim_rad,
+        plim=plim,
         angle=angle,
         resolution=resolution,
         box_factor=box_factor
@@ -585,9 +610,9 @@ def plot_fit_path(
     fig_phase = plot_phase(
         K_coeff=K_coeff,
         title=(
-            '{} phase error $d_z=\\pm {}$ m ' +
+            '{} phase error $d_z=\\pm {}$ cm ' +
             '$n={}$ $\\alpha={}$ deg'
-            ).format(obs_object, round(pyoof_info['d_z'][2], 3), n, meanel),
+            ).format(obs_object, round(d_z[2].to_value(apu.cm), 3), n, meanel),
         notilt=True,
         pr=telgeo[2]
         )
@@ -596,7 +621,7 @@ def plot_fit_path(
         u_data=u_data,
         v_data=v_data,
         beam_data=res,
-        d_z=pyoof_info['d_z'],
+        d_z=d_z,
         title='{} residual $n={}$'.format(obs_object, n),
         angle=angle,
         res_mode=True
@@ -606,7 +631,7 @@ def plot_fit_path(
         matrix=cov,
         order=n,
         title='{} variance-covariance matrix $n={}$'.format(obs_object, n),
-        cbtitle='$\sigma_{ij}^2$',
+        cbtitle='$\\sigma_{ij}^2$',
         diag=True,
         illumination=illumination
         )

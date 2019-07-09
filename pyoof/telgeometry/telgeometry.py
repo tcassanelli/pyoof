@@ -11,6 +11,13 @@ __all__ = [
     ]
 
 
+# def sr_reflection(x, y):
+
+#     x1 = np.sqrt(x ** 2 + y ** 2)
+
+#     gamma = np.arctan2()
+
+
 def opd_effelsberg(x, y, d_z):
     """
     Optical path difference (OPD) function, :math:`\\delta(x,y;d_z)`. Given by
@@ -102,7 +109,7 @@ def opd_manual(Fp, F):
     return opd_func
 
 
-def block_effelsberg(x, y, alpha=10 * apu.rad):
+def block_effelsberg(x, y):
     """
     Truncation in the aperture (amplitude) distribution, :math:`B(x, y)`,
     given by the telescope's structure; i.e. support legs, sub-reflector and
@@ -130,6 +137,7 @@ def block_effelsberg(x, y, alpha=10 * apu.rad):
 
     # Angle shade effect in aperture plane
     # alpha = np.radians(10)  # triangle angle
+    alpha = 20 * apu.deg  # triangle angle
 
     block = np.zeros(x.shape)  # or y.shape same
     block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1

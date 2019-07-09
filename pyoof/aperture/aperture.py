@@ -102,14 +102,17 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
 
     i_amp, c_dB, x0, y0 = I_coeff
 
-    # workaround for units dB
+    # workaround for units
     if type(c_dB) == apu.quantity.Quantity:
         c = 10 ** (c_dB / 20. / apu.dB)
     else:
         c = 10 ** (c_dB / 20.)
+    if type(x0) != apu.quantity.Quantity:
+        x0 = x0 * apu.m
+    if type(y0) != apu.quantity.Quantity:
+        y0 = y0 * apu.m
 
     # c_dB has to be negative, bounds given [-8, -25]
-
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
 
     # Parabolic taper on a pedestal
@@ -286,7 +289,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     x_grid, y_grid = np.meshgrid(x, y)
 
     r, t = cart2pol(x_grid, y_grid)
-    r_norm = r / pr  # For orthogonality U(n, l) polynomials
+    r_norm = r / pr       # For orthogonality U(n, l) polynomials
 
     # Wavefront (aberration) distribution
     W = wavefront(rho=r_norm, theta=t, K_coeff=_K_coeff)
@@ -490,9 +493,10 @@ def radiation_pattern(
 
     # workaround units
     if type(x) == apu.quantity.Quantity:
-        u_shift = np.fft.fftshift(u) * u.unit
-        v_shift = np.fft.fftshift(v) * v.unit
+        u_shift = np.fft.fftshift(u) * u.unit * wavel * apu.rad
+        v_shift = np.fft.fftshift(v) * v.unit * wavel * apu.rad
     else:
-        u_shift, v_shift = np.fft.fftshift(u), np.fft.fftshift(v)
+        u_shift = np.fft.fftshift(u) * wavel.to_value(apu.m)
+        v_shift = np.fft.fftshift(v) * wavel.to_value(apu.m)
 
     return u_shift, v_shift, F_shift
