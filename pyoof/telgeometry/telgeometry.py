@@ -11,13 +11,6 @@ __all__ = [
     ]
 
 
-# def sr_reflection(x, y):
-
-#     x1 = np.sqrt(x ** 2 + y ** 2)
-
-#     gamma = np.arctan2()
-
-
 def opd_effelsberg(x, y, d_z):
     """
     Optical path difference (OPD) function, :math:`\\delta(x,y;d_z)`. Given by
@@ -136,13 +129,14 @@ def block_effelsberg(x, y):
     a = 1 * apu.m      # Half-width support structure
 
     # Angle shade effect in aperture plane
-    # alpha = np.radians(10)  # triangle angle
     alpha = 20 * apu.deg  # triangle angle
 
     block = np.zeros(x.shape)  # or y.shape same
     block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+
     block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
     block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
+    # block[(x ** 2 + y ** 2 < sr ** 2)] = 0.8
 
     csc2 = np.sin(alpha) ** (-2)  # squared cosecant
 
