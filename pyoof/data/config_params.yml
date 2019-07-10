@@ -16,7 +16,7 @@ excluded:
 # - 1  # c_dB
 - 2  # x0
 - 3  # y0
-- 5  # K(0, 0)
+- 4  # K(0, 0)
 fixed:
 - 1.0  # i_amp
 - -13  # c_dB
