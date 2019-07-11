@@ -40,7 +40,7 @@ def fit_beam_effelsberg(pathfits):
         order_max=15,                        # it'll fit from 1 to order_max
         illum_func=aperture.illum_pedestal,  # or illum_gauss
         telescope=telescope['effelsberg'],
-        fit_previous=False,                   # True is recommended
+        fit_previous=True,                   # True is recommended
         resolution=2 ** 8,                   # standard is 2 ** 8
         box_factor=5,              # box_size = 5 * pr, better pixel resolution
         config_params_file=None,   # default or add path config_file.yaml
