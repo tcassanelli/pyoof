@@ -469,7 +469,7 @@ def plot_variance(matrix, order, diag, illumination, cbtitle, title):
     ax.set_xticklabels(labels_x, rotation='vertical')
     ax.set_yticks(np.arange(y_ticks) + 0.5)
     ax.set_yticklabels(labels_y)
-    ax.grid('off')
+    ax.grid(False)
 
     fig.tight_layout()
 
