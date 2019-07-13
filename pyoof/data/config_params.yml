@@ -1,6 +1,6 @@
 # Default parameters pyoof package
 bound_max:
-- 100000.0  # i_amp
+- 1.0  # i_amp
 - -8  # c_dB or other taper
 - 0.01  # x0 illumination offset
 - 0.01  # y0
