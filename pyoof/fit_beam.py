@@ -40,15 +40,15 @@ def residual_true(
         The ``beam_data_norm`` is a list with the three observed beam maps,
         :math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`, minus, zero and plus
         out-of-focus. The data has to be initially normalized by its maximum.
-    u_data : `~numpy.ndarray`
+    u_data : `list`
         :math:`x` axis value for the 3 beam maps in radians. The values have
         to be flatten, in one dimension, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
-    v_data : `~numpy.ndarray`
+    v_data : `list`
         :math:`y` axis value for the 3 beam maps in radians. The values have
         to be flatten, one dimensional, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
-    d_z : `list`
+    d_z : `~astropy.units.quantity.Quantity`
         Radial offset :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is
@@ -172,15 +172,15 @@ def residual(
         The ``beam_data_norm`` is a list with the three observed beam maps,
         :math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`, minus, zero and plus
         out-of-focus. The data has to be initially normalized by its maximum.
-    u_data : `~numpy.ndarray`
+    u_data : `list`
         :math:`x` axis value for the 3 beam maps in radians. The values have
         to be flatten, in one dimension, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
-    v_data : `~numpy.ndarray`
+    v_data : `list`
         :math:`y` axis value for the 3 beam maps in radians. The values have
         to be flatten, one dimensional, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
-    d_z : `list`
+    d_z : `~astropy.units.quantity.Quantity`
         Radial offset :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is

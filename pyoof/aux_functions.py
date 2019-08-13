@@ -4,7 +4,6 @@
 # Author: Tomas Cassanelli
 import os
 import numpy as np
-from scipy.constants import golden
 from astropy.io import ascii, fits
 from astropy import units as apu
 from astropy.constants import c as light_speed
@@ -101,16 +100,16 @@ def extract_data_pyoof(pathfits):
             ):
         raise TypeError('Not all necessary keys found in FITS header.')
 
-    freq = hdulist[0].header['FREQ']
-    wavel = hdulist[0].header['WAVEL']
-    meanel = hdulist[0].header['MEANEL']
+    freq = hdulist[0].header['FREQ'] * apu.Hz
+    wavel = hdulist[0].header['WAVEL'] * apu.m
+    meanel = hdulist[0].header['MEANEL'] * apu.deg
     obs_object = hdulist[0].header['OBJECT']
     obs_date = hdulist[0].header['DATE_OBS']
 
     beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
-    u_data = [hdulist[i].data['U'] for i in range(1, 4)]
-    v_data = [hdulist[i].data['V'] for i in range(1, 4)]
-    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)]
+    u_data = [hdulist[i].data['U'] * apu.rad for i in range(1, 4)]
+    v_data = [hdulist[i].data['V'] * apu.rad for i in range(1, 4)]
+    d_z = np.array([hdulist[i].header['DZ'] for i in range(1, 4)]) * apu.m
 
     data_file = [name, pthto]
     data_info = data_file + [obs_object, obs_date, freq, wavel, d_z, meanel]
@@ -149,21 +148,17 @@ def extract_data_effelsberg(pathfits):
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
     """
 
-    # Opening fits file with astropy
-
-    pos = [3, 1, 2]  # standard postions for the pyoof software
-
-    # main fits file with the OOF holography format
-    hdulist = fits.open(pathfits)
+    pos = [3, 1, 2]  # Positions for OOF holography observations at Effelsberg
+    hdulist = fits.open(pathfits)  # main fits file OOF holography format
 
     # Observation frequency
-    freq = hdulist[0].header['FREQ'] * apu.Hz  # Hz
+    freq = hdulist[0].header['FREQ'] * apu.Hz
     wavel = light_speed / freq
 
     # Mean elevation
-    meanel = hdulist[0].header['MEANEL'] * apu.deg  # Degrees
-    obs_object = hdulist[0].header['OBJECT']         # observed object
-    obs_date = hdulist[0].header['DATE_OBS']         # observation date
+    meanel = hdulist[0].header['MEANEL'] * apu.deg
+    obs_object = hdulist[0].header['OBJECT']        # observed object
+    obs_date = hdulist[0].header['DATE_OBS']        # observation date
     d_z = np.array([hdulist[i].header['DZ'] for i in pos]) * apu.m
 
     beam_data = [hdulist[i].data['fnu'] for i in pos]
@@ -312,16 +307,16 @@ def uv_ratio(u, v):
 
     Parameters
     ----------
-    u : `~numpy.ndarray`
+    u : `~astropy.units.quantity.Quantity`
         Spatial frequencies from the power pattern, usually in degrees.
-    v : `~numpy.ndarray`
+    v : `~astropy.units.quantity.Quantity`
         Spatial frequencies from the power pattern, usually in degrees.
 
     Returns
     -------
-    plot_width : `float`
+    width : `float`
         Width for the power pattern figure.
-    plot_height : `float`
+    height : `float`
         Height for the power pattern figure.
     """
 

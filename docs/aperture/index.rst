@@ -47,24 +47,29 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
 
     import numpy as np
     import matplotlib.pyplot as plt
+    from astropy import units as u
     from pyoof import aperture
 
-    pr = 50  # primary relfector m
+    pr = 50 * u.m  # primary relfector radius
     x = np.linspace(-pr, pr, 1e3)
-    xx, yy = np.meshgrid(x, x)
+    y = x.copy()
+    xx, yy = np.meshgrid(x, y)
 
-    I_coeff = [1, -14, 0, 0]  # [amp, c_dB, x0, y0]
+    I_coeff = [1, -14 * u.dB, 0 * u.m, 0 * u.m]  # [amp, c_dB, x0, y0]
 
     Ea = aperture.illum_pedestal(xx, yy, I_coeff, pr)
     Ea[xx ** 2 + yy ** 2 > pr ** 2] = 0  # circle shape
 
     fig, ax = plt.subplots()
 
-    ax.imshow(Ea, extent=[-pr, pr] * 2, cmap='viridis')
+    ax.imshow(
+        X=Ea,
+        extent=[-pr.to_value(u.m), pr.to_value(u.m)] * 2,
+        cmap='viridis'
+        )
     ax.set_xlabel('$x$ m')
     ax.set_ylabel('$y$ m')
     ax.set_title('Illumination function')
-
 
 The `~pyoof.aperture` only uses standard Python libraries, but what needs special consideration are the Python functions with the parameter ``K_coeff``, coming up.
 

@@ -4,10 +4,7 @@
 # Author: Tomas Cassanelli
 import numpy as np
 
-__all__ = [
-    'cart2pol', 'wavevector2degrees', 'wavevector2radians', 'co_matrices',
-    'line_equation', 'rms'
-    ]
+__all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms']
 
 
 def cart2pol(x, y):
@@ -16,10 +13,10 @@ def cart2pol(x, y):
 
     Parameters
     ----------
-    x : `~numpy.ndarray`
-        Grid value for the :math:`x` variable.
-    y : `~numpy.ndarray`
-        Grid value for the :math:`y` variable.
+    x : `~astropy.units.quantity.Quantity`
+        Grid value for the :math:`x` variable in length units.
+    y : `~astropy.units.quantity.Quantity`
+        Grid value for the :math:`y` variable in length units.
 
     Returns
     -------
@@ -35,48 +32,50 @@ def cart2pol(x, y):
     return rho, theta
 
 
-def wavevector2degrees(u, wavel):
-    """
-    Transformation from a wave-vector 1 / m units to degrees.
+# def wavevector2degrees(u, wavel):
+#     """
+#     This function may be deprecated after updating to astropy units.
+#     Transformation from a wave-vector 1 / m units to degrees.
 
-    Parameters
-    ----------
-    u : `~numpy.ndarray`
-        Wave-vector, result from FFT2 in 1 / m units.
-    wavel : `~numpy.ndarray`
-        Wavelength in meters.
+#     Parameters
+#     ----------
+#     u : `~numpy.ndarray`
+#         Wave-vector, result from FFT2 in 1 / m units.
+#     wavel : `~numpy.ndarray`
+#         Wavelength in meters.
 
-    Returns
-    -------
-    wavevector_degrees : `~numpy.ndarray`
-        Wave-vector in degrees.
-    """
+#     Returns
+#     -------
+#     wavevector_degrees : `~numpy.ndarray`
+#         Wave-vector in degrees.
+#     """
 
-    wavevector_degrees = np.degrees(u * wavel)
+#     wavevector_degrees = np.degrees(u * wavel)
 
-    return wavevector_degrees
+#     return wavevector_degrees
 
 
-def wavevector2radians(u, wavel):
-    """
-    Transformation from a wave-vector 1 / m units to radians.
+# def wavevector2radians(u, wavel):
+#     """
+#     This function may be deprecated after updating to astropy units.
+#     Transformation from a wave-vector 1 / m units to radians.
 
-    Parameters
-    ----------
-    u : `~numpy.ndarray`
-        Wave-vector, result from FFT2 in 1 / m units.
-    wavel : `~numpy.ndarray`
-        Wavelength in meters.
+#     Parameters
+#     ----------
+#     u : `~numpy.ndarray`
+#         Wave-vector, result from FFT2 in 1 / m units.
+#     wavel : `~numpy.ndarray`
+#         Wavelength in meters.
 
-    Returns
-    -------
-    wavevector_degrees : `~numpy.ndarray`
-        Wave-vector in radians.
-    """
+#     Returns
+#     -------
+#     wavevector_degrees : `~numpy.ndarray`
+#         Wave-vector in radians.
+#     """
 
-    wavevector_radians = wavevector2degrees(u, wavel) * np.pi / 180
+#     wavevector_radians = wavevector2degrees(u, wavel) * np.pi / 180
 
-    return wavevector_radians
+#     return wavevector_radians
 
 
 def co_matrices(res, jac, n_pars):
@@ -152,7 +151,7 @@ def rms(phase):
 
     Parameters
     ----------
-    phase : `~numpy.ndarray`
+    phase : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         One or two dimensional array for the aperture phase distribution.
     """
 

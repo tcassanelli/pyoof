@@ -4,7 +4,6 @@
 # Author: Tomas Cassanelli
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
@@ -15,7 +14,6 @@ import warnings
 import os
 import yaml
 from .aperture import radiation_pattern, phase
-from .math_functions import wavevector2degrees, wavevector2radians
 from .aux_functions import uv_ratio
 
 __all__ = [
@@ -42,14 +40,14 @@ def plot_beam(
     params : `~numpy.ndarray`
         Two stacked arrays, the illumination and Zernike circle polynomials
         coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
-    d_z : `list`
+    d_z : `~astropy.units.quantity.Quantity`
         Radial offset :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is
         an out-of-focus property. The radial offset list must be as follows,
-        ``d_z = [d_z-, 0., d_z+]`` all of them in meters.
-    wavel : `float`
-        Wavelength, :math:`\\lambda`, of the observation in meters.
+        ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
+    wavel : `~astropy.units.quantity.Quantity`
+        Wavelength, :math:`\\lambda`, of the observation in length units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
         with the key **I_coeff**. The illumination functions available are
@@ -69,13 +67,12 @@ def plot_beam(
         telescope, e.g. a ``box_factor = 5`` returns ``x = np.linspace(-5 *
         pr, 5 * pr, resolution)``, an array to be used in the FFT2
         (`~numpy.fft.fft2`).
-    plim : `~numpy.ndarray`
+    plim : `~astropy.units.quantity.Quantity`
         Contains the maximum values for the :math:`u` and :math:`v`
-        wave-vectors, it can be in degrees or radians depending which one is
-        chosen in **angle** key. The `~numpy.ndarray` must be in the following
-        order, ``plim = np.array([umin, umax, vmin, vmax])``.
-    angle : `str`
-        Angle unit, it can be ``'degrees'`` or ``'radians'``.
+        wave-vectors in angle units. The `~astropy.units.quantity.Quantity`
+        must be in the following order, ``plim = [umin, umax, vmin, vmax]``.
+    angle : `~astropy.units.quantity.Quantity`
+        Angle unit. Axes for the power pattern.
     title : `str`
         Figure title.
 
@@ -196,16 +193,16 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         flatten, one dimensional, and stacked in the same order as the ``d_z =
         [d_z-, 0., d_z+]`` values from each beam map. If ``res_mode = False``,
         the beam map will be normalized.
-    d_z : `list`
+    d_z : `~astropy.units.quantity.Quantity`
         Radial offset :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is
         an out-of-focus property. The radial offset list must be as follows,
-        ``d_z = [d_z-, 0., d_z+]`` all of them in meters.
-    wavel : `float`
-        Wavelength, :math:`\\lambda`, of the observation in meters.
-    angle : `str`
-        Angle unit, it can be ``'degrees'`` or ``'radians'``.
+        ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
+    wavel : `~astropy.units.quantity.Quantity`
+        Wavelength, :math:`\\lambda`, of the observation in length units.
+    angle : `~astropy.units.quantity.Quantity`
+        Angle unit. Axes for the power pattern.
     title : `str`
         Figure title.
     res_mode : `bool`
@@ -315,8 +312,8 @@ def plot_phase(K_coeff, notilt, pr, title):
         phase distribution. The Zernike circle polynomials are related to tilt
         through :math:`U^{-1}_1(\\varrho, \\varphi)` and
         :math:`U^1_1(\\varrho, \\varphi)`.
-    pr : `float`
-        Primary reflector radius in meters.
+    pr : `astropy.units.quantity.Quantity`
+        Primary reflector radius in length units.
     title : `str`
         Figure title.
 
@@ -508,13 +505,12 @@ def plot_fit_path(
         telescope, e.g. a ``box_factor = 5`` returns ``x = np.linspace(-5 *
         pr, 5 * pr, resolution)``, an array to be used in the FFT2
         (`~numpy.fft.fft2`).
-    angle : `str`
-        Angle unit, it can be ``'degrees'`` or ``'radians'``.
-    plim : `~numpy.ndarray`
+    angle : `~astropy.units.quantity.Quantity`
+        Angle unit. Axes for the power pattern.
+    plim : `~astropy.units.quantity.Quantity`
         Contains the maximum values for the :math:`u` and :math:`v`
-        wave-vectors, it can be in degrees or radians depending which one is
-        chosen in **angle** key. The `~numpy.ndarray` must be in the following
-        order, ``plim = np.array([umin, umax, vmin, vmax])``.
+        wave-vectors in angle units. The `~astropy.units.quantity.Quantity`
+        must be in the following order, ``plim = [umin, umax, vmin, vmax]``.
     save : `bool`
         If `True`, it stores all plots in the ``'pyoof_out/directory'``
         directory.

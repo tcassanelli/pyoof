@@ -4,7 +4,8 @@
 # Author: Tomas Cassanelli
 import numpy as np
 import os
-from scipy.constants import c as light_speed
+from astropy import units as apu
+from astropy.constants import c as light_speed
 from astropy.io import fits
 from .aperture import radiation_pattern
 from .math_functions import wavevector2radians
@@ -25,14 +26,14 @@ def beam_generator(
     params : `~numpy.ndarray`
         Two stacked arrays, the illumination and Zernike circle polynomials
         coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
-    wavel : `float`
-        Wavelength, :math:`\\lambda`, in meters.
-    d_z : `list`
+    wavel : `~astropy.units.quantity.Quantity`
+        Wavelength, :math:`\\lambda`, of the observation in length units.
+    d_z : `~astropy.units.quantity.Quantity`
         Radial offset :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is
         an out-of-focus property. The radial offset list must be as follows,
-        ``d_z = [d_z-, 0., d_z+]`` all of them in meters.
+        ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
         with the key **I_coeff**. The illumination functions available are
@@ -71,11 +72,15 @@ def beam_generator(
     if work_dir is None:
         work_dir = os.getcwd()
 
-    freq = light_speed / wavel  # Hz frequency
-    bw = 1.22 * wavel / (2 * telgeo[2])  # Beamwidth
+    freq = light_speed / wavel
+    bw = 1.22 * apu.rad * wavel / (2 * telgeo[2])  # beamwidth in radians
     size_in_bw = 8 * bw
-    plim_u = [-size_in_bw, size_in_bw]  # radians
-    plim_v = [-size_in_bw, size_in_bw]
+
+    plim = np.array([
+        -size_in_bw.to_value(apu.rad), size_in_bw.to_value(apu.rad),
+        -size_in_bw.to_value(apu.rad), size_in_bw.to_value(apu.rad)
+        ]) * apu.rad
+    plim_u, plim_v = plim[:2], plim[2:]
 
     I_coeff, K_coeff = params[:4], params[4:]
 
@@ -93,9 +98,6 @@ def beam_generator(
             box_factor=box_factor
             )
 
-        _u = wavevector2radians(_u, wavel)  # radians
-        _v = wavevector2radians(_v, wavel)
-
         uu, vv = np.meshgrid(_u, _v)
         power_pattern = np.abs(_radiation) ** 2
 
@@ -109,8 +111,10 @@ def beam_generator(
         size_trim = int(np.sqrt(power_trim_1d.size))  # new size of the box
 
         # Box to be trimmed in uu and vv meshed arrays
-        box = [(plim_u[0] < uu) & (plim_u[1] > uu) & (plim_v[0] < vv) & (
-            plim_v[1] > vv)]
+        box = [
+            (plim_u[0] < uu) & (plim_u[1] > uu) & (plim_v[0] < vv) &
+            (plim_v[1] > vv)
+            ]
 
         # reshaping trimmed arrys
         power_trim = power_trim_1d.reshape(size_trim, size_trim)
@@ -132,8 +136,8 @@ def beam_generator(
             np.random.normal(0., noise, np.array(P_norm).shape)
             )
 
-    u_to_save = [u[i].flatten() for i in range(3)]
-    v_to_save = [v[i].flatten() for i in range(3)]
+    u_to_save = [u[i].to_value(apu.rad).flatten() for i in range(3)]
+    v_to_save = [v[i].to_value(apu.rad).flatten() for i in range(3)]
     p_to_save = [power_noise[i].flatten() for i in range(3)]
 
     # Writing default fits file for OOF observations
@@ -166,9 +170,9 @@ def beam_generator(
         if not os.path.exists(name_file):
 
             prihdr = fits.Header()
-            prihdr['FREQ'] = freq
-            prihdr['WAVEL'] = wavel
-            prihdr['MEANEL'] = 0
+            prihdr['FREQ'] = freq.to_value(apu.Hz)
+            prihdr['WAVEL'] = wavel.to_value(apu.m)
+            prihdr['MEANEL'] = 0 * apu.deg
             prihdr['OBJECT'] = 'test{}'.format(j)
             prihdr['DATE_OBS'] = 'test{}'.format(j)
             prihdr['COMMENT'] = 'Generated data pyoof package'
@@ -179,7 +183,7 @@ def beam_generator(
                 )
 
             for i in range(3):
-                pyoof_fits[i + 1].header['DZ'] = d_z[i]
+                pyoof_fits[i + 1].header['DZ'] = d_z[i].to_value(apu.m)
 
             pyoof_fits[1].name = 'MINUS OOF'
             pyoof_fits[2].name = 'ZERO OOF'

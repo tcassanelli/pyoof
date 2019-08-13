@@ -38,11 +38,11 @@ def opd_effelsberg(x, y, d_z):
 
     Parameters
     ----------
-    x : `~numpy.ndarray`
-        Grid value for the :math:`x` variable in meters.
-    y : `~numpy.ndarray`
-        Grid value for the :math:`y` variable in meters.
-    d_z : `float`
+    x : `~astropy.units.quantity.Quantity`
+        Grid value for the :math:`x` variable in length units.
+    y : `~astropy.units.quantity.Quantity`
+        Grid value for the :math:`y` variable in length units.
+    d_z : `~astropy.units.quantity.Quantity`
         Radial offset, :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is
@@ -50,7 +50,7 @@ def opd_effelsberg(x, y, d_z):
 
     Returns
     -------
-    opd : `~numpy.ndarray`
+    opd : `~astropy.units.quantity.Quantity`
         Optical path difference function, :math:`\\delta(x,y;d_z)`.
 
     Notes
@@ -92,11 +92,11 @@ def opd_manual(Fp, F):
 
     Parameters
     ----------
-    Fp : `float`
-        Focus primary reflector, :math:`F_\\mathrm{p}`, in meters.
-    F : `float`
+    Fp : `~astropy.units.quantity.Quantity`
+        Focus primary reflector, :math:`F_\\mathrm{p}`, in length units.
+    F : `~astropy.units.quantity.Quantity`
         Effective or total focus for the telescope mirror configuration,
-        :math:`F_\\mathrm{eff}`, in meters.
+        :math:`F_\\mathrm{eff}`, in length units.
 
     Returns
     -------
@@ -129,14 +129,14 @@ def block_effelsberg(x, y):
 
     Parameters
     ----------
-    x : `~numpy.ndarray`
-        Grid value for the :math:`x` variable in meters.
-    y : `~numpy.ndarray`
-        Grid value for the :math:`y` variable in meters.
+    x : `~astropy.units.quantity.Quantity`
+        Grid value for the :math:`x` variable in length units.
+    y : `~astropy.units.quantity.Quantity`
+        Grid value for the :math:`y` variable in length units.
 
     Returns
     -------
-    block : `~numpy.ndarray`
+    block : `~astropy.units.quantity.Quantity`
         Aperture (amplitude) distribution truncation, :math:`B(x, y)`. Values
         that are zero correspond to blocked values.
     """
@@ -206,15 +206,15 @@ def block_manual(pr, sr, a, L):
 
     Parameters
     ----------
-    pr : `float`
-        Primary reflector radius, in meters.
+    pr : `astropy.units.quantity.Quantity`
+        Primary reflector radius in length units.
     sr : `float`
-        Sub-reflector radius, in meters.
+        Sub-reflector radius in length units.
     a : `float`
-        Half-width of a support leg, in meters.
+        Half-width of a support leg in length units.
     L : `float`
         Length of a support leg, measured from the edge of the sub-reflector
-        towards its end, in meters.
+        towards its end, in length units.
 
     Returns
     -------
