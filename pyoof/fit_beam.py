@@ -14,7 +14,7 @@ import yaml
 from .aperture import radiation_pattern, phase
 from .math_functions import co_matrices
 from .plot_routines import plot_fit_path
-from .aux_functions import store_data_csv, illum_strings, store_data_ascii
+from .aux_functions import store_data_csv, store_data_ascii
 
 __all__ = [
     'residual_true', 'residual', 'params_complete', 'fit_beam',
@@ -49,12 +49,13 @@ def residual_true(
         to be flatten, one dimensional, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
     d_z : `~astropy.units.quantity.Quantity`
-        Radial offset :math:`d_z`, added to the sub-reflector in meters. This
-        characteristic measurement adds the classical interference pattern to
-        the beam maps, normalized squared (field) radiation pattern, which is
-        an out-of-focus property. The radial offset list must be as follows,
-        ``d_z = [d_z-, 0., d_z+]`` all of them in meters.
-    wavel : `float`
+        Radial offset :math:`d_z`, added to the sub-reflector in length units.
+        This characteristic measurement adds the classical interference
+        pattern to the beam maps, normalized squared (field) radiation
+        pattern, which is an out-of-focus property. The radial offset list
+        must be as follows, ``d_z = [d_z-, 0., d_z+]`` all of them in length
+        units.
+    wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in meters.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
@@ -181,12 +182,13 @@ def residual(
         to be flatten, one dimensional, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
     d_z : `~astropy.units.quantity.Quantity`
-        Radial offset :math:`d_z`, added to the sub-reflector in meters. This
-        characteristic measurement adds the classical interference pattern to
-        the beam maps, normalized squared (field) radiation pattern, which is
-        an out-of-focus property. The radial offset list must be as follows,
-        ``d_z = [d_z-, 0., d_z+]`` all of them in meters.
-    wavel : `float`
+        Radial offset :math:`d_z`, added to the sub-reflector in length units.
+        This characteristic measurement adds the classical interference
+        pattern to the beam maps, normalized squared (field) radiation
+        pattern, which is an out-of-focus property. The radial offset list
+        must be as follows, ``d_z = [d_z-, 0., d_z+]`` all of them in length
+        units.
+    wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in meters.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
@@ -234,7 +236,7 @@ def residual(
     The **idx** key needs an indices list of the parameters to be removed.
     The structure of the parameters always follows, ``params = np.hstack([
     I_coeff, K_coeff])``, a list with ``idx = [0, 1, 2, 4]`` will remove from
-    the least squares minimization, ``[i_amp, taper_dB, x0, y0, K(0, 0)]``.
+    the least squares minimization, ``[i_amp, c_dB, x0, y0, K(0, 0)]``.
     """
 
     # Parameters list for the true fit
@@ -295,7 +297,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
     """
 
     # Fixed values for parameters, in case they're excluded, see idx
-    [i_amp_f, taper_dB_f, x0_f, y0_f, K_f] = config_params['fixed']
+    [i_amp_f, c_dB_f, x0_f, y0_f, K_f] = config_params['fixed']
 
     # N_K_coeff number of Zernike circle polynomials coefficients
     if params.size != (4 + N_K_coeff):
@@ -305,7 +307,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
                 params_updated = np.insert(params_updated, i, i_amp_f)
                 # assigned value for i_amp
             elif i == 1:
-                params_updated = np.insert(params_updated, i, taper_dB_f)
+                params_updated = np.insert(params_updated, i, c_dB_f)
                 # assigned value for c_dB
             elif i == 2:
                 params_updated = np.insert(params_updated, i, x0_f)
@@ -406,7 +408,6 @@ def fit_beam(
     if work_dir is None:
         work_dir = pthto
 
-    illum_name, taper_name = illum_strings(illum_func)
     telgeo, tel_name = telescope[:3], telescope[3]
 
     # Calling default configuration file from the pyoof package
@@ -436,8 +437,9 @@ def fit_beam(
         'Obs Wavelength: {}'.format(wavel.to(apu.cm)),
         'Mean elevation {}'.format(meanel.to(apu.deg)),
         'd_z (out-of-focus): {}'.format(d_z.to(apu.cm)),
-        'Illumination to be fitted: {}'.format(illum_name),
-        sep='\n', end='\n'
+        'Illumination to be fitted: {}'.format(illum_name.__qualname__),
+        sep='\n',
+        end='\n'
         )
 
     for order in range(1, order_max + 1):
@@ -552,7 +554,6 @@ def fit_beam(
         store_data_ascii(
             name=name,
             name_dir=name_dir,
-            taper_name=taper_name,
             order=n,
             params_solution=params_solution,
             params_init=params_init,
@@ -573,7 +574,7 @@ def fit_beam(
                 d_z=d_z.to_value(apu.m).tolist(),
                 wavel=wavel.to_value(apu.m),
                 frequency=freq.to_value(apu.Hz),
-                illumination=illum_name,
+                illumination=illum_name.__qualname__,
                 meanel=meanel.to_value(apu.deg),
                 fft_resolution=resolution,
                 box_factor=box_factor,
