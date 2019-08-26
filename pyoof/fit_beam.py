@@ -100,10 +100,10 @@ def residual_true(
     for i in range(3):
 
         u, v, F = radiation_pattern(
+            I_coeff=I_coeff,
             K_coeff=K_coeff,
             d_z=d_z[i],
             wavel=wavel,
-            I_coeff=I_coeff,
             illum_func=illum_func,
             telgeo=telgeo,
             resolution=resolution,
@@ -326,7 +326,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
 
 def fit_beam(
     data_info, data_obs, order_max, illum_func, telescope, resolution,
-    box_factor, fit_previous=True, config_params_file=None, make_plots=True,
+    box_factor, fit_previous=True, config_params_file=None, make_plots=False,
     verbose=2, work_dir=None
         ):
     """
@@ -437,7 +437,7 @@ def fit_beam(
         'Obs Wavelength: {}'.format(wavel.to(apu.cm)),
         'Mean elevation {}'.format(meanel.to(apu.deg)),
         'd_z (out-of-focus): {}'.format(d_z.to(apu.cm)),
-        'Illumination to be fitted: {}'.format(illum_name.__qualname__),
+        'Illumination to be fitted: {}'.format(illum_func.__qualname__),
         sep='\n',
         end='\n'
         )
@@ -516,6 +516,7 @@ def fit_beam(
                 config_params    # Params configuration for minimization (dict)
                 ),
             bounds=tuple([bound_min_true, bound_max_true]),
+            method='trf',
             verbose=verbose,
             max_nfev=None
             )
@@ -574,7 +575,7 @@ def fit_beam(
                 d_z=d_z.to_value(apu.m).tolist(),
                 wavel=wavel.to_value(apu.m),
                 frequency=freq.to_value(apu.Hz),
-                illumination=illum_name.__qualname__,
+                illumination=illum_func.__qualname__,
                 meanel=meanel.to_value(apu.deg),
                 fft_resolution=resolution,
                 box_factor=box_factor,
