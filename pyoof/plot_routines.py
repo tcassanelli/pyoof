@@ -25,8 +25,8 @@ plt.style.use(get_pkg_data_filename('data/pyoof.mplstyle'))
 
 
 def plot_beam(
-    params, d_z, wavel, illum_func, telgeo, resolution, box_factor, plim,
-    angle, title
+    I_coeff, K_coeff, d_z, wavel, illum_func, telgeo, resolution, box_factor,
+    plim, angle, title
         ):
     """
     Beam maps, :math:`P_\\mathrm{norm}(u, v)`, figure given fixed
@@ -37,15 +37,23 @@ def plot_beam(
 
     Parameters
     ----------
-    params : `~numpy.ndarray`
-        Two stacked arrays, the illumination and Zernike circle polynomials
-        coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
+    I_coeff : `list`
+        List which contains 4 parameters, the illumination amplitude,
+        :math:`A_{E_\\mathrm{a}}`, the illumination taper,
+        :math:`c_\\mathrm{dB}` and the two coordinate offset, :math:`(x_0,
+        y_0)`. The illumination coefficients must be listed as follows,
+        ``I_coeff = [i_amp, c_dB, x0, y0]``.
+    K_coeff : `~numpy.ndarray`
+        Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
+        \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     d_z : `~astropy.units.quantity.Quantity`
-        Radial offset :math:`d_z`, added to the sub-reflector in meters. This
-        characteristic measurement adds the classical interference pattern to
-        the beam maps, normalized squared (field) radiation pattern, which is
-        an out-of-focus property. The radial offset list must be as follows,
-        ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
+        Radial offset :math:`d_z`, added to the sub-reflector in length units.
+        This characteristic measurement adds the classical interference
+        pattern to the beam maps, normalized squared (field) radiation
+        pattern, which is an out-of-focus property. The radial offset list
+        must be as follows, ``d_z = [d_z-, 0., d_z+]`` all of them in length
+        units.
     wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in length units.
     illum_func : `function`
@@ -84,9 +92,6 @@ def plot_beam(
         :math:`0` and :math:`d_z^+`.
     """
 
-    I_coeff = params[:4]
-    K_coeff = params[4:]
-
     u, v, F = [], [], []
     for _d_z in d_z:
 
@@ -119,12 +124,12 @@ def plot_beam(
         u_offset = uu[power_norm[1] == power_norm[1].max()][0]
         v_offset = vv[power_norm[1] == power_norm[1].max()][0]
 
-        plim = np.array([
+        plim = [
             (-s_bw + u_offset).to_value(apu.rad),
             (s_bw + u_offset).to_value(apu.rad),
             (-s_bw + v_offset).to_value(apu.rad),
             (s_bw + v_offset).to_value(apu.rad)
-            ]) * apu.rad
+            ] * apu.rad
 
     plim = plim.to_value(angle)
     plim_u, plim_v = plim[:2], plim[2:]
@@ -134,13 +139,26 @@ def plot_beam(
         str(round(d_z[i].to_value(apu.cm), 3)) + '$ cm' for i in range(3)
         ]
 
-    fig = plt.figure(figsize=uv_ratio(plim_u, plim_v), constrained_layout=True)
+    fig = plt.figure(figsize=uv_ratio(plim_u, plim_v))
     gs = GridSpec(
-        nrows=1, ncols=4, figure=fig, width_ratios=[.295, .295, .295, .01]
+        nrows=1,
+        ncols=3,
+        figure=fig,
+        width_ratios=[1] * 3,
+        height_ratios=[1],
+        wspace=0
         )
-    ax = [plt.subplot(gs[i]) for i in range(4)]
+    ax = [plt.subplot(gs[i]) for i in range(3)]
+
     ax[1].set_yticklabels([])
     ax[2].set_yticklabels([])
+
+    dividers = [make_axes_locatable(ax[i]) for i in range(3)]
+    caxs = [
+        dividers[i].append_axes("right", size="5%", pad=.05) for i in range(3)
+        ]
+    caxs[0].remove()
+    caxs[1].remove()
 
     for i in range(3):
 
@@ -167,7 +185,7 @@ def plot_beam(
         ax[i].grid(False)
 
     ax[0].set_ylabel('$v$ {}'.format(angle))
-    fig.colorbar(im, cax=ax[3], use_gridspec=True)
+    plt.colorbar(im, cax=caxs[2])
     fig.suptitle(title)
 
     return fig
@@ -180,11 +198,11 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
 
     Parameters
     ----------
-    u_data : `~numpy.ndarray`
+    u_data : `list`
         :math:`x` axis value for the 3 beam maps in radians. The values have
         to be flatten, in one dimension, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
-    v_data : `~numpy.ndarray`
+    v_data : `list`
         :math:`y` axis value for the 3 beam maps in radians. The values have
         to be flatten, one dimensional, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
@@ -199,8 +217,6 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         the beam maps, normalized squared (field) radiation pattern, which is
         an out-of-focus property. The radial offset list must be as follows,
         ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
-    wavel : `~astropy.units.quantity.Quantity`
-        Wavelength, :math:`\\lambda`, of the observation in length units.
     angle : `~astropy.units.quantity.Quantity`
         Angle unit. Axes for the power pattern.
     title : `str`
@@ -221,10 +237,6 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     if not res_mode:
         # Power pattern normalization
         beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
-    # input u and v are in radians
-
-    # u_data = u_data.to(angle)
-    # v_data = u_data.to(angle)
 
     vmin = np.min(beam_data)
     vmax = np.max(beam_data)
@@ -234,18 +246,26 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         str(round(d_z[i].to_value(apu.cm), 3)) + '$ cm' for i in range(3)
         ]
 
-    # fig, ax = plt.subplots(ncols=3, figsize=uv_ratio(u_data[0], v_data[0]))
-
-    fig = plt.figure(
-        figsize=uv_ratio(u_data[0], v_data[0]),
-        constrained_layout=True
-        )
+    fig = plt.figure(figsize=uv_ratio(u_data[0], v_data[0]))
     gs = GridSpec(
-        nrows=1, ncols=4, figure=fig, width_ratios=[.295, .295, .295, .01]
+        nrows=1,
+        ncols=3,
+        figure=fig,
+        width_ratios=[1] * 3,
+        height_ratios=[1],
+        wspace=0
         )
-    ax = [plt.subplot(gs[i]) for i in range(4)]
+    ax = [plt.subplot(gs[i]) for i in range(3)]
+
     ax[1].set_yticklabels([])
     ax[2].set_yticklabels([])
+
+    dividers = [make_axes_locatable(ax[i]) for i in range(3)]
+    caxs = [
+        dividers[i].append_axes("right", size="5%", pad=.05) for i in range(3)
+        ]
+    caxs[0].remove()
+    caxs[1].remove()
 
     for i in range(3):
         # new grid for beam_data
@@ -276,19 +296,12 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
             beam_ng, levels=levels
             )
 
-        # divider = make_axes_locatable(ax[i])
-        # cax = divider.append_axes("right", size="3%", pad=0.03)
-        # cb = fig.colorbar(im, cax=cax)
-        # cb.formatter.set_powerlimits((0, 0))
-        # cb.ax.yaxis.set_offset_position('left')
-        # cb.update_ticks()
-
         ax[i].set_xlabel('$u$ {}'.format(angle))
         ax[i].set_title(subtitle[i])
         ax[i].grid(False)
 
     ax[0].set_ylabel('$v$ {}'.format(angle))
-    fig.colorbar(im, cax=ax[3], use_gridspec=True)
+    plt.colorbar(im, cax=caxs[2])
     fig.suptitle(title)
     # fig.tight_layout()
 
@@ -366,7 +379,7 @@ def plot_phase(K_coeff, notilt, pr, title):
     return fig
 
 
-def plot_variance(matrix, order, diag, illumination, cbtitle, title):
+def plot_variance(matrix, order, diag, cbtitle, title):
     """
     Variance-Covariance matrix or Correlation matrix figure. It returns
     the triangle figure with a color amplitude value for each element. Used to
@@ -382,9 +395,6 @@ def plot_variance(matrix, order, diag, illumination, cbtitle, title):
         Order used for the Zernike circle polynomial, :math:`n`.
     diag : `bool`
         If `True` it will plot the matrix diagonal.
-    illumination : `str`
-        Name of the illumination function used in the least squares
-        minimization.
     cbtitle : `str`
         Color bar title.
     title : `str`
@@ -401,16 +411,7 @@ def plot_variance(matrix, order, diag, illumination, cbtitle, title):
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
-    if illumination == 'pedestal':
-        taper_name = '$c_\\mathrm{dB}$'
-    elif illumination == 'gauss':
-        taper_name = '$\\sigma_\\mathrm{dB}$'
-    else:
-        taper_name = '$\\mathrm{taper}_\\mathrm{dB}$'
-
-    params_names = [
-        '$A_{E_\mathrm{a}}$', taper_name, '$x_0$', '$y_0$'
-        ]
+    params_names = ['$A_{E_\mathrm{a}}$', '$c_\\mathrm{dB}$', '$x_0$', '$y_0$']
     for i in range(N_K_coeff):
         params_names.append('$K_{' + str(N[i]) + '\,' + str(L[i]) + '}$')
     params_names = np.array(params_names)
@@ -553,14 +554,12 @@ def plot_fit_path(
     # Reading least squares minimization output
     n = order
     fitpar = ascii.read(os.path.join(path_pyoof, 'fitpar_n{}.csv'.format(n)))
-    K_coeff = np.array(fitpar['parfit'])[4:]
 
     with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
         pyoof_info = yaml.safe_load(inputfile)
 
     obs_object = pyoof_info['obs_object']
     meanel = round(pyoof_info['meanel'], 2)
-    illumination = pyoof_info['illumination']
 
     # Beam and residual
     beam_data = np.genfromtxt(os.path.join(path_pyoof, 'beam_data.csv'))
@@ -590,7 +589,8 @@ def plot_fit_path(
             )
 
     fig_beam = plot_beam(
-        params=np.array(fitpar['parfit']),
+        I_coeff=fitpar['parfit'][:4],
+        K_coeff=fitpar['parfit'][4:],
         title='{} fit power pattern  $n={}$ $\\alpha={}$ degrees'.format(
             obs_object, n, meanel),
         d_z=d_z,
@@ -604,7 +604,7 @@ def plot_fit_path(
         )
 
     fig_phase = plot_phase(
-        K_coeff=K_coeff,
+        K_coeff=fitpar['parfit'][4:],
         title=(
             '{} phase error $d_z=\\pm {}$ cm ' +
             '$n={}$ $\\alpha={}$ deg'
@@ -629,7 +629,6 @@ def plot_fit_path(
         title='{} variance-covariance matrix $n={}$'.format(obs_object, n),
         cbtitle='$\\sigma_{ij}^2$',
         diag=True,
-        illumination=illumination
         )
 
     fig_corr = plot_variance(
@@ -638,14 +637,12 @@ def plot_fit_path(
         title='{} correlation matrix $n={}$'.format(obs_object, n),
         cbtitle='$\\rho_{ij}$',
         diag=True,
-        illumination=illumination
         )
 
     if save:
         fig_beam.savefig(os.path.join(path_plot, 'fitbeam_n{}.pdf'.format(n)))
         fig_phase.savefig(
-            os.path.join(path_plot, 'fitphase_n{}.pdf'.format(n))
-            )
+            os.path.join(path_plot, 'fitphase_n{}.pdf'.format(n)))
         fig_res.savefig(os.path.join(path_plot, 'residual_n{}.pdf'.format(n)))
         fig_cov.savefig(os.path.join(path_plot, 'cov_n{}.pdf'.format(n)))
         fig_corr.savefig(os.path.join(path_plot, 'corr_n{}.pdf'.format(n)))
