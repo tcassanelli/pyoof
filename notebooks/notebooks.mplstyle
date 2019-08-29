@@ -1,0 +1,48 @@
+# pyoof notebook plot style
+# Author: Tomas Cassanelli
+# Last update: 17.06.2019
+
+# Look here how to add more style!
+# https://github.com/matplotlib/matplotlib/blob/master/matplotlibrc.template
+
+
+# LINES
+lines.linewidth     : 0.8
+
+# TEXT
+text.usetex         : True
+
+# FONT
+font.family       : serif
+font.serif        : Computer Modern Roman
+font.size         : 10
+
+# AXES
+axes.labelsize      : 12
+axes.linewidth      : 0.5
+axes.titlesize      : 13
+axes.grid           : True
+axes.prop_cycle     : cycler('color', ['1f2db4', 'b41f2d', '1fb4a6', 'b4a61f'])
+
+# TICKS
+xtick.labelsize     : 11
+ytick.labelsize     : 11
+
+# IMAGES
+image.cmap          : viridis
+image.origin        : lower
+
+# GRIDS
+grid.linestyle      : --
+grid.alpha          : 0.6
+grid.linewidth      : 0.3
+grid.color          : b0b0b0
+
+# FIGURE
+figure.titlesize    : 13
+
+# LEGEND
+legend.fontsize     : 7
+legend.fancybox     : False
+legend.borderpad    : 0.4
+
