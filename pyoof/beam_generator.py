@@ -8,14 +8,13 @@ from astropy import units as apu
 from astropy.constants import c as light_speed
 from astropy.io import fits
 from .aperture import radiation_pattern
-from .math_functions import wavevector2radians
 
 __all__ = ['beam_generator']
 
 
 def beam_generator(
-    params, wavel, d_z, illum_func, telgeo, noise, resolution, box_factor,
-    work_dir=None
+    I_coeff, K_coeff, wavel, d_z, illum_func, telgeo, noise, resolution,
+    box_factor, work_dir=None
         ):
     """
     Routine to generate data and test the pyoof package algorithm. It has the
@@ -23,25 +22,34 @@ def beam_generator(
 
     Parameters
     ----------
-    params : `~numpy.ndarray`
-        Two stacked arrays, the illumination and Zernike circle polynomials
-        coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
+    I_coeff : `list`
+        List which contains 4 parameters, the illumination amplitude,
+        :math:`A_{E_\\mathrm{a}}`, the illumination taper,
+        :math:`c_\\mathrm{dB}` and the two coordinate offset, :math:`(x_0,
+        y_0)`. The illumination coefficients must be listed as follows,
+        ``I_coeff = [i_amp, c_dB, x0, y0]``.
+    K_coeff : `~numpy.ndarray`
+        Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
+        \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in length units.
     d_z : `~astropy.units.quantity.Quantity`
-        Radial offset :math:`d_z`, added to the sub-reflector in meters. This
-        characteristic measurement adds the classical interference pattern to
-        the beam maps, normalized squared (field) radiation pattern, which is
-        an out-of-focus property. The radial offset list must be as follows,
-        ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
+        Radial offset :math:`d_z`, added to the sub-reflector in length units.
+        This characteristic measurement adds the classical interference
+        pattern to the beam maps, normalized squared (field) radiation
+        pattern, which is an out-of-focus property. The radial offset list
+        must be as follows, ``d_z = [d_z-, 0., d_z+]`` all of them in length
+        units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
         with the key **I_coeff**. The illumination functions available are
         `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
-        (OPD) function, and the primary radius (`float`) in meters. The list
-        must have the following order, ``telego = [block_dist, opd_func, pr]``.
+        (OPD) function, and the primary radius (`float`) in lenght units. The
+        list must have the following order, ``telego = [block_dist, opd_func,
+        pr]``.
     noise : `float`
         Noise amplitude added to the generated data. The noise comes from a
         random Gaussian, see `~numpy.random.normal`.
@@ -76,13 +84,11 @@ def beam_generator(
     bw = 1.22 * apu.rad * wavel / (2 * telgeo[2])  # beamwidth in radians
     size_in_bw = 8 * bw
 
-    plim = np.array([
+    plim = [
         -size_in_bw.to_value(apu.rad), size_in_bw.to_value(apu.rad),
         -size_in_bw.to_value(apu.rad), size_in_bw.to_value(apu.rad)
-        ]) * apu.rad
+        ] * apu.rad
     plim_u, plim_v = plim[:2], plim[2:]
-
-    I_coeff, K_coeff = params[:4], params[4:]
 
     # Generating power pattern and spatial frequencies
     u, v, P = [], [], []
@@ -112,8 +118,8 @@ def beam_generator(
 
         # Box to be trimmed in uu and vv meshed arrays
         box = [
-            (plim_u[0] < uu) & (plim_u[1] > uu) & (plim_v[0] < vv) &
-            (plim_v[1] > vv)
+            (plim_u[0] < uu) & (plim_u[1] > uu) &
+            (plim_v[0] < vv) & (plim_v[1] > vv)
             ]
 
         # reshaping trimmed arrys
@@ -172,7 +178,7 @@ def beam_generator(
             prihdr = fits.Header()
             prihdr['FREQ'] = freq.to_value(apu.Hz)
             prihdr['WAVEL'] = wavel.to_value(apu.m)
-            prihdr['MEANEL'] = 0 * apu.deg
+            prihdr['MEANEL'] = 0
             prihdr['OBJECT'] = 'test{}'.format(j)
             prihdr['DATE_OBS'] = 'test{}'.format(j)
             prihdr['COMMENT'] = 'Generated data pyoof package'

@@ -22,7 +22,7 @@ pyoof is a Python package that contains all needed tools to perform out-of-focus
 
 and `software <https://github.com/bnikolic/oof>`_ developed by `Bojan Nikolic <http://www.mrao.cam.ac.uk/~bn204/oof/>`_.
 
-The pyoof package calculates the aperture phase distribution map from a set of beam maps (telescope observations), at a relatively good signal-to-noise as described by B. Nikolic. By using a nonlinear least squares minimization, a convenient set of polynomials coefficients can be found to represent the aperture distribution. Once this is calculated the aberrations on the primary dish are known.
+In brief, the pyoof package calculates the aperture phase distribution map from a set of beam maps (telescope observations), at a relatively good signal-to-noise as described by B. Nikolic. By using a nonlinear least squares minimization a convenient set of polynomials can be used to reconstruct the aperture distribution. The representation can also be used to compute the aperture phase distribution or simply phase error, which contains vital information related to the aberrations in the telescope primary dish surface. Knowing the dish aberrations means that they can be potentially corrected, hence improve the telescope sensitivity [K/Jy].
 
 We are currently testing the pyoof package at the `Effelsberg radio telescope <https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope>`_ :satellite:.
 
@@ -39,7 +39,7 @@ Project Status
 pyoof is still in the early-development stage. While much of the
 functionality is already working as intended, the API is not yet stable.
 Nevertheless, we kindly invite you to use and test the library and we are
-grateful for feedback. Note, that work on the documentation is still ongoing.
+grateful for feedback.
 
 Installation
 ============
@@ -94,7 +94,7 @@ To use the pyoof package is straight forward. First define your observational da
 .. code-block:: python
 
     import pyoof
-    from pyoof import aperture, telgeometry
+    from astropy import units as u
 
     # Extracting observation data and important information
     oofh_data = 'path/to/file.fits'  # fits file with special format
@@ -102,21 +102,20 @@ To use the pyoof package is straight forward. First define your observational da
 
     # Effelsberg telescope definition
     effelsberg_telescope = [
-        telgeometry.block_effelsberg,  # Blockage distribution
-        telgeometry.opd_effelsberg,    # OPD function
-        50.,                           # Primary dish radius
-        'effelsberg'                   # Telescope name
+        pyoof.telgeometry.block_effelsberg,  # blockage distribution
+        pyoof.telgeometry.opd_effelsberg,    # OPD function
+        50. * u.m,                           # primary reflector radius
+        'effelsberg'                         # telescope name
         ]
 
     pyoof.fit_beam(
-        data_info=data_info,                   # information
-        data_obs=data_obs,                     # observed beam
-        method='trf',                          # opt. algorithm 'trf', 'lm' or 'dogbox'
-        order_max=5,                           # it will fit from 1 to order_max
-        illum_func=aperture.illum_pedestal,    # or illum_gauss
-        telescope=effelsberg_telescope,        # telescope properties
-        resolution=2 ** 8,                     # standard is 2 ** 8
-        box_factor=5,                          # box_size = 5 * pr, pixel resolution
+        data_info=data_info,                       # information
+        data_obs=data_obs,                         # observed beam
+        order_max=5,                               # computes up to order_max
+        illum_func=pyoof.aperture.illum_pedestal,  # or illum_gauss
+        telescope=effelsberg_telescope,            # telescope properties
+        resolution=2 ** 8,                         # standard is 2 ** 8
+        box_factor=5,                              # box_size = 5 * pr, pixel resolution
         )
 
 For the impatient :hushed: , see the Jupyter notebook example, `oof_holography.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_.
@@ -127,13 +126,13 @@ pyoof is licensed under a 3-clause BSD style license - see the `LICENSE <https:/
 
 Improvements future versions
 ============================
-- Including plot tests for `plot_routines.py` code
+- Including plot tests for `plot_routines.py` code :white_check_mark:
+- Integrate Astropy units :white_check_mark:
 - Reduce the size of the test files
 - Include automatic setup for the FFT resolution ``pyoof.fit_beam(resolution)``
 - Include cosine taper illumination function
 - Add actuator correction (sub-module) and its translation from phase error (specific for Effelsberg)
-- Integrate Astropy units
-- Add option for 2 or more beam maps
+- Add option for 2 or more beam maps 
 
 Contact
 =======

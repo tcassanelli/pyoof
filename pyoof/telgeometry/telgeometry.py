@@ -8,26 +8,26 @@ from ..math_functions import line_equation
 
 __all__ = [
     'opd_effelsberg', 'opd_manual', 'block_manual', 'block_effelsberg',
-    'sr_correction_effelsberg'
     ]
 
 
-def sr_correction_effelsberg(phase_shape, sr):
+# not so sure about this function
+# def sr_correction_effelsberg(phase_shape, sr):
 
-    x = np.linspace(-sr, sr, phase_shape[0])
-    y = np.linspace(-sr, sr, phase_shape[1])
-    xx, yy = np.meshgrid(x, y)
+#     x = np.linspace(-sr, sr, phase_shape[0])
+#     y = np.linspace(-sr, sr, phase_shape[1])
+#     xx, yy = np.meshgrid(x, y)
 
-    a = 14.3050 * apu.m
-    b = 7.3872 * apu.m
-    c = np.sqrt(a ** 2 - b ** 2)
-    rr = np.sqrt(xx ** 2 + yy ** 2)
+#     a = 14.3050 * apu.m
+#     b = 7.3872 * apu.m
+#     c = np.sqrt(a ** 2 - b ** 2)
+#     rr = np.sqrt(xx ** 2 + yy ** 2)
 
-    zz = a * np.sqrt(1 - rr ** 2 / b ** 2) - c
-    theta = np.arctan2(rr, zz)
-    correction = np.cos(theta)
+#     zz = a * np.sqrt(1 - rr ** 2 / b ** 2) - c
+#     theta = np.arctan2(rr, zz)
+#     correction = np.cos(theta)
 
-    return correction
+#     return correction
 
 
 def opd_effelsberg(x, y, d_z):

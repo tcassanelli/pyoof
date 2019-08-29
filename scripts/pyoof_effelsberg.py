@@ -44,15 +44,17 @@ def fit_beam_effelsberg(pathfits):
         resolution=2 ** 8,                   # standard is 2 ** 8
         box_factor=5,              # box_size = 5 * pr, better pixel resolution
         config_params_file=None,   # default or add path config_file.yaml
-        make_plots=False,           # for now testing only the software
+        make_plots=True,           # for now testing only the software
         verbose=2,
-        work_dir='/scratch/v/vanderli/cassane'
+        work_dir=None
+        # work_dir='/scratch/v/vanderli/cassane'
         )
 
 
 # Example in my machine :)
 if __name__ == '__main__':
 
-    fit_beam_effelsberg(
-        pathfits='/home/v/vanderli/cassane/data/pyoof/S9mm_3800-3807_3C84_48deg_H6_LON.fits'
-        )  # Execute!
+    # fit_beam_effelsberg(
+    #     pathfits='/home/v/vanderli/cassane/data/pyoof/S9mm_3800-3807_3C84_48deg_H6_LON.fits'
+    #     )  # Execute!
+    fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')

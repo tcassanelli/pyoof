@@ -13,16 +13,16 @@ def cart2pol(x, y):
 
     Parameters
     ----------
-    x : `~astropy.units.quantity.Quantity`
+    x : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         Grid value for the :math:`x` variable in length units.
-    y : `~astropy.units.quantity.Quantity`
+    y : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         Grid value for the :math:`y` variable in length units.
 
     Returns
     -------
-    rho : `~numpy.ndarray`
+    rho : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         Grid value for the radial variable.
-    theta : `~numpy.ndarray`
+    theta : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         Grid value for the angular variable, in radians.
     """
 
@@ -30,52 +30,6 @@ def cart2pol(x, y):
     theta = np.arctan2(y, x)
 
     return rho, theta
-
-
-# def wavevector2degrees(u, wavel):
-#     """
-#     This function may be deprecated after updating to astropy units.
-#     Transformation from a wave-vector 1 / m units to degrees.
-
-#     Parameters
-#     ----------
-#     u : `~numpy.ndarray`
-#         Wave-vector, result from FFT2 in 1 / m units.
-#     wavel : `~numpy.ndarray`
-#         Wavelength in meters.
-
-#     Returns
-#     -------
-#     wavevector_degrees : `~numpy.ndarray`
-#         Wave-vector in degrees.
-#     """
-
-#     wavevector_degrees = np.degrees(u * wavel)
-
-#     return wavevector_degrees
-
-
-# def wavevector2radians(u, wavel):
-#     """
-#     This function may be deprecated after updating to astropy units.
-#     Transformation from a wave-vector 1 / m units to radians.
-
-#     Parameters
-#     ----------
-#     u : `~numpy.ndarray`
-#         Wave-vector, result from FFT2 in 1 / m units.
-#     wavel : `~numpy.ndarray`
-#         Wavelength in meters.
-
-#     Returns
-#     -------
-#     wavevector_degrees : `~numpy.ndarray`
-#         Wave-vector in radians.
-#     """
-
-#     wavevector_radians = wavevector2degrees(u, wavel) * np.pi / 180
-
-#     return wavevector_radians
 
 
 def co_matrices(res, jac, n_pars):
@@ -144,7 +98,7 @@ def line_equation(P1, P2, x):
     return y
 
 
-def rms(phase):
+def rms(phase, radius=None):
     """
     Computes the root-mean-square value from a aperture phase distribution
     map, :math:`\\varphi(x, y)`.
@@ -153,9 +107,21 @@ def rms(phase):
     ----------
     phase : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         One or two dimensional array for the aperture phase distribution.
+    radius : `bool`
+        The limit radios where the phase error map is contained in length
+        units. By default it is set to None, meaning that will include the
+        entire array.
     """
 
-    # To remove elements out limit radius
-    nonzero_values = phase[np.nonzero(phase)]
+    if radius is not None:
+        x = np.linspace(-radius, radius, phase.shape[0])
+        y = np.linspace(-radius, radius, phase.shape[1])
+        xx, yy = np.meshgrid(x, y)
 
-    return np.sqrt(np.sum(np.square(nonzero_values)) / nonzero_values.size)
+        phase[xx ** 2 + yy ** 2 > radius ** 2] = np.nan
+        phase_real = phase[~np.isnan(phase)]
+        _rms = np.sqrt(np.nansum(np.square(phase_real)) / phase_real.size)
+    else:
+        _rms = np.sqrt(np.nansum(np.square(phase)) / phase.size)
+
+    return _rms

@@ -13,7 +13,7 @@ Introduction
 
 The Zernike circle polynomials [Virendra]_ were introduced by `Frits Zernike <https://en.wikipedia.org/wiki/Frits_Zernike>`_ (winner Nobel prize in physics 1953), for testing his phase contrast method in circular mirror figures. The polynomials were used by Ben Nijboer to study the effects of small aberrations on diffracted images with a rotationally symmetric origin on circular pupils.
 
-The studies on the wavefront (aberration) distribution, have been classically described as a power series, where it is possible to expand it in terms of `orthonormal polynomials in the unitary circle`. Although, there is a wide range of polynomials that fulfill this condition, the Zernike circle polynomials have certain properties of invariance that make them unique.
+The studies on the wavefront (aberration) distribution, have been classically described as a power series, where it is possible to expand it in terms of orthonormal polynomials in the unitary circle. Although, there is a wide range of polynomials that fulfill this condition, the Zernike circle polynomials have certain properties of invariance that make them unique.
 
 Mathematical definitions
 ========================
@@ -63,7 +63,7 @@ The Zernike circle polynomials can be used to represent, in a convenient way, th
     \varphi(x, y) = 2\pi \cdot W(x, y) = 2\pi \cdot \sum_{n, \ell} K_{n\ell}U^\ell_n(\varrho, \vartheta),
 
 where :math:`K_{n\ell}` are the Zernike circle polynomial coefficients. The final output from the `~pyoof` package is to find such coefficients and then make a representation of the aberration in the (telescope) aperture plane. The wavefront (aberration) distribution, `~pyoof.aperture.wavefront`, is a function listed in the `~pyoof.aperture` sub-package.
-The order of the :math:`K_{n\ell}` coefficients will vary from the order of the polynomials. Commonly for the `~pyoof` package their values are between :math:`[-2, 2]`.
+The order of the :math:`K_{n\ell}` coefficients will depend on the order of the polynomials. Commonly for the `~pyoof` package their values are between :math:`[-2, 2]`.
 
 .. warning::
     The order of magnitude of the Zernike circle polynomial coefficients (:math:`K_{n\ell}`) will vary on what conventions are used to generate them. There are some conventions that require a normalization constant.
@@ -74,45 +74,46 @@ Using `~pyoof.zernike`
 To use the polynomials from the `~pyoof.zernike` is really easy. First import the sub-package and start using the default structure::
 
     >>> import numpy as np
+    >>> from astropy import units as u
     >>> from pyoof import zernike  # calling the sub-package
-
-    >>> rho = np.linspace(0, 1, 10)
-    >>> R40 = zernike.R(n=4, m=0, rho=rho)
+    >>> rho = np.linspace(0, 1, 10) * u.m
+    >>> R40 = zernike.R(n=4, m=0, rho=rho / rho.max())
     >>> R40
-    array([ 1.        ,  0.92684042,  0.71833562,  0.40740741,  0.04892547,
-           -0.28029264, -0.48148148, -0.43392775,  0.00502972,  1.        ])
+    <Quantity [ 1.        ,  0.92684042,  0.71833562,  0.40740741,  0.04892547,
+               -0.28029264, -0.48148148, -0.43392775,  0.00502972,  1.        ]>
 
 To plot the polynomials first it is required to construct a grid.
 
 .. plot::
     :include-source:
 
-    import matplotlib.pyplot as plt
     import numpy as np
+    import matplotlib.pyplot as plt
+    from astropy import units as u
     from pyoof import zernike, cart2pol
 
-    radius = 1  # m
-    x = np.linspace(-radius, radius, 1e3)
+    radius = 1 * u.m
+    x = np.linspace(-radius, radius, 1000)
     xx, yy = np.meshgrid(x, x)
     rho, theta = cart2pol(xx, yy)
     rho_norm = rho / radius  # polynomials only work in the unitary circle
 
     U31 = zernike.U(n=3, l=1, rho=rho_norm, theta=theta)
-    extent = [x.min(), x.max()] * 2
+    extent = [x.value.min(), x.value.max()] * 2
 
     # restricting to a circle shape
     U31[xx ** 2 + yy ** 2 > radius ** 2] = 0
 
     fig, ax = plt.subplots()
     ax.imshow(U31, extent=extent, origin='lower', cmap='viridis')
-    ax.contour(xx, yy, U31, cmap='viridis')
+    ax.contour(xx, yy, U31, alpha=0.3, colors='k')
     ax.set_title('Primary $x$-coma $U^1_3(\\varrho, \\ell)$')
     ax.set_xlabel('$x$ m')
     ax.set_ylabel('$y$ m')
 
 
 .. note::
-    At the time of using the function `~pyoof.zernike.U` make sure that the radius is normalized by its maximum. The Zernike circle polynomials are only orthonormal under the unitary circle. It is to avoid the use of extra constants, use :math:`\varrho / \varrho_\text{max}`.
+    At the time of using the function `~pyoof.zernike.U` make sure that the radius is normalized by its maximum. The Zernike circle polynomials are **only** orthonormal under the unitary circle.
 
 For a more in-depth example of their usage go to the Jupyter notebook `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_.
 
@@ -128,12 +129,13 @@ Then a plot of such function will be,
 .. plot::
     :include-source:
 
-    import matplotlib.pyplot as plt
     import numpy as np
+    import matplotlib.pyplot as plt
+    from astropy import units as u
     from pyoof import zernike, cart2pol
 
-    radius = 1  # m
-    x = np.linspace(-radius, radius, 1e3)
+    radius = 1 * u.m
+    x = np.linspace(-radius, radius, 1000)
     xx, yy = np.meshgrid(x, x)
     rho, theta = cart2pol(xx, yy)
     rho_norm = rho / radius  # polynomials only work in the unitary circle
@@ -146,14 +148,14 @@ Then a plot of such function will be,
         ]
 
     W = sum(K_coeff[i] * _U[i] for i in range(3))  # wavefront distribution
-    extent = [x.min(), x.max()] * 2
+    extent = [x.value.min(), x.value.max()] * 2
 
     # restricting to a circle shape
     W[xx ** 2 + yy ** 2 > radius ** 2] = 0
 
     fig, ax = plt.subplots()
     ax.imshow(W, extent=extent, origin='lower', cmap='viridis')
-    ax.contour(xx, yy, W, cmap='viridis')
+    ax.contour(xx, yy, W, alpha=0.3, colors='k')
     ax.set_title('Wavefront (aberration) distribution')
     ax.set_xlabel('$x$ m')
     ax.set_ylabel('$y$ m')

@@ -8,10 +8,10 @@ pyoof Documentation
 Introduction (`pyoof`)
 ======================
 
-Welcome to the `~pyoof` documentation. `~pyoof` is a Python package which computes out-of-focus (OOF) holography, for beam maps of a single-dish radio telescope. The method was developed by `B. Nikolic et al <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_. The OOF holography is a phase-retrieval holography procedure used to find the aperture phase distribution, :math:`\varphi(x, y)`, (or simply the phase error) and the associated errors on a telescope's surface (primary dish). The main advantage of this method, over the traditional with-phase holography, is that it does not require additional equipment to perform observations and it can be used for a wide elevation range. These two allow OOF holography to study and model gravitational deformations, the most well behaved and prominent source of deformation (other sources could also be thermal and wind deformations which are non-repeatable), on the telescope's primary dish.
+Welcome to the `~pyoof` documentation. `~pyoof` is a Python package which computes out-of-focus (OOF) holography for beam maps of a single-dish radio telescope. The method was developed by `B. Nikolic et al <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_. The OOF holography is a phase-retrieval holography procedure used to find the aperture phase distribution, :math:`\varphi(x, y)`, (or simply the phase error) and the associated errors on a telescope's surface (primary reflector). The main advantage of this method, over the traditional with-phase holography, is that it does not require additional equipment to perform observations and it can be used for a wide elevation range. These two allow OOF holography to study and model gravitational deformations, the most well behaved and prominent source of deformation (other sources could also be thermal and wind deformations which are non-repeatable and too fast to model), on the telescope's primary reflector.
 
 The method requires the use of a compact source (point-like) with a good signal-to-noise (:math:`\geq200`). Then a set of continuum observations (on-the-fly mapping) are required, two of them out-of-focus and one in-focus. The OOF observations are performed by adding a known radial offset (:math:`d_z`), of the order of centimeters, to the telescope's sub-reflector.
-The defocused terms are needed to break the degeneracy between the power pattern (observed quantity :math:`P(u, v)`), and the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`, without OOF observations the problem becomes under-determined. Such a relation is given by,
+The defocused terms are needed to break the degeneracy between the power pattern or beam map (observed quantity :math:`P(u, v)`), and the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`, without OOF holography observations the problem becomes under-determined. Such a relation is given by,
 
 .. math::
     P(u, v) = \left| \mathcal{F}\left[\underline{E_\text{a}}(x, y) \right]  \right|^2.
@@ -25,7 +25,7 @@ The aperture phase distribution, related to the power pattern (observed beam map
 
 The parametrization of the aperture phase distribution allows its construction by using a nonlinear least squares minimization (`~pyoof.fit_beam`), due to the highly nonlinear relation between the aperture distribution and the power pattern (degenerated). The `~pyoof` package takes as an input the observed beam maps and computes the :math:`K_{n\ell}` coefficients to find the aperture phase distribution (on the primary reflector).
 
-Among the basic operations that the `~pyoof` package does, there are: construction aperture distribution (`~pyoof.aperture.aperture`), calculation of its Fast Fourier Transform in two dimensions (`~pyoof.aperture.radiation_pattern`), calculation of a residual between observed and modeled power pattern, and nonlinear least squares minimization (`~pyoof.fit_beam`).
+The operations that the `~pyoof` package does are: construction of the  aperture distribution (`~pyoof.aperture.aperture`), calculation of its Fast Fourier Transform in two dimensions (`~pyoof.aperture.radiation_pattern`), calculation of a residual between observed and modeled power pattern, and nonlinear least squares minimization (`~pyoof.fit_beam`) to find :math:`K_{n\ell}` set and construct the aperture phase distribution.
 
 OOF holography parameters
 =========================
@@ -48,17 +48,17 @@ The aperture phase distribution represents the aberrations of an optical system,
 Blockage distribution: :math:`B(x, y)` (`~pyoof.telgeometry.block_manual`)
 --------------------------------------------------------------------------
 
-It is the truncation or blockage that the telescope structure (or a shade effect) does to the aperture plane. It is usually best represented as a two dimensional modified Heaviside step function. Since it depends on the geometry, it will depend on the telescope used.
+It is the truncation or blockage that the telescope structure (or a shade effect) does to the aperture plane. It is usually best represented as a two dimensional modified Heaviside step function. Since it depends on the geometry, it will depend on the telescope. The `~pyoof` package includes the option of introducing a new blockage distribution.
 
 (Field) radiation pattern: :math:`F(u, v)` (`~pyoof.aperture.radiation_pattern`)
 --------------------------------------------------------------------------------
 
-The (field) radiation pattern is a complex distribution, it is the direct Fourier Transform (in two dimensions) of the aperture distribution, :math:`F(u, v) = \mathcal{F}[\underline{E_\text{a}}(x, y)]`. Represents the angular variation of the radiation around the antenna.
+The (field) radiation pattern (or voltage reception pattern) is a complex distribution, it is the direct Fourier Transform (in two dimensions) of the aperture distribution, :math:`F(u, v) = \mathcal{F}[\underline{E_\text{a}}(x, y)]`. Represents the angular variation of the radiation around the antenna.
 
 Illumination function: :math:`E_\text{a}(x, y)` (`~pyoof.aperture.illum_pedestal` or `~pyoof.aperture.illum_gauss`)
 ------------------------------------------------------------------------------------------------------------------------------------------------
 
-The illumination function is a characteristic of a receiver and it is used to reduce the level of the side lobes. It can be modeled with different types of functions, such as a Gaussian or a cosine. The default one used by the `~pyoof` package is the parabolic taper on a pedestal (order :math:`q=2`),
+The illumination function is a characteristic of a receiver and it is used to reduce the level of the beam side lobes. It can be modeled with different types of functions, such as a Gaussian or a cosine. The default one used by the `~pyoof` package is the parabolic taper on a pedestal (order :math:`q=2`),
 
 .. math::
     E_\text{a}(\rho') = C + (1 - C)\cdot \left[ 1-\left(\frac{\rho'}{R}\right)^2 \right]^q, \qquad C=10^{\frac{c_\text{dB}}{20}},
@@ -68,7 +68,7 @@ the `~pyoof` package includes the option of introducing a new illumination funct
 Illumination coefficients (``I_coeff``)
 ---------------------------------------
 
-The illumination coefficients correspond to four constants that need to be added to the illumination function, :math:`E_\text{a}`. These coefficients are the illumination amplitude, :math:`A_{E_\text{a}}`, the illumination offset (:math:`x_0, y_0`), and the illumination taper in decibels, :math:`c_\text{dB}` or :math:`\sigma_\text{dB}` (depending on the type of illumination function used). The coefficients, ``I_coeff``, are organized in the following order:
+The illumination coefficients correspond to four constants that need to be added to the illumination function, :math:`E_\text{a}`. These coefficients are the illumination amplitude, :math:`A_{E_\text{a}}`, the illumination offset (:math:`x_0, y_0`), and the illumination taper in decibels, :math:`c_\text{dB}`. The coefficients, ``I_coeff``, are organized in the following order:
 
 .. math::
 
@@ -79,23 +79,23 @@ From these coefficients the most relevant of them is the illumination taper. It 
 Observation wavelength: :math:`\lambda` (``wavel``)
 ---------------------------------------------------
 
-For one OOF holography observation it is required to perform two of the out-of-focus and one in-focus continuum scans. All of them need to be observed with the same receiver at a certain :math:`\lambda`. The wavelength is also important when calculating the aberrations in the primary dish.
+For one OOF holography observation it is required to perform two of the out-of-focus and one in-focus continuum scans. All of them need to be observed with the same receiver at a certain :math:`\lambda`. The wavelength sets how precise are the corrections to be made in the teslecope's surface.
 
 Optical path difference (OPD) function: :math:`\delta(x, y;d_z)` (`~pyoof.telgeometry.opd_manual`)
 --------------------------------------------------------------------------------------------------------------
 
-The OPD function is the extra path that light has to travel every time a radial offset, :math:`d_z`, (known a priori) is added to the sub-reflector (to make OOF observations). The OPD function depends strictly on the telescope geometry.
+The OPD function is the extra path that light has to travel every time a radial offset, :math:`d_z`, (known a priori) is added to the sub-reflector (to make OOF holography observations). The OPD function depends strictly on the telescope geometry.
 
 Power pattern (beam map): :math:`P(u, v)` (``power_pattern``)
 -------------------------------------------------------------
 
-The power pattern or beam map is the observed quantity. For one OOF holography observation, it is required to perform two of the out-of-focus and one in-focus continuum scans (on-the-fly mapping). This will produce two beam maps with a clear interference pattern and one with the common in-focus beam size.
+The power pattern or beam map is modeled and observed quantity. For one OOF holography observation, it is required to perform two of the out-of-focus and one in-focus continuum scans (on-the-fly mapping). This will produce two beam maps with a clear interference pattern and one with the common in-focus beam size.
 
 Radial offset: :math:`d_z` (``d_z``)
 ------------------------------------
 
-The radial offset is the defocused term added to the sub-reflector. It is usually of the order of centimeters (it will vary from telescope to telescope). A small value of the :math:`d_z` may not add enough change to the out-of-focus beam with respect to the in-focus beam, increasing the degeneracy on the least squares minimization. On the contrary, a large value of :math:`d_z` will decrease the signal-to-noise on the source, making the Zernike circle polynomial coefficients have high uncertainties.
-This value can only be set by observing and studying the output.
+The radial offset is the defocused term added to the sub-reflector. It is usually of the order of centimeters (it will vary from telescope to telescope). A small value of the :math:`d_z` may not add enough change to the out-of-focus beam with respect to the in-focus beam, increasing the degeneracy on the least squares minimization. On the contrary, a large value of :math:`d_z` will decrease the signal-to-noise on the source, making the Zernike circle polynomial coefficients have high uncertainty.
+For every feed and telescope geometry this value will change. At the Effelsberg telecope :math:`d_z = \pm 2.2` cm  while using a :math:`9`- and :math:`7`- mm feed
 
 Wavefront (aberration) distribution: :math:`W(x, y)` (`~pyoof.aperture.wavefront`)
 ----------------------------------------------------------------------------------------------------------
@@ -120,6 +120,9 @@ With :math:`m = |\ell|`. The complete Zernike circle polynomials are:
     U^\ell_n(\varrho, \vartheta) = R^m_n(\varrho) \cdot \sin m\vartheta \qquad \ell < 0.
 
 For more about the Zernike circle polynomials and the `~pyoof` package see the Jupyter notebook `zernike.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_ examples from the repository.
+
+.. note::
+    There is no standard way to sort the Zernike circle polynomials, be aware that by creating your own sequence the Zernike polynomials coefficients will change.
 
 
 Zernike circle polynomial coefficient: :math:`K_{n\, \ell}` (``K_coeff``)
@@ -148,7 +151,7 @@ To learn the in-depth structure of the `~pyoof` package, first visit the sub-pac
 * The telescope structure (geometry and blockage), in `~pyoof.telgeometry`
 * Mathematical functions for the construction of the aperture distribution, in `~pyoof.aperture`
 
-If there is not enough time for that I encourage you to read the following examples and test the `Jupyter notebooks <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/>`_.
+If there is not enough, I encourage you to read the following examples and test the `Jupyter notebooks <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/>`_.
 
 The fits file
 -------------
@@ -214,20 +217,21 @@ Where ``U`` and ``V`` are the dimensions of the :math:`x`- and :math:`y`-axis, a
 .. note::
     The fits format can also be avoided. If the required parameters are added to the `~pyoof.fit_beam` function, then the `~pyoof` package will also work. Although, it is recommended to use the fits format, for ease and clean storage of the data.
 
-It is also possible to try the `~pyoof` by generating your own data, with the build-in function `~pyoof.beam_generator`. The Jupyter notebook `oof_holography.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_  has generated data, plus noise, and it is used as an input for the `~pyoof` package.
+It is also possible to try the `~pyoof` by generating your own data, with the build-in function `~pyoof.beam_generator`. The Jupyter notebook `oof_holography.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_  has an example of generated data plus noise, and runs over the `~pyoof` package.
 
 Using pyoof
 -----------
 
-The main function in the `~pyoof` package is `~pyoof.fit_beam`. This function does all the numerical computation necessary to find the Zernike circle coefficients and the illumination coefficients, stored in ``params_solution`` (`~numpy.ndarray`). To start, first the data needs to be extracted using `~pyoof.extract_data_pyoof`, then its outputs; constants, arrays and strings are given as input to the core function `~pyoof.fit_beam`. Besides the observational data some other parameters need to be added, these are the ones related to the FFT2 (`~numpy.fft.fft2`) and functions related to the telescope geometry (effective focal length, type of antenna, etc).
+The main function in the `~pyoof` package is `~pyoof.fit_beam`. This function does all the numerical computation necessary to find the Zernike circle polynomial coefficients and the illumination function coefficients, stored in ``params_solution`` (`~numpy.ndarray`). To start, first the data needs to be extracted using `~pyoof.extract_data_pyoof`, then its outputs; constants, arrays (most of them `~astropy.units.quantity.Quantity`) and strings are given as input to the core function `~pyoof.fit_beam`. Besides the observational data some other parameters need to be added, these are the ones related to the FFT2 (`~numpy.fft.fft2`) and functions related to the telescope geometry (effective focal length, type of antenna, etc).
 
 Following the same example as before, it is possible to make a simple preview of the file, using `~pyoof.extract_data_pyoof`.
 
 .. code-block:: python
 
+    import matplotlib.pyplot as plt
     import pyoof
     from scipy import interpolate
-    import matplotlib.pyplot as plt
+    from astropy import units as u
     # Generally you would store the filename as string
     from astropy.utils.data import get_pkg_data_filename
     oofh_data = get_pkg_data_filename('pyoof/data/example0.fits')
@@ -236,10 +240,10 @@ Following the same example as before, it is possible to make a simple preview of
     [name, obs_object, obs_date, pthto, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-    u_data, v_data = np.degrees(u_data), np.degrees(v_data)
-    vmin = np.min(beam_data)
-    vmax = np.max(beam_data)
+    u_data.to(u.deg)
+    v_data.to(u.deg)
 
+    vmin, vmax = np.min(beam_data), np.max(beam_data)
 
     fig, ax = plt.subplots(ncols=3)
 
@@ -257,13 +261,16 @@ Following the same example as before, it is possible to make a simple preview of
             method='cubic'
             )
 
-        extent = [u_ng.min(), u_ng.max(), v_ng.min(), v_ng.max()]
+        extent = [
+            u_ng.value.min(), u_ng.value.max(),
+            v_ng.value.min(), v_ng.value.max()
+            ]
         ax[i].imshow(beam_ng, extent=extent, vmin=vmin, vmax=vmax)
         ax[i].contour(u_ng, v_ng, beam_ng, 10)
 
-The properties of the receiver and the telescope can be found in the sub-packages `~pyoof.aperture` and `~pyoof.telgeometry`. These are important geometrical aspects that will make the nonlinear least squares minimization process more precise. An example on how to gather the properties of a telescope is below::
+The properties of the receiver and the telescope can be found in the sub-packages `~pyoof.aperture` and `~pyoof.telgeometry`. These are important geometrical aspects that will make the nonlinear least squares minimization process more accurate. An example on how the properties are gather follows::
 
-    pr = 50. # primary reflector radius m
+    pr = 50. * u.m  # primary reflector radius
 
     # telescope = [block_dist, opd_func, pr, name]
     telescope = dict(
@@ -274,57 +281,58 @@ The properties of the receiver and the telescope can be found in the sub-package
             'effelsberg'
             ]
         manual = [
-            telgeometry.block_manual(pr=50, sr=3.25, a=1, L=50-3.25),
-            telgeometry.opd_manual(Fp=30, F=387),
+            telgeometry.block_manual(
+                pr=50 * u.m, sr=3.25 * u.m, a=1 * u.m, L=pr-sr
+                ),
+            telgeometry.opd_manual(Fp=30 * u.m, F=387 * u.m),
             pr,
             'manual'
             ]
         )
 
-Besides this an illumination function must be selected, to fulfill the receiver properties. The illumination functions can be found on the `~pyoof.aperture` package. Currently there are two made functions, `pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+Besides this an illumination function must be selected to fulfill the receiver properties. The illumination functions can be found on the `~pyoof.aperture` package. Currently there are two made functions, `pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss` (but you can add your own).
 
 .. note::
     The blockage distribution, ``block_dist``, and the OPD function, ``opd_func`` can be manually created or using the standard manual functions, `~pyoof.telgeometry.block_manual` and `~pyoof.telgeometry.opd_manual`.
 
 .. warning::
-    The geometrical aspects of the telescope, such as blockage distribution and OPD function, are fundamental for a good fit in the nonlinear squares minimization. If they are not properly estimated there will be a great difference in the final aperture phase distribution.
+    The geometrical aspects of the telescope, such as blockage distribution and OPD function, are **fundamental** for a good fit in the nonlinear squares minimization. If they are not properly estimated there will be a great difference in the final aperture phase distribution.
 
-After creating the basic structure, the core function, `~pyoof.fit_beam`, can be executed,
+After creating the basic structure, the core function, `~pyoof.fit_beam` can be executed,
 
 .. code-block:: python
 
     pyoof.fit_beam(
         data_info=data_info,                   # information
         data_obs=[beam_data, u_data, v_data],  # observed beam
-        method='trf',                          # opt. algorithm 'trf', 'lm' or 'dogbox'
         order_max=5,                           # it will fit from 1 to order_max
         illum_func=illum_pedestal,             # or illum_gauss
         telescope=telescope['effelsberg'],     # [block_dist, opd_func, pr, name]
         resolution=2**8,                       # standard is 2 ** 8
         box_factor=5,                          # box_size = 5 * pr, pixel resolution
         fit_previous=True,                     # default
-        config_params_file=None,               # default
+        2=None,                                # default
         make_plots=True,                       # default
         verbose=2,                             # default
         work_dir=None                          # default
         )
 
-This will show the main properties of the fit as well as its progress. The key ``order_max`` is the maximum order to be fitted in the process. It starts from the polynomial order one until order five. If ``fit_previous=True``, then the algorithm will use coefficients from the previous order (:math:`n`) as the initial coefficients for the next order (:math:`n+1`), this feature is strongly recommended. The keys ``method`` and ``verbose`` are related to the least squares minimization package (`~scipy.optimize.least_squares`). The ``box_factor`` and ``resolution`` are necessary to perform a good FFT2 (more information about this will be updated).
+After excecution the command line will show first the observation properties and the progress of the least squares minimization.The key ``order_max`` is the maximum Zernike circle polynomial coeffcients order to be fitted in the process. It starts from the polynomial order one until order ``order_max``. If ``fit_previous=True``, then the algorithm will use coefficients from the previous order (:math:`n`) as the initial coefficients for the next order (:math:`n+1`), this feature is **strongly** recommended. The key ``verbose`` prints relevant information about the least squares minimization package (`~scipy.optimize.least_squares`). The ``box_factor`` and ``resolution`` are necessary to perform a good FFT2 (more information about this will be updated).
 
 The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, where `name` is the name of the fits file used. The directory will contain:
 
 * `beam_data.csv`: Corresponds to the observed power pattern as a flat array.
 * `corr_n#.csv`: Correlation matrix evaluated at the last residual from the least squares minimization, order `#`.
 * `cov_n#.csv`: Covariance matrix evaluated at the last residual from the least squares minimization, order `#`.
-* `fitpar_n#.csv`: Estimated parameters from the least squares minimization, order `#`. These correspond to the illumination coefficients, ``I_coeff``, and the Zernike circle polynomial coefficients, ``K_coeff``. They are gathered as ``params_solution = I_coeff + K_coeff``. Be aware that some coefficients can be fixed, or excluded from the optimization, such as the illumination offset (:math:`x_0, y_0`) or the illumination amplitude (:math:`A_{E_\text{a}}`). The default configuration is in `config_params.yml` (package directory). You can also provide your own configuration set up.
+* `fitpar_n#.csv`: Estimated parameters from the least squares minimization, order `#`. These correspond to the illumination function coefficients, ``I_coeff``, and the Zernike circle polynomial coefficients, ``K_coeff``. They are gathered as ``params_solution = I_coeff + K_coeff``. Be aware that some coefficients can be fixed, or excluded from the optimization, such as the illumination offset (:math:`x_0, y_0`) or the illumination amplitude (:math:`A_{E_\text{a}}`). The default configuration is in `config_params.yml` (package directory). You can also provide your own configuration set up.
 * `grad_n#.csv`: Gradient of the last residual evaluation, order `#`.
-* `phase_n#.csv`: Aperture phase distribution (phase error), in radians, for the primary dish, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in `~pyoof.fit_beam`.
+* `phase_n#.csv`: Aperture phase distribution (phase error), in radians, for the primary reflector, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in `~pyoof.fit_beam`.
 * `pyoof_info.yml`: It contains information about the fit and observation parameters.
 * `res_n#.csv`: Last evaluation of the residual from the least squares minimization, order `#`.
 * `u_data.csv`: :math:`x`-axis vector which contains position coordinates for `beam_data.csv`, in radians.
 * `v_data.csv`: :math:`y`-axis vector which contains position coordinates for `beam_data.csv`, in radians.
 
-Finally if the key ``make_plots=True``, then `~pyoof.fit_beam` will create a sub-directory containing the most important plots to study the fit, as well as the phase error maps for the primary dish.
+Finally if the key ``make_plots=True``, then `~pyoof.fit_beam` will create a sub-directory containing the most important plots to study the fit, as well as the phase error maps for the primary reflector. Plots require :math:`\mathrm{\LaTeX}` to be installed, if you do not have it simply set the option to ``False``.
 
 See Also
 ========
@@ -365,5 +373,3 @@ This code makes use of the excellent work provided by the
 for the packaging.
 
 As well `bwinkel <https://github.com/bwinkel>`_ for his support and help during the development of `~pyoof`.
-
-

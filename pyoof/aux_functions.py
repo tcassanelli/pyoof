@@ -7,47 +7,12 @@ import numpy as np
 from astropy.io import ascii, fits
 from astropy import units as apu
 from astropy.constants import c as light_speed
-from .aperture import illum_gauss, illum_pedestal
+from scipy.constants import golden
 
 __all__ = [
     'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
-    'store_data_csv', 'uv_ratio', 'illum_strings', 'store_data_ascii'
+    'store_data_csv', 'uv_ratio', 'store_data_ascii'
     ]
-
-
-def illum_strings(illum_func):
-    """
-    It assigns string labels to the illumination function. The `~pyoof` package
-    has two standard illumination functions, `~pyoof.aperture.illum_pedestal`
-    and `~pyoof.aperture.illum_gauss`.
-
-    Parameters
-    ----------
-    illum_func : `function`
-        Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with ``I_coeff``. The illumination functions available are
-        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
-
-    Returns
-    -------
-    illum_name : `str`
-        String with the illumination function name.
-    taper_name : `str`
-        String with the illumination function taper.
-    """
-
-    # adding illumination function information
-    if illum_func == illum_pedestal:
-        illum_name = 'pedestal'
-        taper_name = 'c_dB'
-    elif illum_func == illum_gauss:
-        illum_name = 'gauss'
-        taper_name = 'sigma_dB'
-    else:
-        illum_name = 'manual'
-        taper_name = 'taper_dB'
-
-    return illum_name, taper_name
 
 
 def extract_data_pyoof(pathfits):
@@ -109,7 +74,7 @@ def extract_data_pyoof(pathfits):
     beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
     u_data = [hdulist[i].data['U'] * apu.rad for i in range(1, 4)]
     v_data = [hdulist[i].data['V'] * apu.rad for i in range(1, 4)]
-    d_z = np.array([hdulist[i].header['DZ'] for i in range(1, 4)]) * apu.m
+    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)] * apu.m
 
     data_file = [name, pthto]
     data_info = data_file + [obs_object, obs_date, freq, wavel, d_z, meanel]
@@ -159,7 +124,7 @@ def extract_data_effelsberg(pathfits):
     meanel = hdulist[0].header['MEANEL'] * apu.deg
     obs_object = hdulist[0].header['OBJECT']        # observed object
     obs_date = hdulist[0].header['DATE_OBS']        # observation date
-    d_z = np.array([hdulist[i].header['DZ'] for i in pos]) * apu.m
+    d_z = [hdulist[i].header['DZ'] for i in pos] * apu.m
 
     beam_data = [hdulist[i].data['fnu'] for i in pos]
     u_data = [hdulist[i].data['DX'] * apu.rad for i in pos]
@@ -250,9 +215,7 @@ def store_data_csv(name, name_dir, order, save_to_csv):
             )
 
 
-def store_data_ascii(
-    name, name_dir, taper_name, order, params_solution, params_init
-        ):
+def store_data_ascii(name, name_dir, order, params_solution, params_init):
     """
     Stores in an ascii format the parameters found by the least squares
     minimization (see `~pyoof.fit_beam`).
@@ -264,8 +227,6 @@ def store_data_ascii(
     name_dir : `str`
         Path to store all the csv files. The files will depend on the order of
         the Zernike circle polynomial.
-    taper_name : `str`
-        Name of the illumination function taper.
     order : `int`
         Order used for the Zernike circle polynomial, :math:`n`.
     params_solution : `~numpy.ndarray`
@@ -285,7 +246,7 @@ def store_data_ascii(
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
-    params_names = ['i_amp', taper_name, 'x_0', 'y_0']
+    params_names = ['i_amp', 'c_dB', 'x_0', 'y_0']
     for i in range(N_K_coeff):
         params_names.append('K({}, {})'.format(N[i], L[i]))
 
@@ -320,9 +281,9 @@ def uv_ratio(u, v):
         Height for the power pattern figure.
     """
 
-    ratio = (v.max() - v.min()) / (u.max() - u.min()) * 30
+    ratio = (v.max() - v.min()) / (u.max() - u.min())
 
-    width = ratio
-    height = width / 5
+    width = ratio * 14
+    height = width / 4 * golden
 
     return width, height

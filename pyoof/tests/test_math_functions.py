@@ -4,6 +4,8 @@
 # Author: Tomas Cassanelli
 import pytest
 import numpy as np
+from astropy import units as apu
+from astropy.tests.helper import assert_quantity_allclose
 from astropy.utils.misc import NumpyRNGContext
 from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_allclose, assert_equal
@@ -27,41 +29,6 @@ def test_cart2pol():
 
     assert_allclose(rho, rho_true)
     assert_allclose(theta, theta_true)
-
-
-def test_wavevector2degrees():
-
-    wavel = np.linspace(0.005, 0.014, 10)
-
-    with NumpyRNGContext(0):
-        u = np.sort(np.random.uniform(-2.5, 2.5, 10))
-
-    wavevector_degrees = pyoof.wavevector2degrees(u, wavel)
-
-    wavevector_degrees_true = np.array([
-        -0.16695773, -0.13122773, -0.12515963, 0.10286468, 0.12585635,
-        0.29439539, 0.45975143, 0.73976655, 1.45905107, 1.85961435
-        ])
-
-    assert_allclose(wavevector_degrees, wavevector_degrees_true)
-
-
-def test_wavevector2radians():
-
-    wavel = np.linspace(0.005, 0.014, 10)
-
-    with NumpyRNGContext(0):
-        u = np.sort(np.random.uniform(-2.5, 2.5, 10))
-
-    wavevector_radians = pyoof.wavevector2radians(u, wavel)
-
-    wavevector_radians_true = np.array([
-        -0.002913962029, -0.00229035602, -0.002184447606, 0.00179532732,
-        0.002196607677, 0.005138168804, 0.008024176219, 0.012911361982,
-        0.025465245051, 0.032456393235
-        ])
-
-    assert_allclose(wavevector_radians, wavevector_radians_true)
 
 
 def test_co_matrices():
@@ -118,5 +85,11 @@ def test_rms():
     rms2 = pyoof.rms(x2)
     rms2_true = 4.6335342124813295
 
+    with NumpyRNGContext(1):
+        x3 = np.random.uniform(-20, 20, 100).reshape(10, -1)
+    rms3 = pyoof.rms(x3, 3 * apu.m)
+    rms3_true = 11.665405508342806
+
     assert_equal(rms1, rms1_true)
     assert_equal(rms2, rms2_true)
+    assert_quantity_allclose(rms3, rms3_true)

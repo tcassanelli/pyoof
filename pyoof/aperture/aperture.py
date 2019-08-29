@@ -13,7 +13,7 @@ __all__ = [
     ]
 
 
-def e_rs(phase):
+def e_rs(phase, radius):
     """
     Computes the random-surface-error efficiency,
     :math:`\\varepsilon_\\mathrm{rs}`, using the Ruze's equation.
@@ -24,6 +24,10 @@ def e_rs(phase):
         The phase error, :math:`\\varphi(x, y)`, is a two dimensional array (
         one of the solutions from the pyoof package). Its amplitude values are
         in radians. The input must be in radians or angle units.
+    radius : `bool`
+        The limit radios where the phase error map is contained in length
+        units. By default it is set to None, meaning that will include the
+        entire array.
 
     Notes
     -----
@@ -37,9 +41,22 @@ def e_rs(phase):
     Where :math:`\\delta_\\mathrm{rms}` corresponds to the root-mean-squared
     deviation. The Python function uses the key **phase** because the term
     :math:`4\\pi\\delta_\\mathrm{rms}/\\lambda` corresponds to the phase error.
+
+    Examples
+    --------
+    Simply add the a phase value and define the limits of the phase error map.
+
+    >>> import numpy as np
+    >>> from astropy import units as u
+    >>> from pyoof import aperture
+    >>> K_coeff = np.array([0.1] * 21)  # see aperture.phase
+    >>> radius = 3.25 * u.m
+    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, notilt=True, pr=radius)
+    >>> aperture.e_rs(phase=phi, radius=radius)
+    <Quantity 0.27564826>
     """
 
-    rms_rad = rms(phase)  # rms value in radians
+    rms_rad = rms(phase=phase, radius=radius)  # rms value in radians
 
     with apu.set_enabled_equivalencies(apu.dimensionless_angles()):
         return np.exp(-rms_rad ** 2)
@@ -98,9 +115,9 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
     else:
         c = 10 ** (c_dB / 20.)
     if type(x0) != apu.quantity.Quantity:
-        x0 = x0 * apu.m
+        x0 *= apu.m
     if type(y0) != apu.quantity.Quantity:
-        y0 = y0 * apu.m
+        y0 *= apu.m
 
     # c_dB has to be negative, bounds given [-8, -25]
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
@@ -129,7 +146,7 @@ def illum_gauss(x, y, I_coeff, pr):
         :math:`A_{E_\\mathrm{a}}`, the illumination taper,
         :math:`\\sigma_\\mathrm{dB}` and the two coordinate offset,
         :math:`(x_0, y_0)`. The illumination coefficients must be listed as
-        follows, ``I_coeff = [i_amp, sigma_dB, x0, y0]``, with units as
+        follows, ``I_coeff = [i_amp, c_dB, x0, y0]``, with units as
         dimensionless, decibels and length, respectively.
     pr : `float`
         Primary reflector radius in length units.
@@ -144,11 +161,20 @@ def illum_gauss(x, y, I_coeff, pr):
     The Gaussian illumination function has the same formula of a normalized
     Gaussian distribution.
     """
-    i_amp, sigma_dB, x0, y0 = I_coeff
-    sigma = 10 ** (sigma_dB / 20)  # -15 to -20 dB
-    norm = np.sqrt(2 * np.pi * sigma ** 2)  # normalization Gaussian
+    i_amp, c_dB, x0, y0 = I_coeff
+
+    # workaround for units
+    if type(c_dB) == apu.quantity.Quantity:
+        sigma = 10 ** (c_dB / 20. / apu.dB)
+    else:
+        sigma = 10 ** (c_dB / 20.)
+    if type(x0) != apu.quantity.Quantity:
+        x0 *= apu.m
+    if type(y0) != apu.quantity.Quantity:
+        y0 *= apu.m
+
     Ea = (
-        i_amp * norm *
+        i_amp * np.sqrt(2 * np.pi * sigma ** 2) *
         np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma * pr) ** 2))
         )
 
@@ -208,7 +234,7 @@ def wavefront(rho, theta, K_coeff):
     return W
 
 
-def phase(K_coeff, notilt, pr, resolution=1e3):
+def phase(K_coeff, notilt, pr, resolution=1000):
     """
     Aperture phase distribution (or phase error), :math:`\\varphi(x, y)`, for
     an specific telescope primary reflector. In general, the tilt (average
@@ -260,8 +286,8 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     execute the `~pyoof.aperture.phase` function.
 
     >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
     >>> from astropy import units as u
+    >>> import matplotlib.pyplot as plt
     >>> from pyoof import aperture
     >>> pr = 50 * u.m                       # primary relfector
     >>> n = 5                               # order polynomial
@@ -293,7 +319,7 @@ def phase(K_coeff, notilt, pr, resolution=1e3):
     return x, y, phi
 
 
-def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
+def aperture(x, y, I_coeff, K_coeff, d_z, wavel, illum_func, telgeo):
     """
     Aperture distribution, :math:`\\underline{E_\\mathrm{a}}(x, y)`.
     Collection of individual distribution/functions: i.e. illumination
@@ -310,21 +336,22 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
         Grid value for the :math:`x` variable in length units.
     y : `~astropy.units.quantity.Quantity`
         Grid value for the :math:`y` variable in length units.
-    K_coeff : `~numpy.ndarray`
-        Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
-        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
-        \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     I_coeff : `list`
         List which contains 4 parameters, the illumination amplitude,
         :math:`A_{E_\\mathrm{a}}`, the illumination taper,
         :math:`c_\\mathrm{dB}` and the two coordinate offset, :math:`(x_0,
         y_0)`. The illumination coefficients must be listed as follows,
         ``I_coeff = [i_amp, c_dB, x0, y0]``.
+    K_coeff : `~numpy.ndarray`
+        Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
+        \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     d_z : `~astropy.units.quantity.Quantity`
-        Radial offset, :math:`d_z`, added to the sub-reflector in meters. This
-        characteristic measurement adds the classical interference pattern to
-        the beam maps, normalized squared (field) radiation pattern, which is
-        an out-of-focus property. It is usually of the order of centimeters.
+        Radial offset, :math:`d_z`, added to the sub-reflector in length
+        units. This characteristic measurement adds the classical interference
+        pattern to the beam maps, normalized squared (field) radiation
+        pattern, which is an out-of-focus property. It is usually of the order
+        of centimeters.
     wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in meters.
     illum_func : `function`
@@ -381,7 +408,7 @@ def aperture(x, y, K_coeff, I_coeff, d_z, wavel, illum_func, telgeo):
 
 
 def radiation_pattern(
-    K_coeff, I_coeff, d_z, wavel, illum_func, telgeo, resolution, box_factor
+    I_coeff, K_coeff, d_z, wavel, illum_func, telgeo, resolution, box_factor
         ):
     """
     Spectrum or (field) radiation pattern, :math:`F(u, v)`, it is the FFT2
@@ -391,21 +418,22 @@ def radiation_pattern(
 
     Parameters
     ----------
-    K_coeff : `~numpy.ndarray`
-        Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
-        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
-        \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     I_coeff : `list`
         List which contains 4 parameters, the illumination amplitude,
         :math:`A_{E_\\mathrm{a}}`, the illumination taper,
         :math:`c_\\mathrm{dB}` and the two coordinate offset, :math:`(x_0,
         y_0)`. The illumination coefficients must be listed as follows,
         ``I_coeff = [i_amp, c_dB, x0, y0]``.
+    K_coeff : `~numpy.ndarray`
+        Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
+        only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
+        \\varphi)`. The coefficients are between :math:`[-2, 2]`.
     d_z : `~astropy.units.quantity.Quantity`
-        Radial offset, :math:`d_z`, added to the sub-reflector in meters. This
-        characteristic measurement adds the classical interference pattern to
-        the beam maps, normalized squared (field) radiation pattern, which is
-        an out-of-focus property. It is usually of the order of centimeters.
+        Radial offset, :math:`d_z`, added to the sub-reflector in length
+        units. This characteristic measurement adds the classical interference
+        pattern to the beam maps, normalized squared (field) radiation
+        pattern, which is an out-of-focus property. It is usually of the order
+        of centimeters.
     wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in meters.
     illum_func : `function`

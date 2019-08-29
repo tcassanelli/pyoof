@@ -5,32 +5,27 @@
 import pytest
 import os
 import numpy as np
+from astropy import units as apu
 from astropy.io import ascii
 from numpy.testing import assert_allclose
 import pyoof
 
 
 # Initial fits file configuration
-n = 4                                           # initial order
+n = 6                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
-c_dB = np.random.randint(-21, -10)              # illumination taper
-I_coeff = np.array([1, c_dB, 0, 0])             # illumination coefficients
-
-# Zernike circle polynomial coeff, first one kept fixed.
-K_coeff = np.hstack((0, np.random.normal(0., .08, N_K_coeff)))
-wavel = 0.0093685143125                         # wavelenght in m
+c_dB = np.random.randint(-21, -10) * apu.dB     # illumination taper
+wavel = 0.0093685143125 * apu.m                 # wavelength
 
 plus_minus = np.random.normal(0.025, 0.005)
-d_z = [plus_minus, 0, -plus_minus]              # radial offset
-
-params_true = np.hstack((I_coeff, K_coeff))
+d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 
 noise_level = .03                               # noise added to gen data
 
 effelsberg_telescope = [
     pyoof.telgeometry.block_effelsberg,         # blockage distribution
     pyoof.telgeometry.opd_effelsberg,           # OPD function
-    50.,                                        # primary reflector radius m
+    50. * apu.m,                                # primary reflector radius m
     'effelsberg'                                # telescope name
     ]
 
@@ -38,15 +33,23 @@ effelsberg_telescope = [
 resolution = 2 ** 8
 box_factor = 5
 
+# True values to be compared at the end
+K_coeff = np.hstack((0, np.random.normal(0., .08, N_K_coeff)))
+I_coeff = [1, c_dB, 0 * apu.m, 0 * apu.m]  # illumination coefficients
+
+I_coeff_dimensionless = [I_coeff[0]] + [I_coeff[i].value for i in range(1, 4)]
+params_true = np.hstack((I_coeff_dimensionless, K_coeff))
+
 
 # Generating temp file with pyoof fits and pyoof_out
-@pytest.fixture(params=['trf', 'lm', 'dogbox'])
-def oof_work_dir(tmpdir_factory, request):
+@pytest.fixture()
+def oof_work_dir(tmpdir_factory):
 
     tdir = str(tmpdir_factory.mktemp('pyoof'))
 
     pyoof.beam_generator(
-        params=params_true,
+        K_coeff=K_coeff,
+        I_coeff=I_coeff,
         wavel=wavel,
         d_z=d_z,
         telgeo=effelsberg_telescope[:-1],
@@ -58,17 +61,14 @@ def oof_work_dir(tmpdir_factory, request):
         )
 
     print('files directory: ', tdir)
-    print('method tested: ', request.param)
 
     # Reading the generated data
-
     pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
     data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
 
     pyoof.fit_beam(
         data_info=data_info,
         data_obs=data_obs,
-        method=request.param,
         order_max=n,
         illum_func=pyoof.aperture.illum_pedestal,
         telescope=effelsberg_telescope,
