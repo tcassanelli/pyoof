@@ -29,16 +29,16 @@ import datetime
 import os
 import sys
 
-# try:
-#     import astropy_helpers
-# except ImportError:
-#     # Building from inside the docs/ directory?
-#     if os.path.basename(os.getcwd()) == 'docs':
-#         a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
-#         if os.path.isdir(a_h_path):
-#             sys.path.insert(1, a_h_path)
+try:
+    import astropy_helpers
+except ImportError:
+    # Building from inside the docs/ directory?
+    if os.path.basename(os.getcwd()) == 'docs':
+        a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
+        if os.path.isdir(a_h_path):
+            sys.path.insert(1, a_h_path)
 
-# import astropy
+import astropy
 
 try:
     from sphinx_astropy.conf.v1 import *  # noqa
@@ -104,15 +104,6 @@ copyright = '{0}, {1}'.format(
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-
-__import__(setup_cfg['package_name'])
-package = sys.modules[setup_cfg['package_name']]
-
-# The short X.Y version.
-version = package.__version__.split('-', 1)[0]
-# The full version, including alpha/beta/rc tags.
-release = package.__version__
-
 
 # -- Options for HTML output --------------------------------------------------
 
