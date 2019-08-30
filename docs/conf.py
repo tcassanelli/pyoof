@@ -29,16 +29,16 @@ import datetime
 import os
 import sys
 
-try:
-    import astropy_helpers
-except ImportError:
-    # Building from inside the docs/ directory?
-    if os.path.basename(os.getcwd()) == 'docs':
-        a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
-        if os.path.isdir(a_h_path):
-            sys.path.insert(1, a_h_path)
+# try:
+#     import astropy_helpers
+# except ImportError:
+#     # Building from inside the docs/ directory?
+#     if os.path.basename(os.getcwd()) == 'docs':
+#         a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
+#         if os.path.isdir(a_h_path):
+#             sys.path.insert(1, a_h_path)
 
-import astropy
+# import astropy
 
 try:
     from sphinx_astropy.conf.v1 import *  # noqa
