@@ -96,10 +96,9 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = setup_cfg['package_name']
-author = setup_cfg['author']
-copyright = '{0}, {1}'.format(
-    datetime.datetime.now().year, setup_cfg['author'])
+project = 'pyoof'
+author = 'Tomas Cassanelli'
+copyright = '2019, The pyoof developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -181,8 +180,8 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 if eval(setup_cfg.get('edit_on_github')):
     extensions += ['sphinx_astropy.ext.edit_on_github']
 
-    versionmod = __import__(setup_cfg['package_name'] + '.version')
-    edit_on_github_project = setup_cfg['github_project']
+    versionmod = __import__('pyoof' + '.version')
+    edit_on_github_project = 'tcassanelli/pyoof'
     if versionmod.version.release:
         edit_on_github_branch = "v" + versionmod.version.version
     else:
