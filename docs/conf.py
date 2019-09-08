@@ -41,7 +41,7 @@ except ImportError:
 import astropy
 
 try:
-    from sphinx_astropy.conf import *  # noqa
+    from sphinx_astropy.conf.v1 import *  # noqa
 except ImportError:
     print(
         'ERROR: the documentation requires the sphinx-astropy' +
