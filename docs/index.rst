@@ -311,7 +311,7 @@ After creating the basic structure, the core function, `~pyoof.fit_beam` can be 
         resolution=2**8,                       # standard is 2 ** 8
         box_factor=5,                          # box_size = 5 * pr, pixel resolution
         fit_previous=True,                     # default
-        2=None,                                # default
+        config_params_file=None,               # default
         make_plots=True,                       # default
         verbose=2,                             # default
         work_dir=None                          # default

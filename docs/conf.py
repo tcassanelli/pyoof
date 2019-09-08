@@ -192,8 +192,8 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 #     edit_on_github_source_root = ""
 #     edit_on_github_doc_root = "docs"
 
-# # -- Resolving issue number to links in changelog -----------------------------
-# github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
+# -- Resolving issue number to links in changelog -----------------------------
+github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 
 
 # -- Inline Plotting ----------------------------------------------------------
