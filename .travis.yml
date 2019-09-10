@@ -123,7 +123,7 @@ matrix:
 
 install:
     
-    - travis_wait 30 mvn install
+    - travis_wait
 
     # We now use the ci-helpers package to set up our testing environment.
     # This is done by using Miniconda and then using conda and pip to install
