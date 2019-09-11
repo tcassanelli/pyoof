@@ -47,11 +47,8 @@ env:
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='pip wheel setuptools sphinx scipy pytest astropy matplotlib pyyaml'
-
-        # List other runtime dependencies for the package that are available as
-        # pip packages here.
-        # - PIP_DEPENDENCIES=''
+        - CONDA_DEPENDENCIES='pip wheel setuptools sphinx scipy pytest matplotlib pyyaml'
+        - CONDA_DEPENDENCIES_DOC='sphinx-astropy'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -150,7 +147,7 @@ install:
     # other dependencies.
 
 script:
-   - $MAIN_CMD $SETUP_CMD
+   - travis_wait 20 $MAIN_CMD $SETUP_CMD
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line below.
