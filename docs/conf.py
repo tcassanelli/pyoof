@@ -25,10 +25,9 @@
 # Thus, any C-extensions that are needed to build the documentation will *not*
 # be accessible, and the documentation will not build correctly.
 
+import datetime
 import os
 import sys
-import datetime
-from importlib import import_module
 
 # try:
 #     import astropy_helpers
@@ -64,7 +63,10 @@ plot_formats = ['png', 'svg', 'pdf']
 plot_pre_code = ""
 
 # Get configuration information from setup.cfg
-from configparser import ConfigParser
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
 conf = ConfigParser()
 
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
@@ -96,17 +98,9 @@ rst_epilog += """
 # This does not *have* to match the package name, but typically does
 project = setup_cfg['name']
 author = setup_cfg['author']
-copyright = '{0}, {1}'.format(
-    datetime.datetime.now().year, setup_cfg['author'])
-
-
-import_module(setup_cfg['name'])
-package = sys.modules[setup_cfg['name']]
-
-# The short X.Y version.
-version = package.__version__.split('-', 1)[0]
-# The full version, including alpha/beta/rc tags.
-release = package.__version__
+copyright = '2019, The pyoof developers'
+version = setup_cfg['version']
+release = setup_cfg['version']
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -185,21 +179,21 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 
 # -- Options for the edit_on_github extension ---------------------------------
 
-if eval(setup_cfg.get('edit_on_github')):
-    extensions += ['sphinx_astropy.ext.edit_on_github']
+# if eval(setup_cfg.get('edit_on_github')):
+#     extensions += ['sphinx_astropy.ext.edit_on_github']
 
-    versionmod = __import__(project + '.version')
-    edit_on_github_project = 'tcassanelli/pyoof'
-    if versionmod.version.release:
-        edit_on_github_branch = "v" + versionmod.version.version
-    else:
-        edit_on_github_branch = "master"
+#     versionmod = __import__(project + '.version')
+#     edit_on_github_project = 'tcassanelli/pyoof'
+#     if versionmod.version.release:
+#         edit_on_github_branch = "v" + versionmod.version.version
+#     else:
+#         edit_on_github_branch = "master"
 
-    edit_on_github_source_root = ""
-    edit_on_github_doc_root = "docs"
+#     edit_on_github_source_root = ""
+#     edit_on_github_doc_root = "docs"
 
 # # -- Resolving issue number to links in changelog -----------------------------
-github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
+# github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 
 
 # -- Inline Plotting ----------------------------------------------------------
