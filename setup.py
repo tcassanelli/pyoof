@@ -31,6 +31,7 @@ except ImportError:
 conf = ConfigParser()
 conf.read(['setup.cfg'])
 metadata = dict(conf.items('metadata'))
+extras_require = dict(conf.items('extras_require'))
 
 PACKAGENAME = metadata.get('package_name', 'pyoof')
 DESCRIPTION = metadata.get('description', 'pyoof')
@@ -112,9 +113,9 @@ setup(
     description=DESCRIPTION,
     scripts=scripts,
     install_requires=[
-        s.strip() for s in metadata.get('install_requires').split(
-            ',')
+        s.strip() for s in metadata.get('install_requires').split(',')
         ],
+    extras_require=extras_require,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     license=LICENSE,
