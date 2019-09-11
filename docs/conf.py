@@ -29,14 +29,14 @@ import datetime
 import os
 import sys
 
-try:
-    import astropy_helpers
-except ImportError:
-    # Building from inside the docs/ directory?
-    if os.path.basename(os.getcwd()) == 'docs':
-        a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
-        if os.path.isdir(a_h_path):
-            sys.path.insert(1, a_h_path)
+# try:
+#     import astropy_helpers
+# except ImportError:
+#     # Building from inside the docs/ directory?
+#     if os.path.basename(os.getcwd()) == 'docs':
+#         a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
+#         if os.path.isdir(a_h_path):
+#             sys.path.insert(1, a_h_path)
 
 import astropy
 
@@ -98,21 +98,13 @@ rst_epilog += """
 # This does not *have* to match the package name, but typically does
 project = setup_cfg['name']
 author = setup_cfg['author']
-copyright = '{0}, {1}'.format(
-    datetime.datetime.now().year, setup_cfg['author'])
+copyright = '2019, The pyoof developers'
+version = setup_cfg['version']
+release = setup_cfg['version']
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-
-__import__(setup_cfg['name'])
-package = sys.modules[setup_cfg['name']]
-
-# The short X.Y version.
-version = package.__version__.split('-', 1)[0]
-# The full version, including alpha/beta/rc tags.
-release = package.__version__
-
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -190,8 +182,8 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 # if eval(setup_cfg.get('edit_on_github')):
 #     extensions += ['sphinx_astropy.ext.edit_on_github']
 
-#     versionmod = __import__(setup_cfg['name'] + '.version')
-#     edit_on_github_project = setup_cfg['github_project']
+#     versionmod = __import__(project + '.version')
+#     edit_on_github_project = 'tcassanelli/pyoof'
 #     if versionmod.version.release:
 #         edit_on_github_branch = "v" + versionmod.version.version
 #     else:
@@ -200,8 +192,8 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 #     edit_on_github_source_root = ""
 #     edit_on_github_doc_root = "docs"
 
-# -- Resolving issue number to links in changelog -----------------------------
-github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
+# # -- Resolving issue number to links in changelog -----------------------------
+# github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 
 
 # -- Inline Plotting ----------------------------------------------------------
