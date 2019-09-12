@@ -36,6 +36,10 @@ Project Status
     :target: https://coveralls.io/github/tcassanelli/pyoof?branch=master
     :alt: Pyoof's Coveralls Status
 
+.. image:: https://readthedocs.org/projects/pyoof/badge/?version=latest
+    :target: https://pyoof.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 pyoof is still in the early-development stage. While much of the
 functionality is already working as intended, the API is not yet stable.
 Nevertheless, we kindly invite you to use and test the library and we are
