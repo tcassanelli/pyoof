@@ -1,16 +1,16 @@
 [run]
-source = pyoof
+source = {packagename}
 omit =
-   pyoof/_astropy_init*
-   pyoof/conftest*
-   pyoof/cython_version*
-   pyoof/setup_package*
-   pyoof/*/setup_package*
-   pyoof/*/*/setup_package*
-   pyoof/tests/*
-   pyoof/*/tests/*
-   pyoof/*/*/tests/*
-   pyoof/version*
+   {packagename}/_astropy_init*
+   {packagename}/conftest*
+   {packagename}/cython_version*
+   {packagename}/setup_package*
+   {packagename}/*/setup_package*
+   {packagename}/*/*/setup_package*
+   {packagename}/tests/*
+   {packagename}/*/tests/*
+   {packagename}/*/*/tests/*
+   {packagename}/version*
 
 [report]
 exclude_lines =
