@@ -25,48 +25,19 @@
 # Thus, any C-extensions that are needed to build the documentation will *not*
 # be accessible, and the documentation will not build correctly.
 
-import datetime
 import os
 import sys
-
-try:
-    import astropy_helpers
-except ImportError:
-    # Building from inside the docs/ directory?
-    if os.path.basename(os.getcwd()) == 'docs':
-        a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
-        if os.path.isdir(a_h_path):
-            sys.path.insert(1, a_h_path)
-
-import astropy
+import datetime
+from importlib import import_module
 
 try:
     from sphinx_astropy.conf.v1 import *  # noqa
 except ImportError:
-    print(
-        'ERROR: the documentation requires the sphinx-astropy' +
-        ' package to be installed'
-        )
+    print('ERROR: the documentation requires the sphinx-astropy package to be installed')
     sys.exit(1)
 
-plot_rcparams = {}
-plot_rcparams['figure.figsize'] = (6, 8)
-plot_rcparams['savefig.facecolor'] = 'none'
-plot_rcparams['savefig.bbox'] = 'tight'
-plot_rcparams['axes.labelsize'] = 'large'
-plot_rcparams['figure.subplot.hspace'] = 0.5
-
-plot_apply_rcparams = True
-plot_html_show_source_link = False
-plot_formats = ['png', 'svg', 'pdf']
-# Don't use the default - which includes a numpy and matplotlib import
-plot_pre_code = ""
-
 # Get configuration information from setup.cfg
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+from configparser import ConfigParser
 conf = ConfigParser()
 
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
@@ -96,18 +67,25 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = 'pyoof'
-author = 'Tomas Cassanelli'
-copyright = '2019, The pyoof developers'
+project = setup_cfg['name']
+author = setup_cfg['author']
+copyright = '{0}, {1}'.format(
+    datetime.datetime.now().year, setup_cfg['author'])
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-# -- Options for HTML output --------------------------------------------------
+import_module(setup_cfg['name'])
+package = sys.modules[setup_cfg['name']]
 
-html_static_path = ['_static']
-html_style = 'pyoof.css'
+# The short X.Y version.
+version = package.__version__.split('-', 1)[0]
+# The full version, including alpha/beta/rc tags.
+release = package.__version__
+
+
+# -- Options for HTML output --------------------------------------------------
 
 # A NOTE ON HTML THEMES
 # The global astropy configuration uses a custom theme, 'bootstrap-astropy',
@@ -126,13 +104,12 @@ html_style = 'pyoof.css'
 # name of a builtin theme or the name of a custom theme in html_theme_path.
 #html_theme = None
 
-# Please update these texts to match the name of your package.
+
 html_theme_options = {
     'logotext1': 'py',  # white,  semi-bold
     'logotext2': 'oof',  # orange, light
     'logotext3': ':docs'   # white,  light
     }
-
 
 
 # Custom sidebar templates, maps document names to template names.
@@ -180,8 +157,8 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 if eval(setup_cfg.get('edit_on_github')):
     extensions += ['sphinx_astropy.ext.edit_on_github']
 
-    versionmod = __import__('pyoof' + '.version')
-    edit_on_github_project = 'tcassanelli/pyoof'
+    versionmod = __import__(setup_cfg['package_name'] + '.version')
+    edit_on_github_project = setup_cfg['github_project']
     if versionmod.version.release:
         edit_on_github_branch = "v" + versionmod.version.version
     else:
@@ -193,36 +170,28 @@ if eval(setup_cfg.get('edit_on_github')):
 # -- Resolving issue number to links in changelog -----------------------------
 github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 
-
-# -- Inline Plotting ----------------------------------------------------------
-
-# extensions += [
-#     'matplotlib.sphinxext.only_directives',
-#     'matplotlib.sphinxext.plot_directive',
-#     ]
-
-# -- Options for the Sphinx gallery -------------------------------------------
-
-# try:
-#     import sphinx_gallery
-#     extensions += ["sphinx_gallery.gen_gallery"]
-
-#     sphinx_gallery_conf = {
-#         'backreferences_dir': 'generated/modules', # path to store the module using example template
-#         'filename_pattern': '^((?!skip_).)*$', # execute all examples except those that start with "skip_"
-#         'examples_dirs': '..{}examples'.format(os.sep), # path to the examples scripts
-#         'gallery_dirs': 'generated/examples', # path to save gallery generated examples
-#         'reference_url': {
-#             'astropy': None,
-#             'matplotlib': 'http://matplotlib.org/',
-#             'numpy': 'http://docs.scipy.org/doc/numpy/',
-#         },
-#         'abort_on_example_error': True
-#     }
-
-# except ImportError:
-#     def setup(app):
-#         app.warn('The sphinx_gallery extension is not installed, so the '
-#                  'gallery will not be built.  You will probably see '
-#                  'additional warnings about undefined references due '
-#                  'to this.')
+# -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
+#
+# nitpicky = True
+# nitpick_ignore = []
+#
+# Some warnings are impossible to suppress, and you can list specific references
+# that should be ignored in a nitpick-exceptions file which should be inside
+# the docs/ directory. The format of the file should be:
+#
+# <type> <class>
+#
+# for example:
+#
+# py:class astropy.io.votable.tree.Element
+# py:class astropy.io.votable.tree.SimpleElement
+# py:class astropy.io.votable.tree.SimpleElementWithContent
+#
+# Uncomment the following lines to enable the exceptions:
+#
+# for line in open('nitpick-exceptions'):
+#     if line.strip() == "" or line.startswith("#"):
+#         continue
+#     dtype, target = line.split(None, 1)
+#     target = target.strip()
+#     nitpick_ignore.append((dtype, six.u(target)))
