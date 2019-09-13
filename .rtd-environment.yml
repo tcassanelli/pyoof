@@ -1,10 +1,7 @@
-# Note: it's important that none of the packages below depend on Astropy,
-# because if they do, the conda version of Astropy will get installed. If that
-# happens, then that version will take precendence over the latest developer
-# version of Astropy that gets installed just before the documentation build,
-# and Sphinx will pick up only the older stable conda package.
-
 name: pyoof
+
+channels:
+  - astropy
 
 dependencies:
   - python>=3.6
