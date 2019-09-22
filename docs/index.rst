@@ -358,7 +358,7 @@ Reference/API
 =============
 
 .. automodapi:: pyoof
-    :headings: "-^"
+    :headings: "-2"
 
 Project details
 ===============
