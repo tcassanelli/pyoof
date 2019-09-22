@@ -354,7 +354,11 @@ Available modules
     telgeometry/index
     zernike/index
 
+Reference/API
+=============
+
 .. automodapi:: pyoof
+    :headings: "-^"
 
 Project details
 ===============
