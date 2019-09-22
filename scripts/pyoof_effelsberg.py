@@ -3,7 +3,7 @@
 
 # Author: Tomas Cassanelli
 from astropy import units as u
-from pyoof import aperture, telgeometry, fit_beam, extract_data_effelsberg
+from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 
 # telescope = [blockage, delta, pr, name]
 telescope = dict(
@@ -34,7 +34,7 @@ def fit_beam_effelsberg(pathfits):
     [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-    fit_beam(
+    fit_zpoly(
         data_info=data_info,
         data_obs=[beam_data, u_data, v_data],
         order_max=15,                        # it'll fit from 1 to order_max

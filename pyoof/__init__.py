@@ -31,7 +31,16 @@ if not _ASTROPY_SETUP_:   # noqa
     from .math_functions import *
     from .fit_beam import *
     from .plot_routines import *
-    from .beam_generator import *
+    from .simulate_beam import *
+
+    # commented so they don't apper in docs
+    # __all__ += aux_functions.__all__
+    # __all__ += math_functions.__all__
+    # __all__ += plot_routines.__all__
+
+    __all__ += fit_beam.__all__
+    __all__ += simulate_beam.__all__
+
     from . import aperture
     from . import telgeometry
     from . import zernike

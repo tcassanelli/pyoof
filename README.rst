@@ -112,7 +112,7 @@ To use the pyoof package is straight forward. First define your observational da
         'effelsberg'                         # telescope name
         ]
 
-    pyoof.fit_beam(
+    pyoof.fit_zpoly(
         data_info=data_info,                       # information
         data_obs=data_obs,                         # observed beam
         order_max=5,                               # computes up to order_max
@@ -133,7 +133,7 @@ Improvements future versions
 - Including plot tests for `plot_routines.py` code :white_check_mark:
 - Integrate Astropy units :white_check_mark:
 - Reduce the size of the test files
-- Include automatic setup for the FFT resolution ``pyoof.fit_beam(resolution)``
+- Include automatic setup for the FFT resolution ``pyoof.fit_zpoly(resolution)``
 - Include cosine taper illumination function
 - Add actuator correction (sub-module) and its translation from phase error (specific for Effelsberg)
 - Add option for 2 or more beam maps 

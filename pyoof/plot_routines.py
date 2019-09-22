@@ -32,7 +32,7 @@ def plot_beam(
     Beam maps, :math:`P_\\mathrm{norm}(u, v)`, figure given fixed
     ``I_coeff`` coefficients and ``K_coeff`` set of coefficients. It is the
     straight forward result from a least squares minimization
-    (`~pyoof.fit_beam`). There will be three maps, for three radial offsets,
+    (`~pyoof.fit_zpoly`). There will be three maps, for three radial offsets,
     :math:`d_z^-`, :math:`0` and :math:`d_z^+` (in meters).
 
     Parameters
@@ -224,7 +224,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     res_mode : `bool`
         If `True` the beam map will not be normalized. This feature is used
         to compare the residual outputs from the least squares minimization
-        (`~pyoof.fit_beam`).
+        (`~pyoof.fit_zpoly`).
 
     Returns
     -------

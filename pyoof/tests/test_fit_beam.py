@@ -47,7 +47,7 @@ def oof_work_dir(tmpdir_factory):
 
     tdir = str(tmpdir_factory.mktemp('pyoof'))
 
-    pyoof.beam_generator(
+    pyoof.simulate_data_pyoof(
         K_coeff=K_coeff,
         I_coeff=I_coeff,
         wavel=wavel,
@@ -66,7 +66,7 @@ def oof_work_dir(tmpdir_factory):
     pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
     data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
 
-    pyoof.fit_beam(
+    pyoof.fit_zpoly(
         data_info=data_info,
         data_obs=data_obs,
         order_max=n,

@@ -23,9 +23,9 @@ The aperture phase distribution, related to the power pattern (observed beam map
     \varphi(x, y) = 2\pi \cdot W(x, y) = 2\pi \cdot \sum_{n, \ell} K_{n\ell}U^\ell_n(\varrho, \vartheta).
     :label: phase-error-definition
 
-The parametrization of the aperture phase distribution allows its construction by using a nonlinear least squares minimization (`~pyoof.fit_beam`), due to the highly nonlinear relation between the aperture distribution and the power pattern (degenerated). The `~pyoof` package takes as an input the observed beam maps and computes the :math:`K_{n\ell}` coefficients to find the aperture phase distribution (on the primary reflector).
+The parametrization of the aperture phase distribution allows its construction by using a nonlinear least squares minimization (`~pyoof.fit_zpoly`), due to the highly nonlinear relation between the aperture distribution and the power pattern (degenerated). The `~pyoof` package takes as an input the observed beam maps and computes the :math:`K_{n\ell}` coefficients to find the aperture phase distribution (on the primary reflector).
 
-The operations that the `~pyoof` package does are: construction of the  aperture distribution (`~pyoof.aperture.aperture`), calculation of its Fast Fourier Transform in two dimensions (`~pyoof.aperture.radiation_pattern`), calculation of a residual between observed and modeled power pattern, and nonlinear least squares minimization (`~pyoof.fit_beam`) to find :math:`K_{n\ell}` set and construct the aperture phase distribution.
+The operations that the `~pyoof` package does are: construction of the  aperture distribution (`~pyoof.aperture.aperture`), calculation of its Fast Fourier Transform in two dimensions (`~pyoof.aperture.radiation_pattern`), calculation of a residual between observed and modeled power pattern, and nonlinear least squares minimization (`~pyoof.fit_zpoly`) to find :math:`K_{n\ell}` set and construct the aperture phase distribution.
 
 OOF holography parameters
 =========================
@@ -215,14 +215,14 @@ Where ``U`` and ``V`` are the dimensions of the :math:`x`- and :math:`y`-axis, a
     Always remember to close the fits file after use, ``hdulist.close()``.
 
 .. note::
-    The fits format can also be avoided. If the required parameters are added to the `~pyoof.fit_beam` function, then the `~pyoof` package will also work. Although, it is recommended to use the fits format, for ease and clean storage of the data.
+    The fits format can also be avoided. If the required parameters are added to the `~pyoof.fit_zpoly` function, then the `~pyoof` package will also work. Although, it is recommended to use the fits format, for ease and clean storage of the data.
 
-It is also possible to try the `~pyoof` by generating your own data, with the build-in function `~pyoof.beam_generator`. The Jupyter notebook `oof_holography.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_  has an example of generated data plus noise, and runs over the `~pyoof` package.
+It is also possible to try the `~pyoof` by generating your own data, with the build-in function `~pyoof.simulate_data_pyoof`. The Jupyter notebook `oof_holography.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_  has an example of generated data plus noise, and runs over the `~pyoof` package.
 
 Using pyoof
 -----------
 
-The main function in the `~pyoof` package is `~pyoof.fit_beam`. This function does all the numerical computation necessary to find the Zernike circle polynomial coefficients and the illumination function coefficients, stored in ``params_solution`` (`~numpy.ndarray`). To start, first the data needs to be extracted using `~pyoof.extract_data_pyoof`, then its outputs; constants, arrays (most of them `~astropy.units.quantity.Quantity`) and strings are given as input to the core function `~pyoof.fit_beam`. Besides the observational data some other parameters need to be added, these are the ones related to the FFT2 (`~numpy.fft.fft2`) and functions related to the telescope geometry (effective focal length, type of antenna, etc).
+The main function in the `~pyoof` package is `~pyoof.fit_zpoly`. This function does all the numerical computation necessary to find the Zernike circle polynomial coefficients and the illumination function coefficients, stored in ``params_solution`` (`~numpy.ndarray`). To start, first the data needs to be extracted using `~pyoof.extract_data_pyoof`, then its outputs; constants, arrays (most of them `~astropy.units.quantity.Quantity`) and strings are given as input to the core function `~pyoof.fit_zpoly`. Besides the observational data some other parameters need to be added, these are the ones related to the FFT2 (`~numpy.fft.fft2`) and functions related to the telescope geometry (effective focal length, type of antenna, etc).
 
 Following the same example as before, it is possible to make a simple preview of the file, using `~pyoof.extract_data_pyoof`.
 
@@ -298,11 +298,11 @@ Besides this an illumination function must be selected to fulfill the receiver p
 .. warning::
     The geometrical aspects of the telescope, such as blockage distribution and OPD function, are **fundamental** for a good fit in the nonlinear squares minimization. If they are not properly estimated there will be a great difference in the final aperture phase distribution.
 
-After creating the basic structure, the core function, `~pyoof.fit_beam` can be executed,
+After creating the basic structure, the core function, `~pyoof.fit_zpoly` can be executed,
 
 .. code-block:: python
 
-    pyoof.fit_beam(
+    pyoof.fit_zpoly(
         data_info=data_info,                   # information
         data_obs=[beam_data, u_data, v_data],  # observed beam
         order_max=5,                           # it will fit from 1 to order_max
@@ -326,13 +326,13 @@ The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, whe
 * `cov_n#.csv`: Covariance matrix evaluated at the last residual from the least squares minimization, order `#`.
 * `fitpar_n#.csv`: Estimated parameters from the least squares minimization, order `#`. These correspond to the illumination function coefficients, ``I_coeff``, and the Zernike circle polynomial coefficients, ``K_coeff``. They are gathered as ``params_solution = I_coeff + K_coeff``. Be aware that some coefficients can be fixed, or excluded from the optimization, such as the illumination offset (:math:`x_0, y_0`) or the illumination amplitude (:math:`A_{E_\text{a}}`). The default configuration is in `config_params.yml` (package directory). You can also provide your own configuration set up.
 * `grad_n#.csv`: Gradient of the last residual evaluation, order `#`.
-* `phase_n#.csv`: Aperture phase distribution (phase error), in radians, for the primary reflector, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in `~pyoof.fit_beam`.
+* `phase_n#.csv`: Aperture phase distribution (phase error), in radians, for the primary reflector, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in `~pyoof.fit_zpoly`.
 * `pyoof_info.yml`: It contains information about the fit and observation parameters.
 * `res_n#.csv`: Last evaluation of the residual from the least squares minimization, order `#`.
 * `u_data.csv`: :math:`x`-axis vector which contains position coordinates for `beam_data.csv`, in radians.
 * `v_data.csv`: :math:`y`-axis vector which contains position coordinates for `beam_data.csv`, in radians.
 
-Finally if the key ``make_plots=True``, then `~pyoof.fit_beam` will create a sub-directory containing the most important plots to study the fit, as well as the phase error maps for the primary reflector. Plots require :math:`\mathrm{\LaTeX}` to be installed, if you do not have it simply set the option to ``False``.
+Finally if the key ``make_plots=True``, then `~pyoof.fit_zpoly` will create a sub-directory containing the most important plots to study the fit, as well as the phase error maps for the primary reflector. Plots require :math:`\mathrm{\LaTeX}` to be installed, if you do not have it simply set the option to ``False``.
 
 See Also
 ========

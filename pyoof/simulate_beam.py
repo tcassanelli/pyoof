@@ -9,10 +9,10 @@ from astropy.constants import c as light_speed
 from astropy.io import fits
 from .aperture import radiation_pattern
 
-__all__ = ['beam_generator']
+__all__ = ['simulate_data_pyoof']
 
 
-def beam_generator(
+def simulate_data_pyoof(
     I_coeff, K_coeff, wavel, d_z, illum_func, telgeo, noise, resolution,
     box_factor, work_dir=None
         ):

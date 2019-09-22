@@ -19,7 +19,7 @@ def extract_data_pyoof(pathfits):
     """
     Extracts data from the `~pyoof` default fits file OOF holography
     observations, ready to use for the least squares minimization (see
-    `~pyoof.fit_beam`). The fits file has to have the following keys on its
+    `~pyoof.fit_zpoly`). The fits file has to have the following keys on its
     PrimaryHDU header: ``'FREQ'``, ``'WAVEL'``, ``'MEANEL'``, ``'OBJECT'`` and
     ``'DATE_OBS'``. Besides this three BinTableHDU are required for the data
     itself; ``MINUS OOF``, ``ZERO OOF`` and ``PLUS OOF``. The BinTableHDU
@@ -47,7 +47,7 @@ def extract_data_pyoof(pathfits):
     data_obs : `list`
         It contains beam maps and :math:`x`-, and :math:`y`-axis
         (:math:`uv`-plane in Fourier space) data for the least squares
-        minimization (see `~pyoof.fit_beam`). The list has the following order
+        minimization (see `~pyoof.fit_zpoly`). The list has the following order
         ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
         observations, minus, zero and plus out-of-focus, in a flat array.
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
@@ -107,7 +107,7 @@ def extract_data_effelsberg(pathfits):
     data_obs : `list`
         It contains beam maps and :math:`x`-, and :math:`y`-axis
         (:math:`uv`-plane in Fourier space) data for the least squares
-        minimization (see `~pyoof.fit_beam`). The list has the following order
+        minimization (see `~pyoof.fit_zpoly`). The list has the following order
         ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
         observations, minus, zero and plus out-of-focus, in a flat array.
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
@@ -170,7 +170,7 @@ def str2LaTeX(python_string):
 def store_data_csv(name, name_dir, order, save_to_csv):
     """
     Stores all important information in a csv file after the least squares
-    minimization has finished, `~pyoof.fit_beam`. All data will be stores in
+    minimization has finished, `~pyoof.fit_zpoly`. All data will be stores in
     the ``pyoof_out/name`` directory, with ``name`` the name of the fits file.
 
     Parameters
@@ -218,7 +218,7 @@ def store_data_csv(name, name_dir, order, save_to_csv):
 def store_data_ascii(name, name_dir, order, params_solution, params_init):
     """
     Stores in an ascii format the parameters found by the least squares
-    minimization (see `~pyoof.fit_beam`).
+    minimization (see `~pyoof.fit_zpoly`).
 
     Parameters
     ----------

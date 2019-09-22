@@ -35,7 +35,7 @@ def oof_work_dir(tmpdir_factory):
 
     tdir = str(tmpdir_factory.mktemp('pyoof'))
 
-    pyoof.beam_generator(
+    pyoof.simulate_data_pyoof(
         K_coeff=K_coeff,
         I_coeff=I_coeff,
         wavel=wavel,
@@ -53,7 +53,7 @@ def oof_work_dir(tmpdir_factory):
     return tdir
 
 
-def test_beam_generator(oof_work_dir):
+def test_simulate_data_pyoof(oof_work_dir):
 
     data_info, data_obs = pyoof.extract_data_pyoof(
         os.path.join(oof_work_dir, 'data_generated', 'test000.fits')
@@ -61,7 +61,7 @@ def test_beam_generator(oof_work_dir):
     [beam_data, u_data, v_data] = data_obs
 
     data_info_true, data_obs_true = pyoof.extract_data_pyoof(
-        get_pkg_data_filename('data/beam_generator.fits')
+        get_pkg_data_filename('data/beam_simulated.fits')
         )
     [beam_data_true, u_data_true, v_data_true] = data_obs_true
 

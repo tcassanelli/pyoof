@@ -17,7 +17,7 @@ from .plot_routines import plot_fit_path
 from .aux_functions import store_data_csv, store_data_ascii
 
 __all__ = [
-    'residual_true', 'residual', 'params_complete', 'fit_beam',
+    'residual_true', 'residual', 'params_complete', 'fit_zpoly',
     ]
 
 
@@ -26,10 +26,10 @@ def residual_true(
     resolution, box_factor, interp
         ):
     """
-    Computes the true residual ready to use for the `~pyoof.fit_beam`
+    Computes the true residual ready to use for the `~pyoof.fit_zpoly`
     function. True means that some of the parameters used will not be fitted.
     Their selection is done by default or by adding a ``config_params.yml``
-    file to the `~pyoof.fit_beam` function.
+    file to the `~pyoof.fit_zpoly` function.
 
     Parameters
     ----------
@@ -154,7 +154,7 @@ def residual(
     changing the number of parameters that will be used in the fit. The
     parameter array must be organized as follows, ``params = np.hstack([
     I_coeff, K_coeff])``. The parameter selection is done by default or by
-    adding a ``config_params.yml`` file to the `~pyoof.fit_beam` function.
+    adding a ``config_params.yml`` file to the `~pyoof.fit_zpoly` function.
 
     Parameters
     ----------
@@ -266,7 +266,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
     distribution, :math:`\\underline{E_\\mathrm{a}}(x, y)`. By default the
     following parameters are excluded ``i_amp``, ``x0``, ``y0``, ``K(0, 0)``.
     The parameter selection is done by default or by adding a
-    ``config_params.yml`` file to the `~pyoof.fit_beam` function.
+    ``config_params.yml`` file to the `~pyoof.fit_zpoly` function.
 
     Parameters
     ----------
@@ -324,7 +324,7 @@ def params_complete(params, idx, N_K_coeff, config_params):
     return params_updated
 
 
-def fit_beam(
+def fit_zpoly(
     data_info, data_obs, order_max, illum_func, telescope, resolution,
     box_factor, fit_previous=True, config_params_file=None, make_plots=False,
     verbose=2, work_dir=None
@@ -333,7 +333,7 @@ def fit_beam(
     Computes the Zernike circle polynomial coefficients, ``K_coeff``, and the
     illumination function coefficients, ``I_coeff``, stores and plots data (
     optional) by using a least squares minimization. The stored data belongs
-    to the best fitted power pattern (or beam map). `~pyoof.fit_beam` is the
+    to the best fitted power pattern (or beam map). `~pyoof.fit_zpoly` is the
     core function from the `~pyoof` package.
 
     Parameters
@@ -348,7 +348,7 @@ def fit_beam(
     data_obs : `list`
         It contains beam maps and :math:`x`-, and :math:`y`-axis
         (:math:`uv`-plane in Fourier space) data for the least squares
-        minimization (see `~pyoof.fit_beam`). The list has the following order
+        minimization (see `~pyoof.fit_zpoly`). The list has the following order
         ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
         observations, minus, zero and plus out-of-focus, in a flat array.
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
