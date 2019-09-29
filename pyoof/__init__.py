@@ -33,7 +33,7 @@ if not _ASTROPY_SETUP_:   # noqa
     from .plot_routines import *
     from .simulate_beam import *
 
-    # commented so they don't apper in docs
+    # comment so they don't apper in docs
     # __all__ += aux_functions.__all__
     # __all__ += math_functions.__all__
     # __all__ += plot_routines.__all__
@@ -44,3 +44,4 @@ if not _ASTROPY_SETUP_:   # noqa
     from . import aperture
     from . import telgeometry
     from . import zernike
+    from . import actuator

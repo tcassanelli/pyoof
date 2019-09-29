@@ -353,7 +353,7 @@ def aperture(x, y, I_coeff, K_coeff, d_z, wavel, illum_func, telgeo):
         pattern, which is an out-of-focus property. It is usually of the order
         of centimeters.
     wavel : `~astropy.units.quantity.Quantity`
-        Wavelength, :math:`\\lambda`, of the observation in meters.
+        Wavelength, :math:`\\lambda`, of the observation in length units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
         with the key **I_coeff**. The illumination functions available are
@@ -435,7 +435,7 @@ def radiation_pattern(
         pattern, which is an out-of-focus property. It is usually of the order
         of centimeters.
     wavel : `~astropy.units.quantity.Quantity`
-        Wavelength, :math:`\\lambda`, of the observation in meters.
+        Wavelength, :math:`\\lambda`, of the observation in length units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
         with the key **I_coeff**. The illumination functions available are

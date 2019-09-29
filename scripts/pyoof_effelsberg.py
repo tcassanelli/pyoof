@@ -3,7 +3,9 @@
 
 # Author: Tomas Cassanelli
 from astropy import units as u
-from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
+import pyoof
+from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg, actuator
+import matplotlib.pyplot as plt
 
 # telescope = [blockage, delta, pr, name]
 telescope = dict(
@@ -57,4 +59,13 @@ if __name__ == '__main__':
     # fit_beam_effelsberg(
     #     pathfits='/home/v/vanderli/cassane/data/pyoof/S9mm_3800-3807_3C84_48deg_H6_LON.fits'
     #     )  # Execute!
-    fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
+    
+    # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
+
+    path_pyoof_out='/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3800-3807_3C84_48deg_H6_LON-073'
+
+    # actuator.actuator_displacement_effelsberg(path_pyoof_out=path_pyoof_out, order=2)
+
+    fig = pyoof.plot_actuator_displacement_effelsberg(path_pyoof_out, 2, '')
+    plt.show()
+    

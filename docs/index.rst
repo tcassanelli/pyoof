@@ -358,7 +358,7 @@ Reference/API
 =============
 
 .. automodapi:: pyoof
-    :headings: "-2"
+    :include-all-objects:
 
 Project details
 ===============
