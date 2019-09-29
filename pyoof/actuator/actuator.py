@@ -14,6 +14,8 @@ import yaml
 from astropy import units as apu
 from astropy.utils.data import get_pkg_data_filename
 from scipy import interpolate
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ..math_functions import rms
 from ..aperture import e_rs
 
@@ -21,7 +23,8 @@ __all__ = [
     'sr_actuators', 'actuator_displacement', 'plot_actuator_displacement'
     ]
 
-act_data_csv = get_pkg_data_filename('data/act_effelsberg.csv')
+act_data_csv = get_pkg_data_filename('../data/act_effelsberg.csv')
+plt.style.use(get_pkg_data_filename('../data/pyoof.mplstyle'))
 
 # TODO: perhaps it'll be a good idea to change structure to classes for the
 # telescope geometry?
@@ -35,8 +38,14 @@ act_data_csv = get_pkg_data_filename('data/act_effelsberg.csv')
 def generate_actuators(edge):
     """
     This function generates the actuators coordinates for the sub-reflector at
-    the Effelsberg telecope.
+    the Effelsberg telecope. Since edges of the pyoof output are not well
+    constrained (least squares minimization), the ``edge`` argument will
+    subtract ``edge`` (in length units) from the external ring of the actuators
+    position.
     """
+
+    # TODO: This solution is not good, looking into some other taper function
+    # that reduces the importance of the high amplitude at the edges.
 
     # mesh for the active surface at the Effelsberg telescope
     theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg - 90 * apu.deg
@@ -142,7 +151,7 @@ def actuator_displacement(
     wavel = pyoof_info['wavel'] * apu.m
 
     # phase in each actuator point transformed to perpendicular displacement
-    act_phase_ad = sr_actuators_effelsberg(phase=act_phase, wavel=wavel)
+    act_phase_ad = sr_actuators(phase=act_phase, wavel=wavel)
 
     # Storing the data actuator displacement
     path_ad = path_pyoof_out + '/actdisp_n' + str(order) + '.csv'
@@ -162,16 +171,16 @@ def actuator_displacement(
         'Mean elevation {} deg'.format(pyoof_info['meanel']),
         'd_z (out-of-focus): {} m'.format(pyoof_info['d_z']),
         'Illumination to be fitted: {}'.format(pyoof_info['illumination']),
-        'Considered max radius: {} \n'.format(R[0]),
+        # 'Considered max radius: {} \n'.format(R[0]),
         sep='\n',
         end='\n'
         )
 
-    mean_ad = sr_actuators_effelsberg(phase=phase, wavel=wavel).mean()
+    mean_ad = sr_actuators(phase=phase, wavel=wavel).mean()
 
     print(
         'STATISTICS',
-        'RMS: {}'.format(sr_actuators_effelsberg(
+        'RMS: {}'.format(sr_actuators(
             phase=rms(phase=phase, radius=sr),
             wavel=wavel)
             ),
@@ -185,6 +194,7 @@ def actuator_displacement(
         table=save_ad,
         output=path_ad,
         names=['name', 'x', 'y', 'phase', 'displacement'],
+        # units: -, mm, mm, rad, um
         overwrite=True
         )
 
@@ -193,7 +203,7 @@ def actuator_displacement(
 
     if make_plots:
         print('\n... Making plots ...')
-        plot_actuator_displacement(
+        fig = plot_actuator_displacement(
             path_pyoof_out=path_pyoof_out,
             order=order,
             title=(
@@ -202,7 +212,12 @@ def actuator_displacement(
                     )
                 ),
             act_data=act_data,
-            actuators=False
+            actuators=True
+            )
+
+        fig.savefig(
+            fname=path_pyoof_out + '/plots/actdisp_n{}.pdf'.format(order),
+            bbox_inches='tight'
             )
 
     print('\n **** COMPLETED **** \n')
@@ -212,6 +227,10 @@ def plot_actuator_displacement(
         path_pyoof_out, order, title, act_data=None, actuators=False
         ):
     """
+    Plot for the phase-error given the actuators in the active surface.
+    Translates the phase-error from the whole telescope to an approximated
+    version at the sub-refelctor (at the moment only for Effelsberg).
+    This will also calculates the amplitude value un the actuators mesh.
     """
 
     # reading the pyoof output phase
@@ -235,16 +254,16 @@ def plot_actuator_displacement(
     x = np.linspace(-sr, sr, phase.shape[0])
     y = np.linspace(-sr, sr, phase.shape[1])
 
-    phase = sr_actuators_effelsberg(phase=phase, wavel=wavel)
-    levels = sr_actuators_effelsberg(
+    phase = sr_actuators(phase=phase, wavel=wavel)
+    levels = sr_actuators(
         phase=np.linspace(-2, 2, 9) * apu.rad, wavel=wavel)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6, 5.8))
 
     im = ax.imshow(phase.to_value(apu.um), extent=extent)
     ax.contour(
         x.to_value(apu.m), y.to_value(apu.m), phase.to_value(apu.um),
-        level=levels.to_value(apu.um), colors='k', alpha=0.3
+        levels=levels.to_value(apu.um), colors='k', alpha=0.3
         )
 
     divider = make_axes_locatable(ax)
@@ -261,23 +280,29 @@ def plot_actuator_displacement(
     if actuators:
         if act_data is None:
             act_data = ascii.read(act_data_csv)
-        act_data['x'] *= apu.mm
-        act_data['y'] *= apu.mm
+
+        # displacement in meter
+        act_x = act_data['x'] * 1e-3
+        act_y = act_data['y'] * 1e-3
 
         ax.scatter(
-            act_data['x'].to_value(apu.m), act_data['y'].to_value(apu.m),
-            c='r', s=5
+            act_x, act_y,
+            s=20, facecolors='k', edgecolors='k',
+            linewidth=0.3
             )
 
         for i in range(act_data['name'].size):
             ax.annotate(
                 s=act_data['name'][i],
-                xy=(act_data['x'][i] + 0.01, act_data['y'][i] + 0.01),
-                size=5
+                xy=(act_x[i], act_y[i]),
+                size=3,
+                ha='center',
+                va='center',
+                color='white'
                 )
 
-        ax.set_xlim(-sr.to_value(apu.m) * 1.1, sr.to_value(apu.m) * 1.1)
-        ax.set_ylim(-sr.to_value(apu.m) * 1.1, sr.to_value(apu.m) * 1.1)
+    ax.set_xlim(-sr.to_value(apu.m), sr.to_value(apu.m))
+    ax.set_ylim(-sr.to_value(apu.m), sr.to_value(apu.m))
 
     ax.set_ylabel('$y$ m')
     ax.set_xlabel('$x$ m')

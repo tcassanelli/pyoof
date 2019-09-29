@@ -62,10 +62,10 @@ if __name__ == '__main__':
     
     # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
 
-    path_pyoof_out='/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3800-3807_3C84_48deg_H6_LON-073'
+    path_pyoof_out= '/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3800-3807_3C84_48deg_H6_LON-073'
 
-    # actuator.actuator_displacement_effelsberg(path_pyoof_out=path_pyoof_out, order=2)
+    actuator.actuator_displacement(path_pyoof_out=path_pyoof_out, order=2)
 
-    fig = pyoof.plot_actuator_displacement_effelsberg(path_pyoof_out, 2, '')
-    plt.show()
+    # fig = pyoof.actuator.plot_actuator_displacement(path_pyoof_out, 2, '', actuators=True, act_data=None)
+    # plt.show()
     
