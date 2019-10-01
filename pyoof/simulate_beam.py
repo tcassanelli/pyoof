@@ -144,7 +144,7 @@ def simulate_data_pyoof(
 
     u_to_save = [u[i].to_value(apu.rad).flatten() for i in range(3)]
     v_to_save = [v[i].to_value(apu.rad).flatten() for i in range(3)]
-    p_to_save = [power_noise[i].value.flatten() for i in range(3)]
+    p_to_save = [power_noise[i].flatten() for i in range(3)]
 
     # Writing default fits file for OOF observations
     table_hdu0 = fits.BinTableHDU.from_columns([
