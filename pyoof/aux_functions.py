@@ -190,7 +190,7 @@ def store_data_csv(name, name_dir, order, save_to_csv):
 
     headers = [
         'Normalized beam', 'u vector radians', 'v vector radians', 'Residual',
-        'Jacobian', 'Gradient', 'Phase primary reflector radians',
+        'Jacobian', 'Gradient', 'Phase-error radians',
         'Variance-Covariance matrix (first row fitted parameters idx)',
         'Correlation matrix (first row fitted parameters idx)'
         ]

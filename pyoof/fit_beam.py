@@ -546,7 +546,7 @@ def fit_zpoly(
             K_coeff=params_solution[4:],
             notilt=True,
             pr=telgeo[2]
-            )[2]
+            )[2].to_value(apu.rad)
 
         # Storing files in directory
         if not verbose == 0:
