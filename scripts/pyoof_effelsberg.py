@@ -42,14 +42,14 @@ def fit_beam_effelsberg(pathfits):
     fit_zpoly(
         data_info=data_info,
         data_obs=[beam_data, u_data, v_data],
-        order_max=7,                         # it'll fit from 1 to order_max
+        order_max=6,                         # it'll fit from 1 to order_max
         illum_func=aperture.illum_pedestal,  # or illum_gauss
         telescope=telescope['effelsberg'],
         fit_previous=True,                   # True is recommended
         resolution=2 ** 8,                   # standard is 2 ** 8
         box_factor=5,              # box_size = 5 * pr, better pixel resolution
         config_params_file=None,   # default or add path config_file.yaml
-        make_plots=False,           # for now testing only the software
+        make_plots=True,           # for now testing only the software
         verbose=2,
         work_dir=None
         # work_dir='/scratch/v/vanderli/cassane'
@@ -64,17 +64,25 @@ if __name__ == '__main__':
         pathfits=os.path.join(pth2data, 'S9mm_3824-3843_3C84_72deg_H6_BW.fits')
         )
 
-    # pyoof.plot_fit_path(
-    #     path_pyoof='/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3824-3843_3C84_72deg_H6_BW-015',
-    #     order=4,
-    #     illum_func=aperture.illum_pedestal,
-    #     telgeo=telescope['effelsberg'][:-1],
-    #     resolution=2 ** 8,
-    #     box_factor=5,
-    #     angle=u.deg,
-    #     plim=None,
-    #     save=False
+    # mac
+    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/'
+    # fit_beam_effelsberg(
+    #     pathfits=os.path.join(pth2data, 'S9mm_3824-3843_3C84_72deg_H6_BW.fits')
     #     )
+
+    # for n in range(1, 8):
+    #     pyoof.plot_fit_path(
+    #         path_pyoof='/Users/tomascassanelli/MPIfR/OOF/data/norm_test/norm',
+    #         order=n,
+    #         illum_func=aperture.illum_pedestal,
+    #         telgeo=telescope['effelsberg'][:-1],
+    #         resolution=2 ** 8,
+    #         box_factor=5,
+    #         angle=u.deg,
+    #         plim=None,
+    #         save=True
+    #         )
+    #     plt.close('all')
     # plt.show()
     
     # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')

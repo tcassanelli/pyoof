@@ -164,7 +164,7 @@ def plot_beam(
             u[i].to_value(angle).min(), u[i].to_value(angle).max(),
             v[i].to_value(angle).min(), v[i].to_value(angle).max()
             ]
-        levels = np.linspace(vmin, vmax, 8)
+        levels = np.linspace(vmin, vmax, 10)
 
         im = ax[i].imshow(X=power_norm[i], extent=extent, vmin=vmin, vmax=vmax)
         ax[i].contour(
@@ -173,7 +173,7 @@ def plot_beam(
             power_norm[i],
             levels=levels,
             colors='k',
-            linewidths=0.5
+            linewidths=0.4
             )
 
         ax[i].set_title(subtitle[i])
@@ -243,9 +243,6 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         # Power pattern normalization
         beam_data = [norm(beam_data[i]) for i in range(3)]
 
-    vmin = np.min(beam_data)
-    vmax = np.max(beam_data)
-
     subtitle = [
         '$P_{\\textrm{\\scriptsize{norm}}}(u,v)$ $d_z=' +
         str(round(d_z[i].to_value(apu.cm), 3)) + '$ cm' for i in range(3)
@@ -288,7 +285,8 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
             method='cubic'
             )
 
-        levels = np.linspace(beam_ng.min(), beam_ng.max(), 10)
+        vmin, vmax = beam_ng.min(), beam_ng.max()
+        levels = np.linspace(vmin, vmax, 10)
         extent = [
             u_ng.to_value(angle).min(), u_ng.to_value(angle).max(),
             v_ng.to_value(angle).min(), v_ng.to_value(angle).max()
@@ -298,7 +296,10 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         ax[i].contour(
             u_ng.to_value(angle),
             v_ng.to_value(angle),
-            beam_ng, levels=levels
+            beam_ng,
+            levels=levels,
+            colors='k',
+            linewidths=0.4
             )
 
         ax[i].set_xlabel('$u$ {}'.format(angle))
