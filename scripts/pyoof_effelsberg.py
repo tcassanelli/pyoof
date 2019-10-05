@@ -59,23 +59,23 @@ def fit_beam_effelsberg(pathfits):
 if __name__ == '__main__':
 
     # natasha
-    # pth2data = '/home/tcassanelli/data/pyoof'
-    # fit_beam_effelsberg(
-    #     pathfits=os.path.join(pth2data, 'S9mm_3824-3843_3C84_72deg_H6_BW.fits')
-    #     )
-
-    pyoof.plot_fit_path(
-        path_pyoof='/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3824-3843_3C84_72deg_H6_BW-015',
-        order=4,
-        illum_func=aperture.illum_pedestal,
-        telgeo=telescope['effelsberg'][:-1],
-        resolution=2 ** 8,
-        box_factor=5,
-        angle=u.deg,
-        plim=None,
-        save=False
+    pth2data = '/home/tcassanelli/data/pyoof'
+    fit_beam_effelsberg(
+        pathfits=os.path.join(pth2data, 'S9mm_3824-3843_3C84_72deg_H6_BW.fits')
         )
-    plt.show()
+
+    # pyoof.plot_fit_path(
+    #     path_pyoof='/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3824-3843_3C84_72deg_H6_BW-015',
+    #     order=4,
+    #     illum_func=aperture.illum_pedestal,
+    #     telgeo=telescope['effelsberg'][:-1],
+    #     resolution=2 ** 8,
+    #     box_factor=5,
+    #     angle=u.deg,
+    #     plim=None,
+    #     save=False
+    #     )
+    # plt.show()
     
     # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
 
