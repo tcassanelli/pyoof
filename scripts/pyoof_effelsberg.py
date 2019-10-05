@@ -3,6 +3,8 @@
 
 # Author: Tomas Cassanelli
 import os
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from astropy import units as u
 import pyoof
