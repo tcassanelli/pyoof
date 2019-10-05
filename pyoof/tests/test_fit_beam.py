@@ -12,7 +12,7 @@ import pyoof
 
 
 # Initial fits file configuration
-n = 6                                           # initial order
+n = 4                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
 c_dB = np.random.randint(-21, -10) * apu.dB     # illumination taper
 wavel = 0.0093685143125 * apu.m                 # wavelength
@@ -20,7 +20,7 @@ wavel = 0.0093685143125 * apu.m                 # wavelength
 plus_minus = np.random.normal(0.025, 0.005)
 d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 
-noise_level = .03                               # noise added to gen data
+noise_level = .01                               # noise added to gen data
 
 effelsberg_telescope = [
     pyoof.telgeometry.block_effelsberg,         # blockage distribution
@@ -66,6 +66,12 @@ def oof_work_dir(tmpdir_factory):
     pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
     data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
 
+    beam_data = data_obs[0]
+
+    beam_data = data_obs[0]
+    for i in range(3):
+        print('snr:', beam_data[i].max() / beam_data[i].std())
+
     pyoof.fit_zpoly(
         data_info=data_info,
         data_obs=data_obs,
@@ -97,4 +103,10 @@ def test_fit_beam(oof_work_dir):
     params = ascii.read(fit_pars)['parfit']
 
     # Previous rtol=1e-1, atol=1e-2
-    assert_allclose(params, params_true, rtol=1e-1, atol=1e-1)
+    # Zernike circle polynomials coeffients
+    assert_allclose(params[4:], params_true[4:], rtol=1e-2, atol=1e-2)
+
+    # illumination parameters
+    assert_allclose(params[:4], params_true[:4], rtol=1e-1, atol=1e-1)
+
+    assert False

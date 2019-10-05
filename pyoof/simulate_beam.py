@@ -8,6 +8,7 @@ from astropy import units as apu
 from astropy.constants import c as light_speed
 from astropy.io import fits
 from .aperture import radiation_pattern
+from .math_functions import norm
 
 __all__ = ['simulate_data_pyoof']
 
@@ -131,7 +132,7 @@ def simulate_data_pyoof(
         v.append(v_trim)
         P.append(power_trim)
 
-    P_norm = [P[i] / P[i].max() for i in range(3)]
+    P_norm = [norm(P[i]) for i in range(3)]
 
     # adding noise!
     if noise == 0:

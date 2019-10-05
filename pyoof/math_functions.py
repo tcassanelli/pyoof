@@ -4,7 +4,34 @@
 # Author: Tomas Cassanelli
 import numpy as np
 
-__all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms']
+__all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms', 'norm']
+
+
+def norm(P):
+    """
+    Data normalization. This is a pre-process right before starting the least
+    squares minimization.
+
+    Parameters
+    ----------
+    P :
+
+    Returns
+    -------
+    P_norm :
+
+    """
+
+    # normalization by it's maximum
+    P_norm = P / P.max()
+
+    # normalization
+    # P_norm = (P - P.min()) / (P.max() - P.min())
+
+    # standarization
+    # P_norm = (P - P.mean()) / P.std()
+
+    return P_norm
 
 
 def cart2pol(x, y):

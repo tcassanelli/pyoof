@@ -15,6 +15,7 @@ import os
 import yaml
 from .aperture import radiation_pattern, phase
 from .aux_functions import uv_ratio
+from .math_functions import norm
 
 __all__ = [
     'plot_beam', 'plot_data', 'plot_phase', 'plot_variance', 'plot_fit_path'
@@ -111,7 +112,7 @@ def plot_beam(
         F.append(_F)
 
     power_pattern = np.abs(F) ** 2
-    power_norm = [power_pattern[i] / power_pattern[i].max() for i in range(3)]
+    power_norm = [norm(power_pattern[i]) for i in range(3)]
 
     # Limits, they need to be transformed to degrees
     if plim is None:
@@ -236,7 +237,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
 
     if not res_mode:
         # Power pattern normalization
-        beam_data = [beam_data[i] / beam_data[i].max() for i in range(3)]
+        beam_data = [norm(beam_data[i]) for i in range(3)]
 
     vmin = np.min(beam_data)
     vmax = np.max(beam_data)
@@ -290,11 +291,11 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
             ]
 
         im = ax[i].imshow(X=beam_ng, extent=extent, vmin=vmin, vmax=vmax)
-        ax[i].contour(
-            u_ng.to_value(angle),
-            v_ng.to_value(angle),
-            beam_ng, levels=levels
-            )
+        # ax[i].contour(
+        #     u_ng.to_value(angle),
+        #     v_ng.to_value(angle),
+        #     beam_ng, levels=levels
+        #     )
 
         ax[i].set_xlabel('$u$ {}'.format(angle))
         ax[i].set_title(subtitle[i])

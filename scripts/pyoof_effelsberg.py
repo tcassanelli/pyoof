@@ -36,10 +36,13 @@ def fit_beam_effelsberg(pathfits):
     [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
+    for i in range(3):
+        print('norm{}:'.format(i), pyoof.norm(beam_data[i]))
+
     fit_zpoly(
         data_info=data_info,
         data_obs=[beam_data, u_data, v_data],
-        order_max=15,                        # it'll fit from 1 to order_max
+        order_max=4,                        # it'll fit from 1 to order_max
         illum_func=aperture.illum_pedestal,  # or illum_gauss
         telescope=telescope['effelsberg'],
         fit_previous=True,                   # True is recommended
@@ -60,11 +63,11 @@ if __name__ == '__main__':
     #     pathfits='/home/v/vanderli/cassane/data/pyoof/S9mm_3800-3807_3C84_48deg_H6_LON.fits'
     #     )  # Execute!
     
-    # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
+    fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
 
-    path_pyoof_out= '/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3800-3807_3C84_48deg_H6_LON-073'
+    # path_pyoof_out= '/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3800-3807_3C84_48deg_H6_LON-073'
 
-    actuator.actuator_displacement(path_pyoof_out=path_pyoof_out, order=2)
+    # actuator.actuator_displacement(path_pyoof_out=path_pyoof_out, order=2)
 
     # fig = pyoof.actuator.plot_actuator_displacement(path_pyoof_out, 2, '', actuators=True, act_data=None)
     # plt.show()

@@ -12,7 +12,7 @@ import os
 import time
 import yaml
 from .aperture import radiation_pattern, phase
-from .math_functions import co_matrices
+from .math_functions import co_matrices, norm
 from .plot_routines import plot_fit_path
 from .aux_functions import store_data_csv, store_data_ascii
 
@@ -113,7 +113,7 @@ def residual_true(
         power_pattern = np.abs(F) ** 2
 
         # Normalized power pattern model (Beam model)
-        power_norm = power_pattern / power_pattern.max()
+        power_norm = norm(power_pattern)
 
         if interp:
             # # Generated beam u and v: wave-vectors -> radians
@@ -456,7 +456,7 @@ def fit_zpoly(
             ]) * u_data[0].unit
 
         # Beam normalization
-        beam_data_norm = [beam_data[i] / beam_data[i].max() for i in range(3)]
+        beam_data_norm = [norm(beam_data[i]) for i in range(3)]
 
         n = order                           # order polynomial to fit
         N_K_coeff = (n + 1) * (n + 2) // 2  # number of K(n, l) to fit
