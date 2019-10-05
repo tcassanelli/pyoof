@@ -23,10 +23,10 @@ def norm(P):
     """
 
     # normalization by it's maximum
-    P_norm = P / P.max()
+    # P_norm = P / P.max()
 
     # normalization
-    # P_norm = (P - P.min()) / (P.max() - P.min())
+    P_norm = (P - P.min()) / (P.max() - P.min())
 
     # standarization
     # P_norm = (P - P.mean()) / P.std()
