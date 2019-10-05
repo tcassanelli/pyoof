@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 # Author: Tomas Cassanelli
+import os
 from astropy import units as u
 import pyoof
-from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg, actuator
-import matplotlib.pyplot as plt
+from pyoof import (
+    aperture, telgeometry, fit_zpoly, extract_data_effelsberg, actuator
+    )
 
 # telescope = [blockage, delta, pr, name]
 telescope = dict(
@@ -42,7 +44,7 @@ def fit_beam_effelsberg(pathfits):
     fit_zpoly(
         data_info=data_info,
         data_obs=[beam_data, u_data, v_data],
-        order_max=4,                        # it'll fit from 1 to order_max
+        order_max=7,                         # it'll fit from 1 to order_max
         illum_func=aperture.illum_pedestal,  # or illum_gauss
         telescope=telescope['effelsberg'],
         fit_previous=True,                   # True is recommended
@@ -51,19 +53,19 @@ def fit_beam_effelsberg(pathfits):
         config_params_file=None,   # default or add path config_file.yaml
         make_plots=True,           # for now testing only the software
         verbose=2,
-        work_dir=None
-        # work_dir='/scratch/v/vanderli/cassane'
+        # work_dir=None
+        work_dir='/scratch/v/vanderli/cassane'
         )
 
 
-# Example in my machine :)
 if __name__ == '__main__':
 
-    # fit_beam_effelsberg(
-    #     pathfits='/home/v/vanderli/cassane/data/pyoof/S9mm_3800-3807_3C84_48deg_H6_LON.fits'
-    #     )  # Execute!
+    pth_sct = '/home/v/vanderli/cassane/data/pyoof/'
+    fit_beam_effelsberg(
+        pathfits=os.path.join(pth_sct, 'S9mm_3800-3807_3C84_48deg_H6_LON.fits')
+        )  # Execute!
     
-    fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
+    # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
 
     # path_pyoof_out= '/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3800-3807_3C84_48deg_H6_LON-073'
 
