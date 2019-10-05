@@ -51,7 +51,7 @@ def fit_beam_effelsberg(pathfits):
         resolution=2 ** 8,                   # standard is 2 ** 8
         box_factor=5,              # box_size = 5 * pr, better pixel resolution
         config_params_file=None,   # default or add path config_file.yaml
-        make_plots=True,           # for now testing only the software
+        make_plots=False,           # for now testing only the software
         verbose=2,
         # work_dir=None
         work_dir='/scratch/v/vanderli/cassane'
