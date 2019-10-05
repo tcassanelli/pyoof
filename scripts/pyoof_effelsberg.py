@@ -4,7 +4,6 @@
 # Author: Tomas Cassanelli
 import os
 from astropy import units as u
-import pyoof
 from pyoof import (
     aperture, telgeometry, fit_zpoly, extract_data_effelsberg, actuator
     )
@@ -38,9 +37,6 @@ def fit_beam_effelsberg(pathfits):
     [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-    for i in range(3):
-        print('norm{}:'.format(i), pyoof.norm(beam_data[i]))
-
     fit_zpoly(
         data_info=data_info,
         data_obs=[beam_data, u_data, v_data],
@@ -53,17 +49,18 @@ def fit_beam_effelsberg(pathfits):
         config_params_file=None,   # default or add path config_file.yaml
         make_plots=False,           # for now testing only the software
         verbose=2,
-        # work_dir=None
-        work_dir='/scratch/v/vanderli/cassane'
+        work_dir=None
+        # work_dir='/scratch/v/vanderli/cassane'
         )
 
 
 if __name__ == '__main__':
 
-    pth_sct = '/home/v/vanderli/cassane/data/pyoof/'
+    # natasha
+    pth2data = '/home/tcassanelli/data/pyoof'
     fit_beam_effelsberg(
-        pathfits=os.path.join(pth_sct, 'S9mm_3800-3807_3C84_48deg_H6_LON.fits')
-        )  # Execute!
+        pathfits=os.path.join(pth2data, 'S9mm_3824-3843_3C84_72deg_H6_BW.fits')
+        )
     
     # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
 
