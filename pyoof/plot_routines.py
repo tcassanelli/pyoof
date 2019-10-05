@@ -140,41 +140,40 @@ def plot_beam(
         str(round(d_z[i].to_value(apu.cm), 3)) + '$ cm' for i in range(3)
         ]
 
-    fig = plt.figure(figsize=uv_ratio(plim_u, plim_v))
+    fig = plt.figure(figsize=uv_ratio(plim_u, plim_v), constrained_layout=True)
     gs = GridSpec(
-        nrows=1,
+        nrows=2,
         ncols=3,
         figure=fig,
         width_ratios=[1] * 3,
-        height_ratios=[1],
-        wspace=0
+        height_ratios=[1, 0.03],
+        wspace=0.03
         )
-    ax = [plt.subplot(gs[i]) for i in range(3)]
+    ax = [plt.subplot(gs[i]) for i in range(6)]
 
     ax[1].set_yticklabels([])
     ax[2].set_yticklabels([])
+    ax[0].set_ylabel('$v$ {}'.format(angle))
 
-    dividers = [make_axes_locatable(ax[i]) for i in range(3)]
-    caxs = [
-        dividers[i].append_axes("right", size="5%", pad=.05) for i in range(3)
-        ]
-    caxs[0].remove()
-    caxs[1].remove()
+    cax = [ax[i + 3] for i in range(3)]
 
     for i in range(3):
+        vmin, vmax = power_norm[i].min(), power_norm[i].max()
 
         extent = [
             u[i].to_value(angle).min(), u[i].to_value(angle).max(),
             v[i].to_value(angle).min(), v[i].to_value(angle).max()
             ]
-        levels = np.linspace(power_norm[i].min(), power_norm[i].max(), 10)
+        levels = np.linspace(vmin, vmax, 8)
 
-        im = ax[i].imshow(X=power_norm[i], extent=extent, vmin=0, vmax=1)
+        im = ax[i].imshow(X=power_norm[i], extent=extent, vmin=vmin, vmax=vmax)
         ax[i].contour(
             u[i].to_value(angle),
             v[i].to_value(angle),
             power_norm[i],
-            levels=levels
+            levels=levels,
+            colors='k',
+            linewidths=0.5
             )
 
         ax[i].set_title(subtitle[i])
@@ -185,9 +184,14 @@ def plot_beam(
         ax[i].set_xlim(*plim_u)
         ax[i].grid(False)
 
-    ax[0].set_ylabel('$v$ {}'.format(angle))
-    plt.colorbar(im, cax=caxs[2])
+        plt.colorbar(
+            im, cax=cax[i], orientation='horizontal', use_gridspec=True
+            )
+        cax[i].set_xlabel('Amplitude [arb]')
+        cax[i].set_yticklabels([])
+        cax[i].yaxis.set_ticks_position('none')
     fig.suptitle(title)
+    # fig.tight_layout()
 
     return fig
 
@@ -247,26 +251,26 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         str(round(d_z[i].to_value(apu.cm), 3)) + '$ cm' for i in range(3)
         ]
 
-    fig = plt.figure(figsize=uv_ratio(u_data[0], v_data[0]))
+    fig = plt.figure(
+        figsize=uv_ratio(u_data[0], v_data[0]),
+        constrained_layout=True
+        )
+
     gs = GridSpec(
-        nrows=1,
+        nrows=2,
         ncols=3,
         figure=fig,
         width_ratios=[1] * 3,
-        height_ratios=[1],
-        wspace=0
+        height_ratios=[1, 0.03],
+        wspace=0.03
         )
-    ax = [plt.subplot(gs[i]) for i in range(3)]
+    ax = [plt.subplot(gs[i]) for i in range(6)]
 
     ax[1].set_yticklabels([])
     ax[2].set_yticklabels([])
+    ax[0].set_ylabel('$v$ {}'.format(angle))
 
-    dividers = [make_axes_locatable(ax[i]) for i in range(3)]
-    caxs = [
-        dividers[i].append_axes("right", size="5%", pad=.05) for i in range(3)
-        ]
-    caxs[0].remove()
-    caxs[1].remove()
+    cax = [ax[i + 3] for i in range(3)]
 
     for i in range(3):
         # new grid for beam_data
@@ -291,20 +295,24 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
             ]
 
         im = ax[i].imshow(X=beam_ng, extent=extent, vmin=vmin, vmax=vmax)
-        # ax[i].contour(
-        #     u_ng.to_value(angle),
-        #     v_ng.to_value(angle),
-        #     beam_ng, levels=levels
-        #     )
+        ax[i].contour(
+            u_ng.to_value(angle),
+            v_ng.to_value(angle),
+            beam_ng, levels=levels
+            )
 
         ax[i].set_xlabel('$u$ {}'.format(angle))
         ax[i].set_title(subtitle[i])
         ax[i].grid(False)
 
-    ax[0].set_ylabel('$v$ {}'.format(angle))
-    plt.colorbar(im, cax=caxs[2])
+        plt.colorbar(
+            im, cax=cax[i], orientation='horizontal', use_gridspec=True
+            )
+        cax[i].set_xlabel('Amplitude [arb]')
+        cax[i].set_yticklabels([])
+        cax[i].yaxis.set_ticks_position('none')
+
     fig.suptitle(title)
-    # fig.tight_layout()
 
     return fig
 

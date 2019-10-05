@@ -7,7 +7,6 @@ import numpy as np
 from astropy.io import ascii, fits
 from astropy import units as apu
 from astropy.constants import c as light_speed
-from scipy.constants import golden
 
 __all__ = [
     'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
@@ -281,9 +280,9 @@ def uv_ratio(u, v):
         Height for the power pattern figure.
     """
 
-    ratio = (v.max() - v.min()) / (u.max() - u.min())
+    ratio = (u.max() - u.min()) / (v.max() - v.min())
 
-    width = ratio * 14
-    height = width / 4 * golden
+    height = 5
+    width = ratio * 2.25 * height
 
     return width, height
