@@ -12,7 +12,7 @@ import pyoof
 
 
 # Initial fits file configuration
-n = 4                                           # initial order
+n = 7                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
 c_dB = np.random.randint(-21, -10) * apu.dB     # illumination taper
 wavel = 0.0093685143125 * apu.m                 # wavelength
@@ -34,11 +34,11 @@ resolution = 2 ** 8
 box_factor = 5
 
 # True values to be compared at the end
-K_coeff = np.hstack((0, np.random.normal(0., .08, N_K_coeff)))
-I_coeff = [1, c_dB, 0 * apu.m, 0 * apu.m]  # illumination coefficients
+K_coeff_true = np.hstack((0, np.random.normal(0., .08, N_K_coeff)))
+I_coeff_true = [1, c_dB, 0 * apu.m, 0 * apu.m]  # illumination coefficients
 
-I_coeff_dimensionless = [I_coeff[0]] + [I_coeff[i].value for i in range(1, 4)]
-params_true = np.hstack((I_coeff_dimensionless, K_coeff))
+I_coeff_true_dimensionless = [
+    I_coeff_true[0]] + [I_coeff_true[i].value for i in range(1, 4)]
 
 
 # Generating temp file with pyoof fits and pyoof_out
@@ -48,8 +48,8 @@ def oof_work_dir(tmpdir_factory):
     tdir = str(tmpdir_factory.mktemp('pyoof'))
 
     pyoof.simulate_data_pyoof(
-        K_coeff=K_coeff,
-        I_coeff=I_coeff,
+        K_coeff=K_coeff_true,
+        I_coeff=I_coeff_true,
         wavel=wavel,
         d_z=d_z,
         telgeo=effelsberg_telescope[:-1],
@@ -66,11 +66,8 @@ def oof_work_dir(tmpdir_factory):
     pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
     data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
 
-    beam_data = data_obs[0]
-
-    beam_data = data_obs[0]
     for i in range(3):
-        print('snr:', beam_data[i].max() / beam_data[i].std())
+        print('snr:', data_obs[0][i].max() / data_obs[0][i].std())
 
     pyoof.fit_zpoly(
         data_info=data_info,
@@ -101,12 +98,9 @@ def test_fit_beam(oof_work_dir):
         )
 
     params = ascii.read(fit_pars)['parfit']
+    I_coeff, K_coeff = params[4:], params[:4]
 
-    # Previous rtol=1e-1, atol=1e-2
-    # Zernike circle polynomials coeffients
-    assert_allclose(params[4:], params_true[4:], rtol=1e-2, atol=1e-2)
-
-    # illumination parameters
-    assert_allclose(params[:4], params_true[:4], rtol=1e-1, atol=1e-1)
+    assert_allclose(I_coeff, I_coeff_true_dimensionless, rtol=1e-1, atol=1e-1)
+    assert_allclose(K_coeff, K_coeff_true, rtol=1e-1, atol=1e-1)
 
     assert False
