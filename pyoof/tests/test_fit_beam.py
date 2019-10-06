@@ -20,7 +20,7 @@ wavel = 0.0093685143125 * apu.m                 # wavelength
 plus_minus = np.random.normal(0.025, 0.005)
 d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 
-noise_level = .01                               # noise added to gen data
+noise_level = .03                               # noise added to gen data
 
 effelsberg_telescope = [
     pyoof.telgeometry.block_effelsberg,         # blockage distribution
@@ -98,9 +98,5 @@ def test_fit_beam(oof_work_dir):
         )
 
     params = ascii.read(fit_pars)['parfit']
-    I_coeff, K_coeff = params[:4], params[4:]
-
-    assert_allclose(I_coeff, I_coeff_true_dimensionless, rtol=1e-1, atol=1e-1)
-    assert_allclose(K_coeff, K_coeff_true, rtol=1e-1, atol=1e-1)
-
-    assert False
+    assert_allclose(params[4:], K_coeff_true, rtol=1e-1, atol=0)
+    assert_allclose(params[:4], I_coeff_true_dimensionless, rtol=1e-3, atol=0)
