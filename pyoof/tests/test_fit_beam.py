@@ -12,7 +12,7 @@ import pyoof
 
 
 # Initial fits file configuration
-n = 6                                           # initial order
+n = 7                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
 c_dB = np.random.randint(-21, -10) * apu.dB     # illumination taper
 wavel = 0.0093685143125 * apu.m                 # wavelength
@@ -98,5 +98,5 @@ def test_fit_beam(oof_work_dir):
         )
 
     params = ascii.read(fit_pars)['parfit']
-    assert_allclose(params[4:], K_coeff_true, rtol=1e-2, atol=1e-1)
+    assert_allclose(params[4:], K_coeff_true, rtol=1e-2, atol=1e-2)
     assert_allclose(params[:4], I_coeff_true_dimensionless, rtol=1e-1, atol=0)
