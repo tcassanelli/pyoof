@@ -20,7 +20,7 @@ wavel = 0.0093685143125 * apu.m                 # wavelength
 plus_minus = np.random.normal(0.025, 0.005)
 d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 
-noise_level = .03                               # noise added to gen data
+noise_level = .02                               # noise added to gen data
 
 effelsberg_telescope = [
     pyoof.telgeometry.block_effelsberg,         # blockage distribution
