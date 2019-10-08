@@ -99,4 +99,4 @@ def test_fit_beam(oof_work_dir):
 
     params = ascii.read(fit_pars)['parfit']
     assert_allclose(params[4:], K_coeff_true, rtol=1e-7, atol=1e-1)
-    assert_allclose(params[:4], I_coeff_true_dimensionless, rtol=1e-1, atol=0)
+    assert_allclose(params[:4], I_coeff_true_dimensionless, rtol=1e-7, atol=0)
