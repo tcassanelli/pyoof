@@ -147,7 +147,7 @@ install:
     # other dependencies.
 
 script:
-   - travis_wait 25 $MAIN_CMD $SETUP_CMD
+   - travis_wait 20 $MAIN_CMD $SETUP_CMD
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line below.

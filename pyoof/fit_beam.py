@@ -39,7 +39,7 @@ def residual_true(
     beam_data_norm : `list`
         The ``beam_data_norm`` is a list with the three observed beam maps,
         :math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`, minus, zero and plus
-        out-of-focus. The data has to be initially normalized by its maximum.
+        out-of-focus. The data has to be initially normalized.
     u_data : `list`
         :math:`x` axis value for the 3 beam maps in radians. The values have
         to be flatten, in one dimension, and stacked in the same order as the
@@ -172,7 +172,7 @@ def residual(
     beam_data_norm : `list`
         The ``beam_data_norm`` is a list with the three observed beam maps,
         :math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`, minus, zero and plus
-        out-of-focus. The data has to be initially normalized by its maximum.
+        out-of-focus. The data has to be initially normalized.
     u_data : `list`
         :math:`x` axis value for the 3 beam maps in radians. The values have
         to be flatten, in one dimension, and stacked in the same order as the

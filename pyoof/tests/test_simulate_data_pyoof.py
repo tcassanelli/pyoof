@@ -17,7 +17,7 @@ N_K_coeff = (n + 1) * (n + 2) // 2          # total number of polynomials
 c_dB = -14 * apu.dB                         # illumination taper
 I_coeff = [1, c_dB, 0 * apu.m, 0 * apu.m]   # illumination coefficients
 K_coeff = np.array([0.1] * N_K_coeff)       # random Zernike circle coeff.
-wavel = 0.0093685143125 * apu.m             # wavelenght
+wavel = 0.0093685143125 * apu.m             # wavelength
 d_z = [2.2, 0, -2.2] * apu.cm     # radial offset
 
 # Making example for the Effelsberg telescope
@@ -61,13 +61,16 @@ def test_simulate_data_pyoof(oof_work_dir):
     [beam_data, u_data, v_data] = data_obs
 
     data_info_true, data_obs_true = pyoof.extract_data_pyoof(
-        get_pkg_data_filename('data/beam_simulated.fits')
+        get_pkg_data_filename('data/data_simulated.fits')
         )
     [beam_data_true, u_data_true, v_data_true] = data_obs_true
 
     assert_allclose(beam_data, beam_data_true)
     assert_quantity_allclose(u_data, u_data_true)
     assert_quantity_allclose(v_data, v_data_true)
-    assert_quantity_allclose(data_info[6], data_info_true[6])
-    assert data_info[2:6] == data_info_true[2:6]
+
+    for i in range(4, 7):
+        assert_quantity_allclose(data_info[i], data_info_true[i])
+
+    assert data_info[2:4] == data_info_true[2:4]
     assert data_info[7] == data_info_true[7]

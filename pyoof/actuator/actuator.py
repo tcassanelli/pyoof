@@ -4,7 +4,7 @@
 # Author: Tomas Cassanelli
 
 """
-This is a developer module at the moment and only Effeslberg functions.
+This is a developer module at the moment and only Effelsberg functions.
 """
 
 import os
@@ -38,7 +38,7 @@ plt.style.use(get_pkg_data_filename('../data/pyoof.mplstyle'))
 def generate_actuators(edge):
     """
     This function generates the actuators coordinates for the sub-reflector at
-    the Effelsberg telecope. Since edges of the pyoof output are not well
+    the Effelsberg telescope. Since edges of the `~pyoof` output are not well
     constrained (least squares minimization), the ``edge`` argument will
     subtract ``edge`` (in length units) from the external ring of the actuators
     position.
@@ -105,7 +105,7 @@ def actuator_displacement(
     """
     Calculates displacement for the active surface at the Effelsberg telescope.
     Given the phase error (output from `~pyoof.fit_zpoly`), the phase errors
-    in the sub-reflector can be approximated and specified as perpendicualar
+    in the sub-reflector can be approximated and specified as perpendicular
     displacement for a set of 92 actuators in the current active surface.
     """
 
@@ -117,7 +117,7 @@ def actuator_displacement(
         )
     phase = phase * apu.rad  # stored as default radians
 
-    pr = 50 * apu.m    # Primary refelctor
+    pr = 50 * apu.m    # Primary reflector
     sr = 3.25 * apu.m  # sub-reflector radius
     x = np.linspace(-sr, sr, phase.shape[0])
     y = x.copy()
@@ -159,7 +159,7 @@ def actuator_displacement(
         act_data['name'],              # Label actuator as in Effelsberg sr
         act_data['x'], act_data['y'],  # coordinates actuators [mm]
         act_phase.to_value(apu.rad),   # Phase-error
-        act_phase_ad.to_value(apu.um)  # Phase to perpendicualr displacement
+        act_phase_ad.to_value(apu.um)  # Phase to perpendicular displacement
         ]
 
     print(
@@ -229,7 +229,7 @@ def plot_actuator_displacement(
     """
     Plot for the phase-error given the actuators in the active surface.
     Translates the phase-error from the whole telescope to an approximated
-    version at the sub-refelctor (at the moment only for Effelsberg).
+    version at the sub-reflector (at the moment only for Effelsberg).
     This will also calculates the amplitude value un the actuators mesh.
     """
 

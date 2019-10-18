@@ -14,12 +14,14 @@ def norm(P):
 
     Parameters
     ----------
-    P :
+    P : `~numpy.ndarray`
+        Two-dimensional power pattern (or beam). Units are arbitrary, this
+        same process is applied to the observed and generated power pattern.
 
     Returns
     -------
-    P_norm :
-
+    P_norm : `~numpy.ndarray`
+        Normalized power pattern.
     """
 
     # normalization by it's maximum
@@ -28,7 +30,7 @@ def norm(P):
     # normalization
     P_norm = (P - P.min()) / (P.max() - P.min())
 
-    # standarization
+    # standardization
     # P_norm = (P - P.mean()) / P.std()
 
     return P_norm

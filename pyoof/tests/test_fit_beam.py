@@ -12,7 +12,7 @@ import pyoof
 
 
 # Initial fits file configuration
-n = 6                                           # initial order
+n = 5                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
 c_dB = np.random.randint(-21, -10) * apu.dB     # illumination taper
 wavel = 0.0093685143125 * apu.m                 # wavelength
