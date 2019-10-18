@@ -8,7 +8,7 @@ pyoof Documentation
 Introduction (`pyoof`)
 ======================
 
-Welcome to the `~pyoof` documentation. `~pyoof` is a Python package which computes out-of-focus (OOF) holography for beam maps of a single-dish radio telescope. The method was developed by `B. Nikolic et al <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_. The OOF holography is a phase-retrieval holography procedure used to find the aperture phase distribution, :math:`\varphi(x, y)`, (or simply the phase error) and the associated errors on a telescope's surface (primary reflector). The main advantage of this method, over the traditional with-phase holography, is that it *does not* require additional equipment to perform observations and it can be used for a wide elevation range. These two allow OOF holography to study and model gravitational deformations, the most well behaved and prominent source of deformation (other sources could also be thermal and wind deformations which are non-repeatable and too fast to model), on the telescope's primary reflector.
+Welcome to the `~pyoof` documentation. `~pyoof` is a Python package which computes out-of-focus (OOF) holography for beam maps of a single-dish radio telescope. The method was developed by `B. Nikolic et al <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_. The OOF holography is a phase-retrieval holography procedure used to find the aperture phase distribution, :math:`\varphi(x, y)`, (or simply the phase-error) and the associated errors on a telescope's surface (primary reflector). The main advantage of this method, over the traditional with-phase holography, is that it *does not* require additional equipment to perform observations and it can be used for a wide elevation range. These two allow OOF holography to study and model gravitational deformations, the most well behaved and prominent source of deformation (other sources could also be thermal and wind deformations which are non-repeatable and too fast to model), on the telescope's primary reflector.
 
 The method requires the use of a compact source (point-like) with a good signal-to-noise (:math:`\geq200`). Then a set of continuum observations (on-the-fly mapping) are required, two of them out-of-focus and one in-focus. The OOF observations are performed by adding a known radial offset (:math:`d_z`), of the order of centimeters (using a ~mm receiver), to the telescope's sub-reflector.
 The defocused terms are needed to break the degeneracy between the power pattern or beam map (observed quantity :math:`P(u, v)`), and the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`, without OOF holography observations the problem becomes under-determined. Such a relation is given by,
@@ -40,7 +40,7 @@ Collection of sub-functions and -distributions. It is the point of connection be
 .. math::
     \underline{E_\text{a}}(x, y) = B(x, y)\cdot E_\text{a}(x, y) \cdot \mathrm{e}^{\mathrm{i} \{\varphi(x, y) + \frac{2\pi}{\lambda}\delta(x,y;d_z)\}}.
 
-Aperture phase distribution (phase error): :math:`\varphi(x, y)` (`~pyoof.aperture.phase`)
+Aperture phase distribution (phase-error): :math:`\varphi(x, y)` (`~pyoof.aperture.phase`)
 ------------------------------------------------------------------------------------------------------
 
 The aperture phase distribution represents the aberrations of an optical system, measured in radians. It is also related to the wavefront (aberration) distribution (see Eq. :eq:`phase-error-definition`), :math:`W(x, y)`, which is the classical function used in optics to define aberrations.
@@ -101,7 +101,7 @@ Radial offset: :math:`d_z` (``d_z``)
 ------------------------------------
 
 The radial offset is the defocused term added to the sub-reflector. It is usually of the order of centimeters (using a ~mm receiver). A small value of the :math:`d_z` may not add enough change to the out-of-focus beam with respect to the in-focus beam, increasing the degeneracy on the least squares minimization. On the contrary, a large value of :math:`d_z` will decrease the signal-to-noise on the source, making the Zernike circle polynomial coefficients have high uncertainty in the polynomial fit.
-For every feed and telescope geometry this value will change. At the Effelsberg telescope :math:`d_z = \pm 2.2` cm  while using a :math:`9`- and :math:`7`- mm feed
+For every feed and telescope geometry this value will change. At the Effelsberg telescope :math:`d_z = \pm 2.2` cm  while using a :math:`9`- and :math:`7`-mm feed
 
 Wavefront (aberration) distribution: :math:`W(x, y)` (`~pyoof.aperture.wavefront`)
 ----------------------------------------------------------------------------------------------------------
@@ -335,13 +335,13 @@ The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, whe
 * `cov_n#.csv`: Covariance matrix evaluated at the last residual from the least squares minimization, order `#`.
 * `fitpar_n#.csv`: Estimated parameters from the least squares minimization, order `#`. These correspond to the illumination function coefficients, ``I_coeff``, and the Zernike circle polynomial coefficients, ``K_coeff``. They are gathered as ``params_solution = I_coeff + K_coeff``. Be aware that some coefficients can be fixed, or excluded from the optimization, such as the illumination offset (:math:`x_0, y_0`) or the illumination amplitude (:math:`A_{E_\text{a}}`). The default configuration is in `config_params.yml` (package directory). You can also provide your own configuration set up.
 * `grad_n#.csv`: Gradient of the last residual evaluation, order `#`.
-* `phase_n#.csv`: Aperture phase distribution (phase error), in radians, for the primary reflector, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in `~pyoof.fit_zpoly`.
+* `phase_n#.csv`: Aperture phase distribution (phase-error), in radians, for the primary reflector, order `#`. The solution takes the same approach as the `fitpar_n#.csv`, using the same telescope configuration introduced in `~pyoof.fit_zpoly`.
 * `pyoof_info.yml`: It contains information about the fit and observation parameters.
 * `res_n#.csv`: Last evaluation of the residual from the least squares minimization, order `#`.
 * `u_data.csv`: :math:`x`-axis vector which contains position coordinates for `beam_data.csv`, in radians.
 * `v_data.csv`: :math:`y`-axis vector which contains position coordinates for `beam_data.csv`, in radians.
 
-Finally if the key ``make_plots=True``, then `~pyoof.fit_zpoly` will create a sub-directory containing the most important plots to study the fit, as well as the phase error maps for the primary reflector. Plots require :math:`\mathrm{\LaTeX}` to be installed, if you do not have it simply set the option to ``False``.
+Finally if the key ``make_plots=True``, then `~pyoof.fit_zpoly` will create a sub-directory containing the most important plots to study the fit, as well as the phase-error maps for the primary reflector. Plots require :math:`\mathrm{\LaTeX}` to be installed, if you do not have it simply set the option to ``False``.
 
 See Also
 ========

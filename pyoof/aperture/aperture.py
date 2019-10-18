@@ -21,11 +21,11 @@ def e_rs(phase, radius):
     Parameters
     ----------
     phase : `~astropy.units.quantity.Quantity`
-        The phase error, :math:`\\varphi(x, y)`, is a two dimensional array (
+        The phase-error, :math:`\\varphi(x, y)`, is a two dimensional array (
         one of the solutions from the pyoof package). Its amplitude values are
         in radians. The input must be in radians or angle units.
     radius : `bool`
-        The limit radios where the phase error map is contained in length
+        The limit radios where the phase-error map is contained in length
         units. By default it is set to None, meaning that will include the
         entire array.
 
@@ -40,11 +40,11 @@ def e_rs(phase, radius):
 
     Where :math:`\\delta_\\mathrm{rms}` corresponds to the root-mean-squared
     deviation. The Python function uses the key **phase** because the term
-    :math:`4\\pi\\delta_\\mathrm{rms}/\\lambda` corresponds to the phase error.
+    :math:`4\\pi\\delta_\\mathrm{rms}/\\lambda` corresponds to the phase-error.
 
     Examples
     --------
-    Simply add the a phase value and define the limits of the phase error map.
+    Simply add the a phase value and define the limits of the phase-error map.
 
     >>> import numpy as np
     >>> from astropy import units as u
@@ -184,8 +184,8 @@ def illum_gauss(x, y, I_coeff, pr):
 def wavefront(rho, theta, K_coeff):
     """
     Computes the wavefront (aberration) distribution, :math:`W(x, y)`. It
-    tells how the error is distributed along the primary dish ``pr``, it is
-    related to the phase error (`~pyoof.aperture.phase`). The wavefront
+    tells how the error is distributed along the primary reflector ``pr``, it
+    is related to the phase-error (`~pyoof.aperture.phase`). The wavefront
     aberration) distribution is described as a parametrization of the Zernike
     circle polynomials multiplied by a set of coefficients, :math:`K_{n\\ell}`.
     For the package simplicity this function is considered dimensionless.
@@ -236,7 +236,7 @@ def wavefront(rho, theta, K_coeff):
 
 def phase(K_coeff, notilt, pr, resolution=1000):
     """
-    Aperture phase distribution (or phase error), :math:`\\varphi(x, y)`, for
+    Aperture phase distribution (or phase-error), :math:`\\varphi(x, y)`, for
     an specific telescope primary reflector. In general, the tilt (average
     slope in :math:`x`- and :math:`y`-directions, related to telescope
     pointings) is subtracted from its calculation. Function used to show the
@@ -256,7 +256,7 @@ def phase(K_coeff, notilt, pr, resolution=1000):
     pr : `float`
         Primary reflector radius in length units.
     resolution : `int`
-        Resolution for the phase error map, usually used ``resolution = 1e3``
+        Resolution for the phase-error map, usually used ``resolution = 1e3``
         in the pyoof package.
 
     Returns
@@ -267,11 +267,11 @@ def phase(K_coeff, notilt, pr, resolution=1000):
         :math:`y`-axis dimensions for the primary reflector in meters.
     phi : `~astropy.units.quantity.Quantity`
         Aperture phase distribution, :math:`\\varphi(x, y)`, for an specific
-        primary dish radius, measured in radians.
+        primary reflector radius, measured in radians.
 
     Notes
     -----
-    The aperture phase distribution or phase error, :math:`\\varphi(x, y)` is
+    The aperture phase distribution or phase-error, :math:`\\varphi(x, y)` is
     related to the wavefront (aberration) distribution, from classical optics,
     through the expression,
 
@@ -397,9 +397,9 @@ def aperture(x, y, I_coeff, K_coeff, d_z, wavel, illum_func, telgeo):
     delta = opd_func(x=x, y=y, d_z=d_z)  # Optical path difference function
     Ea = illum_func(x=x, y=y, I_coeff=I_coeff, pr=pr)  # Illumination function
 
-    # Transformation: wavefront (aberration) distribution -> phase error
+    # Transformation: wavefront (aberration) distribution -> phase-error
     phi = (W + delta / wavel) * 2 * np.pi * apu.rad
-    # phase error plus the OPD function
+    # phase-error plus the OPD function
 
     with apu.set_enabled_equivalencies(apu.dimensionless_angles()):
         E = B * Ea * np.exp(phi * 1j)  # Aperture distribution

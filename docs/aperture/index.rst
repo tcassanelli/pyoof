@@ -122,7 +122,7 @@ One basic example is to plot :math:`W(x, y)` with a random set of Zernike circle
 Aperture phase distribution :math:`\varphi(x, y)`
 -------------------------------------------------
 
-The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, follows the same guidelines as the wavefront (aberration) distribution, `~pyoof.aperture.wavefront`. In general, the problem will only focus on the aperture phase distribution, and not on the wavefront (aberration) distribution. To compute the phase error simply,
+The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, follows the same guidelines as the wavefront (aberration) distribution, `~pyoof.aperture.wavefront`. In general, the problem will only focus on the aperture phase distribution, and not on the wavefront (aberration) distribution. To compute the phase-error simply,
 
 .. plot::
     :include-source:
@@ -229,7 +229,7 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
         _ax.set_xticklabels([])
 
 
-As mentioned before the aperture distribution is complex, and depends on the radial offset added to defocus the telescope. Depending on that its shape in  real and imaginary parts will change. In general, the aperture distribution will not be used for the OOF holography study, only the power pattern and phase error will be used for visual inspection.
+As mentioned before the aperture distribution is complex, and depends on the radial offset added to defocus the telescope. Depending on that its shape in  real and imaginary parts will change. In general, the aperture distribution will not be used for the OOF holography study, only the power pattern and phase-error will be used for visual inspection.
 
 In contrast the voltage reception pattern has the same inputs, except for the `~numpy.fft.fft2` routine, which requires two more important parameters. These are ``resolution`` and ``box_factor``. This is simply executed by,
 

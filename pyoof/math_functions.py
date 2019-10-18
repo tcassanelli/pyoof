@@ -137,7 +137,7 @@ def rms(phase, radius=None):
     phase : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         One or two dimensional array for the aperture phase distribution.
     radius : `bool`
-        The limit radios where the phase error map is contained in length
+        The limit radios where the phase-error map is contained in length
         units. By default it is set to None, meaning that will include the
         entire array.
     """

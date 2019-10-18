@@ -22,7 +22,7 @@ pyoof is a Python package that contains all needed tools to perform out-of-focus
 
 and `software <https://github.com/bnikolic/oof>`_ developed by `Bojan Nikolic <http://www.mrao.cam.ac.uk/~bn204/oof/>`_.
 
-In brief, the pyoof package calculates the aperture phase distribution map from a set of beam maps (telescope observations), at a relatively good signal-to-noise as described by B. Nikolic. By using a nonlinear least squares minimization a convenient set of polynomials can be used to reconstruct the aperture distribution. The representation can also be used to compute the aperture phase distribution or simply phase error, which contains vital information related to the aberrations in the telescope primary dish surface. Knowing the dish aberrations means that they can be potentially corrected, hence improve the telescope sensitivity [K/Jy].
+In brief, the pyoof package calculates the aperture phase distribution map from a set of beam maps (telescope observations), at a relatively good signal-to-noise as described by B. Nikolic. By using a nonlinear least squares minimization a convenient set of polynomials can be used to reconstruct the aperture distribution. The representation can also be used to compute the aperture phase distribution or simply phase-error, which contains vital information related to the aberrations in the telescope primary dish surface. Knowing the dish aberrations means that they can be potentially corrected, hence improve the telescope sensitivity [K/Jy].
 
 We are currently testing the pyoof package at the `Effelsberg radio telescope <https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope>`_ :satellite:.
 
@@ -135,8 +135,8 @@ Improvements future versions
 - Reduce the size of the test files
 - Include automatic setup for the FFT resolution ``pyoof.fit_zpoly(resolution)``
 - Include cosine taper illumination function
-- Add actuator correction (sub-module) and its translation from phase error (specific for Effelsberg)
-- Add option for 2 or more beam maps 
+- Add actuator correction (sub-module) and its translation from phase-error (specific for Effelsberg) :white_check_mark:
+- Add option for 2 or more beam maps
 
 Contact
 =======

@@ -320,7 +320,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
 
 def plot_phase(K_coeff, notilt, pr, title):
     """
-    Aperture phase distribution (phase error), :math:`\\varphi(x, y)`, figure,
+    Aperture phase distribution (phase-error), :math:`\\varphi(x, y)`, figure,
     given the Zernike circle polynomial coefficients, ``K_coeff``, solution
     from the least squares minimization.
 
@@ -344,7 +344,8 @@ def plot_phase(K_coeff, notilt, pr, title):
     -------
     fig : `~matplotlib.figure.Figure`
         Aperture phase distribution parametrized in terms of the Zernike
-        circle polynomials, and represented for the telescope's primary dish.
+        circle polynomials, and represented for the telescope's primary
+        reflector.
     """
 
     if notilt:
@@ -534,7 +535,7 @@ def plot_fit_path(
         :math:`0` and :math:`d_z^+`.
     fig_phase : `~matplotlib.figure.Figure`
         Aperture phase distribution for the Zernike circle polynomials for the
-        telescope primary dish.
+        telescope primary reflector.
     fig_res : `~matplotlib.figure.Figure`
         Figure from the three observed beam maps residual. Each map with a
         different offset :math:`d_z` value. From left to right, :math:`d_z^-`,
@@ -616,7 +617,7 @@ def plot_fit_path(
     fig_phase = plot_phase(
         K_coeff=fitpar['parfit'][4:],
         title=(
-            '{} phase error $d_z=\\pm {}$ cm ' +
+            '{} phase-error $d_z=\\pm {}$ cm ' +
             '$n={}$ $\\alpha={}$ deg'
             ).format(obs_object, round(d_z[2].to_value(apu.cm), 3), n, meanel),
         notilt=True,

@@ -386,7 +386,7 @@ def fit_zpoly(
         optimization. See ``config_params.yml`` in the pyoof package directory.
     make_plots : `bool`
         If `True` will generate a sub-directory with all the important plots
-        for the OOF holography, including the phase error, :math:`\\varphi(x,
+        for the OOF holography, including the phase-error, :math:`\\varphi(x,
         y)` and fitted beam, :math:`P_\\mathrm{norm}(u, v)`.
     verbose : `int`
         {0, 1, 2} Level of algorithm verbosity. 0 work silent, 1 display

@@ -166,7 +166,7 @@ References
 
 .. [Born] Born, M. and Wolf, E., 1959. Principles of Optics: Electromagnetic Theory of Propagation, Interference and Diffraction of Light. Pergamon Press.
 
-.. [Virendra] Virendra N. Mahajan, "Zernike Circle Polynomials and Optical Aberrations of Systems with Circular Pupils," Appl. Opt. 33, 8121-8124 (1994)
+.. [Virendra] Virendra N. Mahajan, "Zernike Circle Polynomials and Optical Aberrations of Systems with Circular Pupils", Appl. Opt. 33, 8121-8124 (1994)
 
 .. [Wyant] Wyant, James C., and Katherine Creath. "Basic Wavefront Aberration Theory for Optical Metrology." (1992).
 
