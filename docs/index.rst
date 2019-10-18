@@ -8,9 +8,9 @@ pyoof Documentation
 Introduction (`pyoof`)
 ======================
 
-Welcome to the `~pyoof` documentation. `~pyoof` is a Python package which computes out-of-focus (OOF) holography for beam maps of a single-dish radio telescope. The method was developed by `B. Nikolic et al <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_. The OOF holography is a phase-retrieval holography procedure used to find the aperture phase distribution, :math:`\varphi(x, y)`, (or simply the phase error) and the associated errors on a telescope's surface (primary reflector). The main advantage of this method, over the traditional with-phase holography, is that it does not require additional equipment to perform observations and it can be used for a wide elevation range. These two allow OOF holography to study and model gravitational deformations, the most well behaved and prominent source of deformation (other sources could also be thermal and wind deformations which are non-repeatable and too fast to model), on the telescope's primary reflector.
+Welcome to the `~pyoof` documentation. `~pyoof` is a Python package which computes out-of-focus (OOF) holography for beam maps of a single-dish radio telescope. The method was developed by `B. Nikolic et al <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_. The OOF holography is a phase-retrieval holography procedure used to find the aperture phase distribution, :math:`\varphi(x, y)`, (or simply the phase error) and the associated errors on a telescope's surface (primary reflector). The main advantage of this method, over the traditional with-phase holography, is that it *does not* require additional equipment to perform observations and it can be used for a wide elevation range. These two allow OOF holography to study and model gravitational deformations, the most well behaved and prominent source of deformation (other sources could also be thermal and wind deformations which are non-repeatable and too fast to model), on the telescope's primary reflector.
 
-The method requires the use of a compact source (point-like) with a good signal-to-noise (:math:`\geq200`). Then a set of continuum observations (on-the-fly mapping) are required, two of them out-of-focus and one in-focus. The OOF observations are performed by adding a known radial offset (:math:`d_z`), of the order of centimeters, to the telescope's sub-reflector.
+The method requires the use of a compact source (point-like) with a good signal-to-noise (:math:`\geq200`). Then a set of continuum observations (on-the-fly mapping) are required, two of them out-of-focus and one in-focus. The OOF observations are performed by adding a known radial offset (:math:`d_z`), of the order of centimeters (using a ~mm receiver), to the telescope's sub-reflector.
 The defocused terms are needed to break the degeneracy between the power pattern or beam map (observed quantity :math:`P(u, v)`), and the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`, without OOF holography observations the problem becomes under-determined. Such a relation is given by,
 
 .. math::
@@ -23,9 +23,9 @@ The aperture phase distribution, related to the power pattern (observed beam map
     \varphi(x, y) = 2\pi \cdot W(x, y) = 2\pi \cdot \sum_{n, \ell} K_{n\ell}U^\ell_n(\varrho, \vartheta).
     :label: phase-error-definition
 
-The parametrization of the aperture phase distribution allows its construction by using a nonlinear least squares minimization (`~pyoof.fit_zpoly`), due to the highly nonlinear relation between the aperture distribution and the power pattern (degenerated). The `~pyoof` package takes as an input the observed beam maps and computes the :math:`K_{n\ell}` coefficients to find the aperture phase distribution (on the primary reflector).
+The parametrization of the aperture phase distribution allows its construction by using a nonlinear least squares minimization (`~pyoof.fit_zpoly`), due to the highly nonlinear relation between the aperture distribution and the power pattern (degenerated). The `~pyoof` package takes as an input the observed beam maps and computes the :math:`K_{n\ell}` coefficients to find the aperture phase distribution of the entire optical system.
 
-The operations that the `~pyoof` package does are: construction of the  aperture distribution (`~pyoof.aperture.aperture`), calculation of its Fast Fourier Transform in two dimensions (`~pyoof.aperture.radiation_pattern`), calculation of a residual between observed and modeled power pattern, and nonlinear least squares minimization (`~pyoof.fit_zpoly`) to find :math:`K_{n\ell}` set and construct the aperture phase distribution.
+The operations that the `~pyoof` package does are: construction of the  aperture distribution (`~pyoof.aperture.aperture`), calculation of its Fast Fourier Transform in two dimensions (FFT2) (`~pyoof.aperture.radiation_pattern`), calculation of a residual between observed and modeled power pattern, and nonlinear least squares minimization (`~pyoof.fit_zpoly`) to find :math:`K_{n\ell}` set and construct the aperture phase distribution.
 
 OOF holography parameters
 =========================
@@ -89,13 +89,19 @@ The OPD function is the extra path that light has to travel every time a radial 
 Power pattern (beam map): :math:`P(u, v)` (``power_pattern``)
 -------------------------------------------------------------
 
-The power pattern or beam map is modeled and observed quantity. For one OOF holography observation, it is required to perform two of the out-of-focus and one in-focus continuum scans (on-the-fly mapping). This will produce two beam maps with a clear interference pattern and one with the common in-focus beam size.
+The power pattern or beam map is modeled and observed quantity. For one OOF holography observation, it is required to perform two of the out-of-focus and one in-focus continuum scans (on-the-fly mapping). This will produce two beam maps with a clear interference pattern and one with the common in-focus beam size. Prior the least squares minimization, both observed and modeled power patterns are normalized as,
+
+.. math::
+    
+    P_{\mathrm{norm}}(u, v) = \frac{P(u, v) - P_{\mathrm{min}}}{P_{\mathrm{max}} - P_{\mathrm{min}}},
+
+where :math:`P(u, v)` is the observed or modeled power pattern. This pre-processing facilitates the polynomial fit.
 
 Radial offset: :math:`d_z` (``d_z``)
 ------------------------------------
 
-The radial offset is the defocused term added to the sub-reflector. It is usually of the order of centimeters (it will vary from telescope to telescope). A small value of the :math:`d_z` may not add enough change to the out-of-focus beam with respect to the in-focus beam, increasing the degeneracy on the least squares minimization. On the contrary, a large value of :math:`d_z` will decrease the signal-to-noise on the source, making the Zernike circle polynomial coefficients have high uncertainty.
-For every feed and telescope geometry this value will change. At the Effelsberg telecope :math:`d_z = \pm 2.2` cm  while using a :math:`9`- and :math:`7`- mm feed
+The radial offset is the defocused term added to the sub-reflector. It is usually of the order of centimeters (using a ~mm receiver). A small value of the :math:`d_z` may not add enough change to the out-of-focus beam with respect to the in-focus beam, increasing the degeneracy on the least squares minimization. On the contrary, a large value of :math:`d_z` will decrease the signal-to-noise on the source, making the Zernike circle polynomial coefficients have high uncertainty in the polynomial fit.
+For every feed and telescope geometry this value will change. At the Effelsberg telescope :math:`d_z = \pm 2.2` cm  while using a :math:`9`- and :math:`7`- mm feed
 
 Wavefront (aberration) distribution: :math:`W(x, y)` (`~pyoof.aperture.wavefront`)
 ----------------------------------------------------------------------------------------------------------
@@ -151,7 +157,7 @@ To learn the in-depth structure of the `~pyoof` package, first visit the sub-pac
 * The telescope structure (geometry and blockage), in `~pyoof.telgeometry`
 * Mathematical functions for the construction of the aperture distribution, in `~pyoof.aperture`
 
-If there is not enough, I encourage you to read the following examples and test the `Jupyter notebooks <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/>`_.
+If there is not enough, I encourage you to read the following examples and test in the `Jupyter notebooks <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/>`_.
 
 The fits file
 -------------
@@ -215,14 +221,17 @@ Where ``U`` and ``V`` are the dimensions of the :math:`x`- and :math:`y`-axis, a
     Always remember to close the fits file after use, ``hdulist.close()``.
 
 .. note::
-    The fits format can also be avoided. If the required parameters are added to the `~pyoof.fit_zpoly` function, then the `~pyoof` package will also work. Although, it is recommended to use the fits format, for ease and clean storage of the data.
+    The fits format can also be avoided. If the correct arguments are added to the `~pyoof.fit_zpoly` function, then the `~pyoof` package will also work. Although, it is recommended to use the fits format, for ease and clean storage of the data.
 
-It is also possible to try the `~pyoof` by generating your own data, with the build-in function `~pyoof.simulate_data_pyoof`. The Jupyter notebook `oof_holography.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_  has an example of generated data plus noise, and runs over the `~pyoof` package.
+It is also possible to try the `~pyoof` by generating your own data, with the build-in function `~pyoof.simulate_data_pyoof`. The Jupyter notebook `oof_holography.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_  has an example of generated data plus noise, and runs it over the `~pyoof` package.
 
 Using pyoof
 -----------
 
-The main function in the `~pyoof` package is `~pyoof.fit_zpoly`. This function does all the numerical computation necessary to find the Zernike circle polynomial coefficients and the illumination function coefficients, stored in ``params_solution`` (`~numpy.ndarray`). To start, first the data needs to be extracted using `~pyoof.extract_data_pyoof`, then its outputs; constants, arrays (most of them `~astropy.units.quantity.Quantity`) and strings are given as input to the core function `~pyoof.fit_zpoly`. Besides the observational data some other parameters need to be added, these are the ones related to the FFT2 (`~numpy.fft.fft2`) and functions related to the telescope geometry (effective focal length, type of antenna, etc).
+The main function in the `~pyoof` package is `~pyoof.fit_zpoly`. This function does all the numerical computation necessary to find the Zernike circle polynomial coefficients and the illumination function coefficients, stored in ``params_solution`` (`~numpy.ndarray`). To start, first the data needs to be extracted using `~pyoof.extract_data_pyoof`, then its outputs; constants, arrays (most of them `~astropy.units.quantity.Quantity`) and strings are given as input to the core function `~pyoof.fit_zpoly`. Besides the observational data some other parameters need to be added, these are the ones related to the FFT2 (`~numpy.fft.fft2`) and functions related to the telescope geometry (effective focal length, antenna type, etc).
+
+.. note::
+    The `~pyoof` package has `~astropy.units.quantity.Quantity` included in its core. It is not necessary to run the package but strongly suggested.
 
 Following the same example as before, it is possible to make a simple preview of the file, using `~pyoof.extract_data_pyoof`.
 
@@ -317,7 +326,7 @@ After creating the basic structure, the core function, `~pyoof.fit_zpoly` can be
         work_dir=None                          # default
         )
 
-After excecution the command line will show first the observation properties and the progress of the least squares minimization.The key ``order_max`` is the maximum Zernike circle polynomial coeffcients order to be fitted in the process. It starts from the polynomial order one until order ``order_max``. If ``fit_previous=True``, then the algorithm will use coefficients from the previous order (:math:`n`) as the initial coefficients for the next order (:math:`n+1`), this feature is **strongly** recommended. The key ``verbose`` prints relevant information about the least squares minimization package (`~scipy.optimize.least_squares`). The ``box_factor`` and ``resolution`` are necessary to perform a good FFT2 (more information about this will be updated).
+After execution the command line will show first the observation properties and the progress of the least squares minimization.The key ``order_max`` is the maximum Zernike circle polynomial coefficients order to be fitted in the process. It starts from the polynomial order one until order ``order_max``. If ``fit_previous=True``, then the algorithm will use coefficients from the previous order (:math:`n`) as the initial coefficients for the next order (:math:`n+1`), this feature is **strongly** recommended. The key ``verbose`` prints relevant information about the least squares minimization package (`~scipy.optimize.least_squares`). The ``box_factor`` and ``resolution`` are necessary to perform a good FFT2 (more information about this will be updated).
 
 The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, where `name` is the name of the fits file used. The directory will contain:
 
@@ -342,6 +351,7 @@ See Also
 * `Zernike circle polynomials <https://en.wikipedia.org/wiki/Zernike_polynomials>`_
 * `Effelsberg 100-m radio telescope <https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope>`_
 * `Essential Radio Astronomy <http://www.cv.nrao.edu/course/astr534/ERA_old.shtml>`_
+* `Astropy Units and Quantities <http://docs.astropy.org/en/stable/units/index.html>`_
 
 
 Available modules

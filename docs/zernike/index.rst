@@ -102,7 +102,7 @@ To plot the polynomials first it is required to construct a grid.
     extent = [x.value.min(), x.value.max()] * 2
 
     # restricting to a circle shape
-    U31[xx ** 2 + yy ** 2 > radius ** 2] = 0
+    U31[(xx ** 2 + yy ** 2 > radius ** 2)] = 0
 
     fig, ax = plt.subplots()
     ax.imshow(U31, extent=extent, origin='lower', cmap='viridis')
@@ -151,7 +151,7 @@ Then a plot of such function will be,
     extent = [x.value.min(), x.value.max()] * 2
 
     # restricting to a circle shape
-    W[xx ** 2 + yy ** 2 > radius ** 2] = 0
+    W[(xx ** 2 + yy ** 2 > radius ** 2)] = 0
 
     fig, ax = plt.subplots()
     ax.imshow(W, extent=extent, origin='lower', cmap='viridis')

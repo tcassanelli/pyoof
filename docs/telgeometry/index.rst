@@ -23,7 +23,7 @@ Using the telescope geometry functions is straight forward, simply by defining a
 
 Blockage distribution :math:`B(x, y)`
 -------------------------------------
-The blockage distribution corresponds to the elements that block incoming radiation in the aperture plane. This could be the support legs, the sub-reflector and shade effects. And for the Effelsberg telescope, all three of them are present. How to construct the blockage follows,
+The blockage distribution corresponds to the elements that block incoming radiation in the aperture plane [Baars]_. This could be the support legs, the sub-reflector and shade effects. And for the Effelsberg telescope, all three of them are present. How to construct the blockage follows,
 
 .. plot::
     :include-source:
@@ -43,7 +43,7 @@ The blockage distribution corresponds to the elements that block incoming radiat
     ax.imshow(B, extent=[-pr.value, pr.value] * 2, cmap='viridis')
     ax.set_xlabel('$x$ m')
     ax.set_ylabel('$y$ m')
-    ax.set_title('Blockage dist. Effelsberg telescope')
+    ax.set_title('Blockage distribution Effelsberg telescope')
 
 To construct manually the blockage distribution, using the pre-made function `~pyoof.telgeometry.block_manual`, basic geometrical aspects from the telescope are required, such as the primary and secondary dish radii, dimensions of the support legs, etc.
 
@@ -87,7 +87,12 @@ Same as before the OPD function for the Effelsberg telescope is already made,
 From the plot, it becomes clear that by adding a radial offset of :math:`d_z=0` m the solution becomes flat.
 
 .. note::
-    The presented distribution/functions are a good first order approximation that follow ray-tracing optics. In reality light diffraction has a considerable effect in such measurements. 
+    The presented distribution/functions are a good first order approximation that follow ray-tracing optics. In reality light diffraction has a considerable effect in such measurements.
+
+References
+==========
+
+.. [Baars] Baars, J. and Kärcher, H., 2018. Radio Telescope Reflectors: Historical Development of Design and Construction. Springer.
 
 See Also
 ========

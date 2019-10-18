@@ -11,7 +11,7 @@ Aperture (`pyoof.aperture`)
 Introduction
 ============
 
-The `~pyoof.aperture` sub-package contains related distributions/functions to the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`. The aperture distribution is a two dimensional complex distribution, hence has an amplitude and a phase. The amplitude is represented by the blockage distribution, :math:`B(x, y)`, and the illumination function, :math:`E_\text{a}(x, y)`. The phase is given by the aperture phase distribution, :math:`\varphi(x, y)` and the optical path difference (OPD) function, :math:`\delta(x,y;d_z)`.
+The `~pyoof.aperture` sub-package contains related distributions/functions to the aperture distribution, :math:`\underline{E_\text{a}}(x, y)`. The aperture distribution is a two dimensional complex distribution, hence has an amplitude and a phase. The amplitude is represented by the blockage distribution, :math:`B(x, y)`, and the illumination function, :math:`E_\text{a}(x, y)`. The phase is given by the aperture phase distribution, :math:`\varphi(x, y)` and the optical path difference (OPD) function, :math:`\delta(x,y;d_z)` [Stutzman]_.
 The collection of all distributions/functions for the aperture distribution is then,
 
 .. math::
@@ -51,7 +51,7 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
     from astropy import units as u
     from pyoof import aperture
 
-    pr = 50 * u.m  # primary relfector radius
+    pr = 50 * u.m  # primary reflector radius
     x = np.linspace(-pr, pr, 1000)
     y = x.copy()
     xx, yy = np.meshgrid(x, y)
@@ -59,7 +59,7 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
     I_coeff = [1, -14 * u.dB, 0 * u.m, 0 * u.m]  # [amp, c_dB, x0, y0]
 
     Ea = aperture.illum_pedestal(xx, yy, I_coeff, pr)
-    Ea[xx ** 2 + yy ** 2 > pr ** 2] = 0  # circle shape
+    Ea[(xx ** 2 + yy ** 2 > pr ** 2)] = 0  # circle shape
 
     fig, ax = plt.subplots()
 
@@ -72,15 +72,15 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
     ax.set_ylabel('$y$ m')
     ax.set_title('Illumination function')
 
-The `~pyoof.aperture` only uses standard Python libraries (and Astropy), but what needs special consideration are the Python functions with the parameter ``K_coeff``, coming up.
+The `~pyoof.aperture` only uses standard Python libraries, but what needs special consideration are the Python functions with the parameter ``K_coeff``, coming up.
 
 Wavefront (aberration) distribution :math:`W(x, y)`
 ---------------------------------------------------
 
-The wavefront (aberration) distribution, :math:`W(x, y)`, is strictly related to the aperture phase distribution (see Jupyter notebook, `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_ on GitHub), and it is the basis of the nonlinear least squares minimization done by the `~pyoof` package.
+The wavefront (aberration) distribution [Welford]_, :math:`W(x, y)`, is strictly related to the aperture phase distribution (see Jupyter notebook, `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_ on GitHub), and it is the basis of the nonlinear least squares minimization done by the `~pyoof` package.
 
 .. note::
-    The Zernike circle coefficients, given by ``K_coeff`` are the basic structure for the aperture phase distribution. The poluynomial order :math:`n` is given by :math:`(n+1)(n+2)/2`, or total number of polynomials. See `~pyoof.zernike`.
+    The Zernike circle coefficients, given by ``K_coeff`` are the basic structure for the aperture phase distribution. The polynomial order :math:`n` is given by :math:`(n+1)(n+2)/2`, or total number of polynomials. See `~pyoof.zernike`.
 
 One basic example is to plot :math:`W(x, y)` with a random set of Zernike circle polynomial coefficients.
 
@@ -92,7 +92,7 @@ One basic example is to plot :math:`W(x, y)` with a random set of Zernike circle
     from astropy import units as u
     from pyoof import aperture, cart2pol
 
-    pr = 50 * u.m                       # primary relfector radius
+    pr = 50 * u.m                       # primary reflector radius
     n = 10                              # order polynomial
     N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
     K_coeff = np.random.normal(0., .1, N_K_coeff)
@@ -159,7 +159,7 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
     ax[1].set_title('$\\varphi(x, y)$')
 
 
-To study the aberration in the aperture phase distribution it is necessary to remove some telescope effects. These are the tilt terms that are related to the telescope's pointing, and become irrelevant. The tilt terms also represent the average slope in the :math:`x` and :math:`y` directions. In the Zernike circle polynomials the tilt terms are :math:`K^1_1` and :math:`K^{-1}_1`. To erase their dependence they are set to zero with the option ``notilt = True``.
+To study the aberration in the aperture phase distribution it is necessary to remove some telescope effects. These are the *tilt terms* that are related to the telescope's pointing, and become irrelevant. The tilt terms also represent the average slope in the :math:`x` and :math:`y` directions. In the Zernike circle polynomials the tilt terms are :math:`K^1_1` and :math:`K^{-1}_1`. To erase their dependence they are set to zero with the option ``notilt = True``.
 
 Aperture distribution :math:`\underline{E_\text{a}}(x, y)`
 ----------------------------------------------------------
@@ -220,9 +220,9 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
         ax[i + 3].contour(xx, yy, Ea[i].imag, cmap='viridis')
 
     for j, label in enumerate(['real', 'imag']):
-        ax[0 + j * 3].set_title('Aper {} $d_z^-$'.format(label))
-        ax[1 + j * 3].set_title('Aper {} $d_z$'.format(label))
-        ax[2 + j * 3].set_title('Aper {} $d_z^+$'.format(label))
+        ax[0 + j * 3].set_title('Aperture {} $d_z^-$'.format(label))
+        ax[1 + j * 3].set_title('Aperture {} $d_z$'.format(label))
+        ax[2 + j * 3].set_title('Aperture {} $d_z^+$'.format(label))
 
     for _ax in ax:
         _ax.set_yticklabels([])
@@ -261,11 +261,18 @@ In contrast the voltage reception pattern has the same inputs, except for the `~
         box_factor=5 * pr
         )
 
+References
+==========
+
+.. [Stutzman] Stutzman, W. and Thiele, G., 1998. Antenna Theory and Design. Second edition. Wiley. 
+
+.. [Welford] Welford, W., 1986. Aberration of Optical Systems. The Adam Hilger Series on Optics and Optoelectronics.
 
 See Also
 ========
 
 * `Antenna aperture <https://en.wikipedia.org/wiki/Antenna_aperture>`_
+* `AstroBaki <https://casper.ssl.berkeley.edu/astrobaki/index.php/Main_Page>`_
 
 Reference/API
 =============

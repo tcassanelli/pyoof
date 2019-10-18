@@ -135,6 +135,28 @@ html_title = '{0} v{1}'.format(project, release)
 # Output file base name for HTML help builder.
 htmlhelp_basename = project + 'doc'
 
+# -- Plot options -------------------------------------------------------------
+plot_include_source = True
+import matplotlib
+
+font_size = 15  # 13 px
+plot_rcparams = {
+    'font.size': font_size,
+    'axes.titlesize': font_size,
+    'axes.labelsize': font_size,
+    'xtick.labelsize': font_size,
+    'ytick.labelsize': font_size,
+    'legend.fontsize': font_size,
+    # 'figure.subplot.bottom': 0.2,
+    # 'figure.subplot.left': 0.2,
+    # 'figure.subplot.right': 0.9,
+    # 'figure.subplot.top': 0.85,
+    'figure.subplot.wspace': 0.1,
+    # 'figure.constrained_layout.use': True,
+    'figure.figsize': (11.32, 7),
+    'text.usetex': True
+    }
+matplotlib.rcParams.update(plot_rcparams)
 
 # -- Options for LaTeX output -------------------------------------------------
 
