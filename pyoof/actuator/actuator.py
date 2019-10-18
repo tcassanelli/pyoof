@@ -79,7 +79,7 @@ def sr_actuators(phase, wavel):
     ----------
     phi : `~astropy.units.quantity.Quantity`
         Aperture phase distribution, :math:`\\varphi(x, y)`, for an specific
-        primary dish radius, measured in radians.
+        primary reflector radius, measured in radians.
     wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in length units.
 
@@ -89,7 +89,7 @@ def sr_actuators(phase, wavel):
         Phase-error in terms of perpendicular displacement in the sub-reflector
         of a Cassegrain/Gregorian telescope. It is measured in units of length.
         This phase can be applied to an active surface to counteract the
-        (mainly primary dish) deformations.
+        (mainly primary reflector) deformations.
     """
 
     # phase in terms of the actuators displacement

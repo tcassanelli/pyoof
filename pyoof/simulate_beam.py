@@ -109,19 +109,19 @@ def simulate_data_pyoof(
         power_pattern = np.abs(_radiation) ** 2
 
         # trim the power pattern
-        power_pattern[plim_u[0] > uu] = np.nan
-        power_pattern[plim_u[1] < uu] = np.nan
-        power_pattern[plim_v[0] > vv] = np.nan
-        power_pattern[plim_v[1] < vv] = np.nan
+        power_pattern[(plim_u[0] > uu)] = np.nan
+        power_pattern[(plim_u[1] < uu)] = np.nan
+        power_pattern[(plim_v[0] > vv)] = np.nan
+        power_pattern[(plim_v[1] < vv)] = np.nan
 
         power_trim_1d = power_pattern[~np.isnan(power_pattern)]
         size_trim = int(np.sqrt(power_trim_1d.size))  # new size of the box
 
         # Box to be trimmed in uu and vv meshed arrays
-        box = [
+        box = (
             (plim_u[0] < uu) & (plim_u[1] > uu) &
             (plim_v[0] < vv) & (plim_v[1] > vv)
-            ]
+            )
 
         # reshaping trimmed arrys
         power_trim = power_trim_1d.reshape(size_trim, size_trim)
