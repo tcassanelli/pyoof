@@ -3,11 +3,7 @@
 
 # Author: Tomas Cassanelli
 import os
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pyplot as plt
 from astropy import units as u
-import pyoof
 from pyoof import (
     aperture, telgeometry, fit_zpoly, extract_data_effelsberg, actuator
     )
@@ -17,23 +13,22 @@ telescope = dict(
     effelsberg=[
         telgeometry.block_effelsberg,
         telgeometry.opd_effelsberg,
-        50. * u.m,  # primary reflector radius
+        50. * u.m,
         'effelsberg'
         ],
     manual=[
         telgeometry.block_manual(
             pr=50 * u.m, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
         telgeometry.opd_manual(Fp=30 * u.m, F=387.39435 * u.m),
-        50. * u.m,  # primary reflector radius
+        50. * u.m,
         'effelsberg partial blockage'
         ]
     )
 
 
-def fit_beam_effelsberg(pathfits):
+def compute_phase_error(pathfits, order_max):
     """
-    Fits the beam from the OOF holography observations specifically for the
-    Effelsberg telescope.
+    Uses fit_zpoly and calculates the actuators at the Effelsberg telescope.
     """
 
     data_info, data_obs = extract_data_effelsberg(pathfits)
@@ -44,7 +39,7 @@ def fit_beam_effelsberg(pathfits):
     fit_zpoly(
         data_info=data_info,
         data_obs=[beam_data, u_data, v_data],
-        order_max=6,                         # it'll fit from 1 to order_max
+        order_max=order_max,                 # it'll fit from 1 to order_max
         illum_func=aperture.illum_pedestal,  # or illum_gauss
         telescope=telescope['effelsberg'],
         fit_previous=True,                   # True is recommended
@@ -57,42 +52,35 @@ def fit_beam_effelsberg(pathfits):
         # work_dir='/scratch/v/vanderli/cassane'
         )
 
+    num_list = ["%03d" % i for i in range(101)]
+    for j in range(len(num_list)):
+        path_pyoof_out = os.path.join(
+            pthto, 'pyoof_out', name + '-' + num_list[j]
+            )
+        if not os.path.exists(path_pyoof_out):
+            path_pyoof_out = os.path.join(
+                pthto, 'pyoof_out', name + '-' + num_list[j - 1]
+                )
+            break
+
+    for order in range(1, order_max + 1):
+        actuator.actuator_displacement(
+            path_pyoof_out=path_pyoof_out,
+            order=order,
+            edge=None,
+            make_plots=True
+            )
+
 
 if __name__ == '__main__':
 
-    # natasha
-    pth2data = '/home/tcassanelli/data/pyoof'
-    fit_beam_effelsberg(
-        pathfits=os.path.join(pth2data, 'S9mm_3824-3843_3C84_72deg_H6_BW.fits')
+    # pth2data = '/home/tcassanelli/data/pyoof'  # natasha
+    pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S7mm_FEM'
+
+    compute_phase_error(
+        pathfits=os.path.join(
+            # pth2data, '3C345_75deg_6733-6752_LB.fits'
+            pth2data, '3C454.3_30deg_6758-6765_LB.fits'
+            ),
+        order_max=6
         )
-
-    # mac
-    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/'
-    # fit_beam_effelsberg(
-    #     pathfits=os.path.join(pth2data, 'S9mm_3824-3843_3C84_72deg_H6_BW.fits')
-    #     )
-
-    # for n in range(1, 8):
-    #     pyoof.plot_fit_path(
-    #         path_pyoof='/Users/tomascassanelli/MPIfR/OOF/data/norm_test/norm',
-    #         order=n,
-    #         illum_func=aperture.illum_pedestal,
-    #         telgeo=telescope['effelsberg'][:-1],
-    #         resolution=2 ** 8,
-    #         box_factor=5,
-    #         angle=u.deg,
-    #         plim=None,
-    #         save=True
-    #         )
-    #     plt.close('all')
-    # plt.show()
-    
-    # fit_beam_effelsberg('/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/S9mm_3824-3843_3C84_72deg_H6_BW.fits')
-
-    # path_pyoof_out= '/Users/tomascassanelli/MPIfR/OOF/data/S9mm_noFEM/pyoof_out/S9mm_3800-3807_3C84_48deg_H6_LON-073'
-
-    # actuator.actuator_displacement(path_pyoof_out=path_pyoof_out, order=2)
-
-    # fig = pyoof.actuator.plot_actuator_displacement(path_pyoof_out, 2, '', actuators=True, act_data=None)
-    # plt.show()
-    

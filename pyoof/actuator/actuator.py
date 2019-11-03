@@ -11,6 +11,7 @@ import os
 import numpy as np
 from astropy.io import ascii
 import yaml
+import warnings
 from astropy import units as apu
 from astropy.utils.data import get_pkg_data_filename
 from scipy import interpolate
@@ -109,7 +110,7 @@ def actuator_displacement(
     displacement for a set of 92 actuators in the current active surface.
     """
 
-    print('\n ***** ACTUATOR DISPLACEMENT ***** \n')
+    print('\n ***** ACTUATOR DISPLACEMENT ORDER {} ***** \n'.format(order))
 
     # reading the pyoof output phase
     phase = np.genfromtxt(
@@ -146,7 +147,7 @@ def actuator_displacement(
     with open(
         os.path.join(path_pyoof_out, 'pyoof_info.yml'), 'r'
             ) as inputfile:
-        pyoof_info = yaml.load(inputfile)
+        pyoof_info = yaml.safe_load(inputfile)
 
     wavel = pyoof_info['wavel'] * apu.m
 
@@ -220,7 +221,7 @@ def actuator_displacement(
             bbox_inches='tight'
             )
 
-    print('\n **** COMPLETED **** \n')
+    print('\n ***** COMPLETED *****\n')
 
 
 def plot_actuator_displacement(
@@ -244,7 +245,7 @@ def plot_actuator_displacement(
     with open(
         os.path.join(path_pyoof_out, 'pyoof_info.yml'), 'r'
             ) as inputfile:
-        pyoof_info = yaml.load(inputfile)
+        pyoof_info = yaml.safe_load(inputfile)
 
     wavel = pyoof_info['wavel'] * apu.m
     meanel = np.around(pyoof_info['meanel'], 1)
@@ -256,15 +257,20 @@ def plot_actuator_displacement(
 
     phase = sr_actuators(phase=phase, wavel=wavel)
     levels = sr_actuators(
-        phase=np.linspace(-2, 2, 9) * apu.rad, wavel=wavel)
+        phase=np.linspace(-2, 2, 9) * apu.rad,
+        wavel=wavel
+        )
 
     fig, ax = plt.subplots(figsize=(6, 5.8))
 
     im = ax.imshow(phase.to_value(apu.um), extent=extent)
-    ax.contour(
-        x.to_value(apu.m), y.to_value(apu.m), phase.to_value(apu.um),
-        levels=levels.to_value(apu.um), colors='k', alpha=0.3
-        )
+    
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        ax.contour(
+            x.to_value(apu.m), y.to_value(apu.m), phase.to_value(apu.um),
+            levels=levels.to_value(apu.um), colors='k', alpha=0.3
+            )
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.03)

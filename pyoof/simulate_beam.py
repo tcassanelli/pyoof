@@ -8,7 +8,6 @@ from astropy import units as apu
 from astropy.constants import c as light_speed
 from astropy.io import fits
 from .aperture import radiation_pattern
-from .math_functions import norm
 
 __all__ = ['simulate_data_pyoof']
 
@@ -32,7 +31,7 @@ def simulate_data_pyoof(
     K_coeff : `~numpy.ndarray`
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
         only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
-        \\varphi)`. The coefficients are between :math:`[-2, 2]`.
+        \\varphi)`.
     wavel : `~astropy.units.quantity.Quantity`
         Wavelength, :math:`\\lambda`, of the observation in length units.
     d_z : `~astropy.units.quantity.Quantity`
@@ -132,15 +131,13 @@ def simulate_data_pyoof(
         v.append(v_trim)
         P.append(power_trim)
 
-    P_norm = [norm(P[i]) for i in range(3)]
-
     # adding noise!
     if noise == 0:
-        power_noise = np.array(P_norm)
+        power_noise = np.array(P)
     else:
         power_noise = (
-            np.array(P_norm) +
-            np.random.normal(0., noise, np.array(P_norm).shape)
+            np.array(P) +
+            np.random.normal(0., noise, np.array(P).shape)
             )
 
     u_to_save = [u[i].to_value(apu.rad).flatten() for i in range(3)]

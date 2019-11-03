@@ -63,7 +63,7 @@ The Zernike circle polynomials can be used to represent, in a convenient way, th
     \varphi(x, y) = 2\pi \cdot W(x, y) = 2\pi \cdot \sum_{n, \ell} K_{n\ell}U^\ell_n(\varrho, \vartheta),
 
 where :math:`K_{n\ell}` are the Zernike circle polynomial coefficients. The final output from the `~pyoof` package is to find such coefficients and then make a representation of the aberration in the (telescope) aperture plane. The wavefront (aberration) distribution, `~pyoof.aperture.wavefront`, is a function listed in the `~pyoof.aperture` sub-package.
-The order of the :math:`K_{n\ell}` coefficients will depend on the order of the polynomials. Commonly for the `~pyoof` package their values are between :math:`[-2, 2]`.
+The order of the :math:`K_{n\ell}` coefficients will depend on the order of the polynomials.
 
 .. warning::
     The order of magnitude of the Zernike circle polynomial coefficients (:math:`K_{n\ell}`) will vary on what conventions are used to generate them. There are some conventions that require a normalization constant.

@@ -398,8 +398,8 @@ def fit_zpoly(
 
     start_time = time.time()
 
-    print('\n ******* PYOOF FIT POWER PATTERN ******* \n')
-    print('... Reading data ... \n')
+    print('\n ***** PYOOF FIT POLYNOMIALS ***** \n')
+    print(' ... Reading data ...\n')
 
     # All observed data needed to fit the beam
     [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
@@ -424,7 +424,7 @@ def fit_zpoly(
         os.makedirs(os.path.join(work_dir, 'pyoof_out'))
 
     for j in ["%03d" % i for i in range(101)]:
-        name_dir = os.path.join(work_dir, 'pyoof_out', name + '-' + str(j))
+        name_dir = os.path.join(work_dir, 'pyoof_out', name + '-' + j)
         if not os.path.exists(name_dir):
             os.makedirs(name_dir)
             break
@@ -445,7 +445,7 @@ def fit_zpoly(
     for order in range(1, order_max + 1):
 
         if not verbose == 0:
-            print('\n... Fit order {} ... \n'.format(order))
+            print('\n ... Fit order {} ... \n'.format(order))
 
         # Setting limits for plotting fitted beam
         plim = np.array([
@@ -550,7 +550,7 @@ def fit_zpoly(
 
         # Storing files in directory
         if not verbose == 0:
-            print('\n... Saving data ... \n')
+            print('\n ... Saving data ...\n')
 
         store_data_ascii(
             name=name,
@@ -600,7 +600,7 @@ def fit_zpoly(
 
         if make_plots:
             if not verbose == 0:
-                print('\n... Making plots ...')
+                print('\n ... Making plots ...')
 
             # Making all relevant plots
             plot_fit_path(
@@ -618,4 +618,4 @@ def fit_zpoly(
             plt.close('all')
 
     final_time = np.round((time.time() - start_time) / 60, 2)
-    print('\n **** PYOOF FIT COMPLETED AT {} mins **** \n'.format(final_time))
+    print('\n***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time))
