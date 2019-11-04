@@ -3,7 +3,10 @@
 # no matter how it is invoked within the source tree.
 
 # from astropy.tests.plugins.display import *
-from astropy.tests.helper import *
+try:
+    from astropy.tests.helper import *
+except Exception as e:
+    from pytest_astropy_header.display import *
 
 ## Uncomment the following line to treat all DeprecationWarnings as
 ## exceptions. For Astropy v2.0 or later, there are 2 additional keywords,

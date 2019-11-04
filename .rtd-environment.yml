@@ -12,6 +12,7 @@ dependencies:
   - astropy
   - pyyaml
   - sphinx-astropy
+  - pytest_astropy_header
   # - pip:
   #   - sphinx-gallery>=0.1.12
   #   - jplephem
