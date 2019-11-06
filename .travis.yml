@@ -38,7 +38,7 @@ env:
         - SETUP_CMD='test'
 
         # Adding this line after updating astropy-helpers
-        - PIP_DEPENDENCIES='coveralls sphinx-astropy'
+        - PIP_DEPENDENCIES='coveralls sphinx-astropy pytest_astropy_header'
         
         - EVENT_TYPE='pull_request push'
 
