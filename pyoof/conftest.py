@@ -16,6 +16,6 @@ def pytest_configure(config):
     PYTEST_HEADER_MODULES['scikit-image'] = 'skimage'
 
     from .version import version, astropy_helpers_version
-    packagename = os.path.basename(os.path.dirname(__file__))
-    TESTED_VERSIONS[packagename] = version
+    pyoof = os.path.basename(os.path.dirname(__file__))
+    TESTED_VERSIONS[pyoof] = version
     TESTED_VERSIONS['astropy_helpers'] = astropy_helpers_version

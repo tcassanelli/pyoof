@@ -3,6 +3,7 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
+import astropy  # only imported for workaround
 from astropy import units as apu
 from ..math_functions import cart2pol, rms
 from ..zernike import U
@@ -512,10 +513,15 @@ def radiation_pattern(
     # wave-vectors in 1 / m
     u, v = np.fft.fftfreq(x.size, dx), np.fft.fftfreq(y.size, dy)
 
-    # workaround units
+    # workaround units and the new astropy version
+
     if type(x) == apu.quantity.Quantity:
-        u_shift = np.fft.fftshift(u) * u.unit * wavel * apu.rad
-        v_shift = np.fft.fftshift(v) * v.unit * wavel * apu.rad
+        if astropy.__version__ < '4':
+            u_shift = np.fft.fftshift(u) * u.unit * wavel * apu.rad
+            v_shift = np.fft.fftshift(v) * v.unit * wavel * apu.rad
+        else:
+            u_shift = np.fft.fftshift(u) * wavel * apu.rad
+            v_shift = np.fft.fftshift(v) * wavel * apu.rad
     else:
         u_shift = np.fft.fftshift(u) * wavel.to_value(apu.m)
         v_shift = np.fft.fftshift(v) * wavel.to_value(apu.m)
