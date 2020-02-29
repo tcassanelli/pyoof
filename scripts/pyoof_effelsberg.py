@@ -3,6 +3,7 @@
 
 # Author: Tomas Cassanelli
 import os
+import glob
 from astropy import units as u
 from pyoof import (
     aperture, telgeometry, fit_zpoly, extract_data_effelsberg, actuator
@@ -48,8 +49,8 @@ def compute_phase_error(pathfits, order_max):
         config_params_file=None,   # default or add path config_file.yaml
         make_plots=True,           # for now testing only the software
         verbose=2,
-        work_dir=None
-        # work_dir='/scratch/v/vanderli/cassane'
+        # work_dir=None
+        work_dir='/scratch/v/vanderli/cassane'
         )
 
     num_list = ["%03d" % i for i in range(101)]
@@ -74,13 +75,13 @@ def compute_phase_error(pathfits, order_max):
 
 if __name__ == '__main__':
 
-    # pth2data = '/home/tcassanelli/data/pyoof'  # natasha
-    pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S7mm_FEM'
+    # pth2data = '/home/tcassanelli/data/pyoof'                    # natasha
+    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S7mm_FEM'  # local
+    pth2data = '/home/v/vanderli/cassane/data/pyoof/*.fits'        # scinet
+    files = glob.glob(pth2data)
 
-    compute_phase_error(
-        pathfits=os.path.join(
-            # pth2data, '3C345_75deg_6733-6752_LB.fits'
-            pth2data, '3C454.3_30deg_6758-6765_LB.fits'
-            ),
-        order_max=6
-        )
+    for _f in file:
+        compute_phase_error(
+            pathfits=files,
+            order_max=6
+            )
