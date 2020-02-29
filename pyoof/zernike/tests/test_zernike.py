@@ -9,7 +9,7 @@ from numpy.testing import assert_allclose
 import pyoof
 
 # Basic mesh for polynomials
-x = np.linspace(-1, 1, 1e3)
+x = np.linspace(-1, 1, 1000)
 xx, yy = np.meshgrid(x, x)
 r, t = pyoof.cart2pol(xx, yy)
 
