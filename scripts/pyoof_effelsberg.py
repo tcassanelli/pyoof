@@ -80,8 +80,5 @@ if __name__ == '__main__':
     pth2data = '/home/v/vanderli/cassane/data/pyoof/*.fits'        # scinet
     files = glob.glob(pth2data)
 
-    for _f in file:
-        compute_phase_error(
-            pathfits=files,
-            order_max=6
-            )
+    for _f in files:
+        compute_phase_error(pathfits=_f, order_max=6)

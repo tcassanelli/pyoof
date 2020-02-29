@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=12:00:00
-#SBATCH --job-name coherent_dd
+#SBATCH --job-name pyoof_run
 #SBATCH --output=/scratch/v/vanderli/cassane/output/mpi_ex_%j.txt
 #SBATCH --mail-type=ALL
 
