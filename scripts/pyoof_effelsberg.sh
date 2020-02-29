@@ -6,6 +6,8 @@
 #SBATCH --output=/scratch/v/vanderli/cassane/output/mpi_ex_%j.txt
 #SBATCH --mail-type=ALL
 
+module load texlive
+
 cd $SCRATCH
 
 # INPUT 
