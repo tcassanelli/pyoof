@@ -45,7 +45,7 @@ The blockage distribution corresponds to the elements that block incoming radiat
     ax.set_ylabel('$y$ m')
     ax.set_title('Blockage distribution Effelsberg telescope')
 
-To construct manually the blockage distribution, using the pre-made function `~pyoof.telgeometry.block_manual`, basic geometrical aspects from the telescope are required, such as the primary and secondary reflector radii, dimensions of the support legs, etc.
+To construct manually the blockage distribution, using the pre-made function `~pyoof.telgeometry.block_manual`, basic geometrical aspects from the telescope are required, such as the primary reflector and sub-reflector radii, dimensions of the support legs, etc.
 
 Optical path difference function :math:`\delta(x, y; d_z)`
 ----------------------------------------------------------

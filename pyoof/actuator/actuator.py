@@ -2,319 +2,409 @@
 # -*- coding: utf-8 -*-
 
 # Author: Tomas Cassanelli
-
-"""
-This is a developer module at the moment and only Effelsberg functions.
-"""
-
-import os
+import time
 import numpy as np
-from astropy.io import ascii
-import yaml
-import warnings
 from astropy import units as apu
+from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
-from scipy import interpolate
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from ..math_functions import rms
-from ..aperture import e_rs
+from scipy import interpolate, optimize
+from ..aperture import phase
 
-__all__ = [
-    'sr_actuators', 'actuator_displacement', 'plot_actuator_displacement'
-    ]
+__all__ = ['EffelsbergActuator']
 
-act_data_csv = get_pkg_data_filename('../data/act_effelsberg.csv')
-plt.style.use(get_pkg_data_filename('../data/pyoof.mplstyle'))
-
-# TODO: perhaps it'll be a good idea to change structure to classes for the
-# telescope geometry?
-# class telescope(object):
-#     def __init__(self):
-#         self.name = 'effelsberg'
-#         self.pr = 50 * apu.m
-#         self.sr = 3.25 * apu.m
+path_lookup = get_pkg_data_filename('../data/lookup_effelsberg.txt')
 
 
-def generate_actuators(edge):
+class EffelsbergActuator():
     """
-    This function generates the actuators coordinates for the sub-reflector at
-    the Effelsberg telescope. Since edges of the `~pyoof` output are not well
-    constrained (least squares minimization), the ``edge`` argument will
-    subtract ``edge`` (in length units) from the external ring of the actuators
-    position.
-    """
-
-    # TODO: This solution is not good, looking into some other taper function
-    # that reduces the importance of the high amplitude at the edges.
-
-    # mesh for the active surface at the Effelsberg telescope
-    theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg - 90 * apu.deg
-    R = [3250, 2600, 1880, 1210] * apu.mm
-
-    if edge is not None:
-        R[0] -= edge.to(apu.mm)
-
-    # Actuator positions
-    act_x = np.outer(R.to_value(apu.mm), np.cos(theta)).reshape(-1)
-    act_y = np.outer(R.to_value(apu.mm), np.sin(theta)).reshape(-1)
-    act_name = np.array(range(1, 97), dtype='<U3')
-
-    act_data = [act_name, act_x, act_y]
-
-    return act_data
-
-
-def sr_actuators(phase, wavel):
-    """
-    After the `~pyoof` packages calculates the overall phase-error of the radio
-    telescope, the output file `phase_n<iter>.csv` has the phase information
-    in radians, with `<iter>`, the order of Zernike circle polynomials
-    coefficients used. Note that this formula is a rough approximation, only
-    for a Cassegrain/Gregorian configuration. It assumes that the reflected
-    rays are exactly perpendicular to the sub-reflector, which is not the case.
-    This function is specially useful for an active surface working in the
-    telescope's sub-reflector.
+    Several tasks for the Effelsberg telescope and the active surface control
+    system located in the 6.5 m sub-reflector. The purpose of all these
+    functions is to transform the phase-error maps obtained from the core
+    `~pyoof` routines, to an equivalent actuator perpendicular displacement to
+    correct those effects seen in the main phase-error maps.
 
     Parameters
     ----------
-    phi : `~astropy.units.quantity.Quantity`
-        Aperture phase distribution, :math:`\\varphi(x, y)`, for an specific
-        primary reflector radius, measured in radians.
     wavel : `~astropy.units.quantity.Quantity`
-        Wavelength, :math:`\\lambda`, of the observation in length units.
-
-    Returns
-    -------
-    phase_ad : `~astropy.units.quantity.Quantity`
-        Phase-error in terms of perpendicular displacement in the sub-reflector
-        of a Cassegrain/Gregorian telescope. It is measured in units of length.
-        This phase can be applied to an active surface to counteract the
-        (mainly primary reflector) deformations.
+        Wavelength, :math:`\\lambda`, of the observation in meters.
+    nrot : `int`
+        This is a required rotation to apply to the phase maps (obtained
+        from `~pyoof.fit_zpoly`) to get the right orientation of the active
+        surface lookup table in the active surface control system.
+    sign : `int`
+        It is the value of the phase-error amplitude as seen from the active
+        surface, same as ``nrot`` is a convention for the Effelsberg telescope.
+    resolution : `int`
+        Resolution for the phase-error map, usually used ``resolution = 1000``
+        in the `~pyoof` package.
+    path_lookup : `str`
+        Path for the current look up table that controls the active surface
+        with the Finite Element Method (FEM) model.
     """
 
-    # phase in terms of the actuators displacement
-    phase_ad = phase * wavel / (4 * np.pi * apu.rad)
-    # the extra 2 is given by the double path carried by the light ray.
+    def __init__(
+        self, wavel, nrot=3, sign=-1, order=5, sr=3.25 * apu.m, pr=50 * apu.m,
+        resolution=1000, path_lookup=path_lookup
+            ):
+        self.wavel = wavel
+        self.nrot = nrot
+        self.sign = sign
+        self.sr = sr
+        self.pr = pr
+        self.n = order
+        self.N_K_coeff = (self.n + 1) * (self.n + 2) // 2
+        self.resolution = resolution
+        self.path_lookup = path_lookup
 
-    return phase_ad.to(apu.um)
+        self.alpha_lookup, self.actuator_sr_lookup = self.read_lookup()
+        self.phase_pr_lookup = self.transform(self.actuator_sr_lookup)
 
+    def read_lookup(self):
+        """
+        Simple reader for the Effelsberg active surface look-up table.
 
-def actuator_displacement(
-    path_pyoof_out, order, edge=None, make_plots=True
-        ):
-    """
-    Calculates displacement for the active surface at the Effelsberg telescope.
-    Given the phase error (output from `~pyoof.fit_zpoly`), the phase errors
-    in the sub-reflector can be approximated and specified as perpendicular
-    displacement for a set of 92 actuators in the current active surface.
-    """
+        Returns
+        -------
+        alpha_lookup : `~astropy.units.quantity.Quantity`
+            List of angles from the look-up table.
+        actuator_sr_lookup : `~astropy.units.quantity.Quantity`
+            Actuators surface perpendicular displacement as seen from the
+            sub-reflector in the standard grid format from `~pyoof`.
+        """
 
-    print('\n ***** ACTUATOR DISPLACEMENT ORDER {} ***** \n'.format(order))
+        alpha_lookup = [7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * apu.deg
+        names = [
+            'NR', 'N', 'ffff'
+            ] + alpha_lookup.value.astype(int).astype(str).tolist()
 
-    # reading the pyoof output phase
-    phase = np.genfromtxt(
-        os.path.join(path_pyoof_out, 'phase_n{}.csv'.format(order))
-        )
-    phase = phase * apu.rad  # stored as default radians
-
-    pr = 50 * apu.m    # Primary reflector
-    sr = 3.25 * apu.m  # sub-reflector radius
-    x = np.linspace(-sr, sr, phase.shape[0])
-    y = x.copy()
-
-    # mesh for the active surface at the Effelsberg telescope
-    # theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg - 90 * apu.deg
-    # R = [3250, 2600, 1880, 1210] * apu.mm
-
-    # if edge is not None:
-    #     R[0] -= edge.to(apu.mm)
-
-    if edge is not None:
-        act_data = generate_actuators(edge)
-    else:
-        act_data = ascii.read(act_data_csv)
-
-    # Interpolation
-    intrp = interpolate.RegularGridInterpolator(
-        points=(x.to_value(apu.mm), y.to_value(apu.mm)),
-        values=phase.to_value(apu.rad).T,  # data on a grid
-        method='linear'                    # linear or nearest
-        )
-    act_phase = intrp(np.array([act_data['x'], act_data['y']]).T) * phase.unit
-
-    # importing phase related data
-    with open(
-        os.path.join(path_pyoof_out, 'pyoof_info.yml'), 'r'
-            ) as inputfile:
-        pyoof_info = yaml.safe_load(inputfile)
-
-    wavel = pyoof_info['wavel'] * apu.m
-
-    # phase in each actuator point transformed to perpendicular displacement
-    act_phase_ad = sr_actuators(phase=act_phase, wavel=wavel)
-
-    # Storing the data actuator displacement
-    path_ad = path_pyoof_out + '/actdisp_n' + str(order) + '.csv'
-    save_ad = [
-        act_data['name'],              # Label actuator as in Effelsberg sr
-        act_data['x'], act_data['y'],  # coordinates actuators [mm]
-        act_phase.to_value(apu.rad),   # Phase-error
-        act_phase_ad.to_value(apu.um)  # Phase to perpendicular displacement
-        ]
-
-    print(
-        'File name: {}'.format(pyoof_info['name']),
-        'Order: {}'.format(order),
-        'Telescope name: {}'.format(pyoof_info['telescope']),
-        'File name: {}'.format(pyoof_info['name']),
-        'Obs Wavelength: {} m'.format(pyoof_info['wavel']),
-        'Mean elevation {} deg'.format(pyoof_info['meanel']),
-        'd_z (out-of-focus): {} m'.format(pyoof_info['d_z']),
-        'Illumination to be fitted: {}'.format(pyoof_info['illumination']),
-        # 'Considered max radius: {} \n'.format(R[0]),
-        sep='\n',
-        end='\n'
-        )
-
-    mean_ad = sr_actuators(phase=phase, wavel=wavel).mean()
-
-    print(
-        'STATISTICS',
-        'RMS: {}'.format(sr_actuators(
-            phase=rms(phase=phase, radius=sr),
-            wavel=wavel)
-            ),
-        'MEAN: {}'.format(mean_ad),
-        'eff-random-surface-error: {} \n'.format(e_rs(phase=phase, radius=pr)),
-        sep='\n',
-        end='\n'
-        )
-
-    ascii.write(
-        table=save_ad,
-        output=path_ad,
-        names=['name', 'x', 'y', 'phase', 'displacement'],
-        # units: -, mm, mm, rad, um
-        overwrite=True
-        )
-
-    # printing the full table
-    ascii.read(path_ad).pprint(max_lines=-1, max_width=-1)
-
-    if make_plots:
-        print('\n... Making plots ...')
-        fig = plot_actuator_displacement(
-            path_pyoof_out=path_pyoof_out,
-            order=order,
-            title=(
-                'Actuators displacement $n={}$ $\\alpha={}$ degrees'.format(
-                    order, round(pyoof_info['meanel'], 2)
-                    )
-                ),
-            act_data=act_data,
-            actuators=True
+        lookup_table = QTable.read(
+            self.path_lookup, names=names, format='ascii'
             )
 
-        fig.savefig(
-            fname=path_pyoof_out + '/plots/actdisp_n{}.pdf'.format(order),
-            bbox_inches='tight'
+        for n in names[3:]:
+            lookup_table[n] = lookup_table[n] * apu.um
+
+        # Generating the mesh from technical drawings
+        theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg
+        R = np.array([3250, 2600, 1880, 1210]) * apu.mm
+
+        # Actuator positions
+        act_x = np.outer(R, np.cos(theta)).reshape(-1)
+        act_y = np.outer(R, np.sin(theta)).reshape(-1)
+
+        # Generating new grid same as pyoof output
+        x_ng = np.linspace(-self.sr, self.sr, self.resolution)
+        y_ng = x_ng.copy()
+        xx, yy = np.meshgrid(x_ng, y_ng)
+        circ = [(xx ** 2 + yy ** 2) >= (self.sr) ** 2]
+
+        # actuators displacement in the new grid
+        actuator_sr_lookup = np.zeros(
+            shape=(alpha_lookup.size, self.resolution, self.resolution)
+            ) << apu.um
+
+        for j, _alpha in enumerate(names[3:]):
+            actuator_sr_lookup[j, :, :] = interpolate.griddata(
+                # coordinates of grid points to interpolate from
+                points=(act_x.to_value(apu.m), act_y.to_value(apu.m)),
+                values=lookup_table[_alpha].to_value(apu.um),
+                # coordinates of grid points to interpolate to
+                xi=tuple(
+                    np.meshgrid(x_ng.to_value(apu.m), y_ng.to_value(apu.m))
+                    ),
+                method='cubic'
+                ) * apu.um
+            actuator_sr_lookup = np.nan_to_num(actuator_sr_lookup)
+            actuator_sr_lookup[j, :, :][tuple(circ)] = 0
+
+        return alpha_lookup, actuator_sr_lookup
+
+    def grav_deformation_model(self, G, alpha):
+        """
+        Simple decomposition of the telescope elastic structure and
+        gravitational force into a gravitational deformation model. The model
+        takes into account only the elevation angle and not azimuth (since it
+        cancels out).
+
+        Parameters
+        ----------
+        G : `~np.ndarray` or `list`
+            It has the list of three gravitational/elastic coefficients to
+            supply the model.
+        alpha : `~astropy.units.quantity.Quantity`
+            Single angle related to the three ``G`` coefficients.
+
+        Returns
+        -------
+        K : `float`
+            Single Zernike circle polynomial coefficient related to a single
+            elevation angle ``alpha``.
+        """
+
+        if type(alpha) == apu.Quantity:
+            alpha = alpha.to_value(apu.rad)
+
+        K = G[0] * np.sin(alpha) + G[1] * np.cos(alpha) + G[2]
+
+        return K
+
+    def transform(self, actuator_sr):
+        """
+        Transformation required to get from the actuators displacement in the
+        sub-reflector to the phase-error map in the primary dish.
+
+        Parameters
+        ----------
+        actuator_sr : `~astropy.units.quantity.Quantity`
+            Two dimensional array, in the `~pyoof` format, for the actuators
+            displacement in the sub-reflector. It must have shape
+            ``(alpha.size, resolution, resolution)``
+
+        Returns
+        -------
+        phase_pr : `~astropy.units.quantity.Quantity`
+            Phase-error map for the primary dish. It must have shape
+            ``(alpha.size, resolution, resolution)``.
+        """
+        factor = self.sign * 4 * np.pi * apu.rad / self.wavel
+
+        phase_pr = (
+            factor * np.rot90(m=actuator_sr, axes=(1, 2), k=self.nrot)
+            ).to(apu.rad)
+
+        return phase_pr
+
+    def itransform(self, phase_pr):
+        """
+        Inverse transformation for
+        `~pyoof.actuator.EffeslbergActuator.transform`.
+
+        Parameters
+        ----------
+        phase_pr : `~astropy.units.quantity.Quantity`
+            Phase-error map for the primary dish. It must have shape
+            ``(alpha.size, resolution, resolution)``.
+
+        Returns
+        -------
+        actuator_sr : `~astropy.units.quantity.Quantity`
+            Two dimensional array, in the `~pyoof` format, for the actuators
+            displacement in the sub-reflector. It must have shape
+            ``(alpha.size, resolution, resolution)``
+        """
+
+        factor = self.wavel / (self.sign * 4 * np.pi * apu.rad)
+
+        actuator_sr = np.rot90(
+            m=(phase_pr * factor).to(apu.um),
+            axes=(1, 2),
+            k=-self.nrot
             )
 
-    print('\n ***** COMPLETED *****\n')
+        return actuator_sr
 
+    def write_lookup(self, fname, actuator_sr):
+        """
+        Easy writer for the active surface standard formatting at the
+        Effelsberg telescope. The writer admits the actuator sub-reflector
+        perpendicular displacement in the same shape as the `~pyoof` format,
+        then it grids the data to the active surface look-up format.
 
-def plot_actuator_displacement(
-        path_pyoof_out, order, title, act_data=None, actuators=False
-        ):
-    """
-    Plot for the phase-error given the actuators in the active surface.
-    Translates the phase-error from the whole telescope to an approximated
-    version at the sub-reflector (at the moment only for Effelsberg).
-    This will also calculates the amplitude value un the actuators mesh.
-    """
+        Parameters
+        ----------
+        fname : `str`
+            String to the name and path for the look-up table to be stored.
+        actuator_sr : `~astropy.units.quantity.Quantity`
+            Two dimensional array, in the `~pyoof` format, for the actuators
+            displacement in the sub-reflector. It must have shape
+            ``(alpha.size, resolution, resolution)``
+        """
 
-    # reading the pyoof output phase
-    phase = np.genfromtxt(
-        os.path.join(path_pyoof_out, 'phase_n{}.csv'.format(order))
-        )
+        # Generating the mesh from technical drawings
+        theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg
 
-    phase = phase * apu.rad
+        # slightly different at the edge
+        R = np.array([3245, 2600, 1880, 1210]) * apu.mm
 
-    # importing phase related data
-    with open(
-        os.path.join(path_pyoof_out, 'pyoof_info.yml'), 'r'
-            ) as inputfile:
-        pyoof_info = yaml.safe_load(inputfile)
+        # Actuator positions
+        act_x = np.outer(R, np.cos(theta)).reshape(-1)
+        act_y = np.outer(R, np.sin(theta)).reshape(-1)
 
-    wavel = pyoof_info['wavel'] * apu.m
-    meanel = np.around(pyoof_info['meanel'], 1)
+        # Generating new grid same as pyoof output
+        x = np.linspace(-self.sr, self.sr, self.resolution)
+        y = x.copy()
 
-    sr = 3.25 * apu.m
-    extent = [-sr.to_value(apu.m), sr.to_value(apu.m)] * 2
-    x = np.linspace(-sr, sr, phase.shape[0])
-    y = np.linspace(-sr, sr, phase.shape[1])
+        lookup_table = np.zeros((11, 96))
+        for j in range(11):
 
-    phase = sr_actuators(phase=phase, wavel=wavel)
-    levels = sr_actuators(
-        phase=np.linspace(-2, 2, 9) * apu.rad,
-        wavel=wavel
-        )
-
-    fig, ax = plt.subplots(figsize=(6, 5.8))
-
-    im = ax.imshow(phase.to_value(apu.um), extent=extent)
-    
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        ax.contour(
-            x.to_value(apu.m), y.to_value(apu.m), phase.to_value(apu.um),
-            levels=levels.to_value(apu.um), colors='k', alpha=0.3
-            )
-
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="3%", pad=0.03)
-    cb = fig.colorbar(im, cax=cax)
-    cb.ax.set_ylabel(
-        '$\\varphi^{(' + str(meanel) + '^{\\circ})}' +
-        '_{\\scriptsize{\\textrm{no-tilt}}, \\bot}(x,y)$ amplitude $\\mu$m'
-        )
-    cb.formatter.set_powerlimits((0, 0))
-    cb.ax.yaxis.set_offset_position('left')
-    cb.update_ticks()
-
-    if actuators:
-        if act_data is None:
-            act_data = ascii.read(act_data_csv)
-
-        # displacement in meter
-        act_x = act_data['x'] * 1e-3
-        act_y = act_data['y'] * 1e-3
-
-        ax.scatter(
-            act_x, act_y,
-            s=20, facecolors='k', edgecolors='k',
-            linewidth=0.3
-            )
-
-        for i in range(act_data['name'].size):
-            ax.annotate(
-                s=act_data['name'][i],
-                xy=(act_x[i], act_y[i]),
-                size=3,
-                ha='center',
-                va='center',
-                color='white'
+            intrp = interpolate.RegularGridInterpolator(
+                points=(x.to_value(apu.mm), y.to_value(apu.mm)),
+                values=actuator_sr.to_value(apu.um)[j, :, :].T,
+                method='linear'
                 )
 
-    ax.set_xlim(-sr.to_value(apu.m), sr.to_value(apu.m))
-    ax.set_ylim(-sr.to_value(apu.m), sr.to_value(apu.m))
+            lookup_table[j, :] = intrp(np.array([act_x, act_y]).T)
 
-    ax.set_ylabel('$y$ m')
-    ax.set_xlabel('$x$ m')
-    ax.grid(False)
-    ax.set_title(title)
+        # writing the file row per row
+        with open(fname, 'w') as file:
+            for k in range(96):
+                row = np.around(
+                    lookup_table[:, k], 0).astype(np.int).astype(str)
+                print(row)
+                file.write(f'NR {k + 1} ffff ' + '  '.join(tuple(row)) + '\n')
 
-    fig.tight_layout()
+    def fit_zpoly(self, phase_pr, alpha):
+        """
+        Simple Zernike circle polynomial fit to a single phase-error map. Do
+        not confuse with the `~pyoof.fit_zpoly`, the later calculates the
+        phase-error maps from a set of beam maps, in this case we only adjust
+        polynomials to the phase, an easier process.
 
-    return fig
+        Parameters
+        ----------
+        phase_pr : `~astropy.units.quantity.Quantity`
+            Phase-error map for the primary dish. It must have shape
+            ``(alpha.size, resolution, resolution)``.
+        alpha : `~astropy.units.quantity.Quantity`
+            List of elevation angles related to ``phase_pr.shape[0]``.
+
+        Returns
+        -------
+        K_coeff_alpha : `~numpy.ndarray`
+            Two dimensional array for the Zernike circle polynomials
+            coefficients. The shape is ``(alpha.size, N_K_coeff)``.
+        """
+        start_time = time.time()
+        print('\n ***** PYOOF FIT POLYNOMIALS ***** \n')
+
+        def residual_phase(K_coeff, phase_data):
+            phase_model = phase(
+                K_coeff=K_coeff,
+                notilt=False,
+                pr=self.pr,
+                resolution=self.resolution
+                )[2].to_value(apu.rad).flatten()
+            return phase_data - phase_model
+
+        K_coeff_alpha = np.zeros((alpha.size, self.N_K_coeff))
+        for _alpha in range(alpha.size):
+            res_lsq_K = optimize.least_squares(
+                fun=residual_phase,
+                x0=np.array([0.1] * self.N_K_coeff),
+                args=(phase_pr[_alpha, :, :].to_value(apu.rad).flatten(),)
+                )
+            K_coeff_alpha[_alpha, :] = res_lsq_K.x
+
+        final_time = np.round((time.time() - start_time) / 60, 2)
+        print(
+            '\n***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time)
+            )
+
+        return K_coeff_alpha
+
+    def fit_grav_deformation_model(self, K_coeff_alpha, alpha):
+        """
+        Finds the full set for a gravitational deformation model given a list
+        of elevations in ``alpha``. The list of Zernike circle polynomials
+        coefficients, ``K_coeff_alpha``, must be given in the same order as
+        ``alpha``.
+
+        Parameters
+        ----------
+        K_coeff_alpha : `~numpy.ndarray`
+            Two dimensional array for the Zernike circle polynomials
+            coefficients. The shape is ``(alpha.size, N_K_coeff)``.
+        alpha : `~astropy.units.quantity.Quantity`
+            List of elevation angles related to ``phase_pr.shape[0]``.
+
+        Returns
+        -------
+        G_coeff : `~numpy.ndarray`
+            Two dimensional array for the gravitational deformation
+            coefficients found in the least-squares minimization. The shape of
+            the array will be given by the Zernike circle polynomial order
+            ``n``.
+        """
+        start_time = time.time()
+        print('\n ***** PYOOF FIT GRAVITATIONAL DEFORMATION MODEL ***** \n')
+
+        def residual_grav_deformation_model(G, Knl, alpha):
+            Knl_model = self.grav_deformation_model(G, alpha)
+            return Knl - Knl_model
+
+        G_coeff = np.zeros((self.N_K_coeff, 3))
+        for N in range(self.N_K_coeff):
+
+            res_lsq_G = optimize.least_squares(
+                fun=residual_grav_deformation_model,
+                x0=[0, 0, 0],
+                args=(K_coeff_alpha[:, N], alpha,)
+                )
+            G_coeff[N, :] = res_lsq_G.x
+
+        final_time = np.round((time.time() - start_time) / 60, 2)
+        print(
+            '\n***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time)
+            )
+
+        return G_coeff
+
+    def fit_all(self, phase_pr, alpha):
+        """
+        Wrapper for all least-squares minimizations, Zernike circle
+        polynomials (`~pyoof.actuator.EffelsbergActuator.fit_zpoly`) and
+        gravitational deformation model
+        (`~pyoof.actuator.EffelsbergActuator.fit_grav_deformation_model`).
+        """
+
+        K_coeff_alpha = self.fit_zpoly(phase_pr=phase_pr, alpha=alpha)
+        G_coeff = self.fit_grav_deformation_model(
+            K_coeff_alpha=K_coeff_alpha,
+            alpha=alpha
+            )
+        return G_coeff, K_coeff_alpha
+
+    def generate_phase_pr(self, G_coeff, alpha):
+        """
+        Generate a set of phase for the primary reflector ``phase_pr``, given
+        the gravitational deformation coefficients ``G_coeff`` for a new set
+        of elevations ``alpha``.
+
+        Parameters
+        ----------
+        G_coeff : `~numpy.ndarray`
+            Two dimensional array for the gravitational deformation
+            coefficients found in the least-squares minimization. The shape of
+            the array will be given by the Zernike circle polynomial order
+            ``n``.
+        alpha : `~astropy.units.quantity.Quantity`
+            List of new elevation angles.
+
+        Returns
+        -------
+        phase_pr : `~astropy.units.quantity.Quantity`
+            Phase-error map for the primary dish. It must have shape
+            ``(alpha.size, resolution, resolution)``.
+        """
+
+        phases = np.zeros(
+            shape=(alpha.size, self.resolution, self.resolution)
+            ) << apu.rad
+
+        for a, _alpha in enumerate(alpha):
+
+            K_coeff = np.zeros((self.N_K_coeff))
+            for k in range(self.N_K_coeff):
+
+                K_coeff[k] = self.grav_deformation_model(
+                    G=G_coeff[k, :],
+                    alpha=_alpha
+                    )
+
+            phases[a, :, :] = phase(
+                K_coeff=K_coeff,
+                notilt=False,
+                pr=self.pr
+                )[2]
+
+        return phases

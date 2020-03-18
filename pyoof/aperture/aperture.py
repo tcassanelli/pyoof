@@ -14,7 +14,7 @@ __all__ = [
     ]
 
 
-def e_rs(phase, radius):
+def e_rs(phase, circ=False):
     """
     Computes the random-surface-error efficiency,
     :math:`\\varepsilon_\\mathrm{rs}`, using the Ruze's equation.
@@ -25,14 +25,13 @@ def e_rs(phase, radius):
         The phase-error, :math:`\\varphi(x, y)`, is a two dimensional array (
         one of the solutions from the pyoof package). Its amplitude values are
         in radians. The input must be in radians or angle units.
-    radius : `bool`
-        The limit radios where the phase-error map is contained in length
-        units. By default it is set to None, meaning that will include the
-        entire array.
+    circ : `bool`
+        If `True` it will take the `phase.shape[0]` as the diameter of a circle
+        and calculate the root-mean-square only in that portion.
 
     Notes
     -----
-    Ruze's equation is derived empirically from a fat reflector with Gaussian
+    Ruze's equation was derived empirically from a test reflector with Gaussian
     distributed errors, and it expressed as,
 
     .. math::
@@ -50,14 +49,14 @@ def e_rs(phase, radius):
     >>> import numpy as np
     >>> from astropy import units as u
     >>> from pyoof import aperture
+    >>> pr = 50 * u.m
     >>> K_coeff = np.array([0.1] * 21)  # see aperture.phase
-    >>> radius = 3.25 * u.m
-    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, notilt=True, pr=radius)
-    >>> aperture.e_rs(phase=phi, radius=radius)
+    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, notilt=True, pr=pr)
+    >>> aperture.e_rs(phase=phi, circ=True)
     <Quantity 0.27564826>
     """
 
-    rms_rad = rms(phase=phase, radius=radius)  # rms value in radians
+    rms_rad = rms(phase=phase, circ=circ)  # rms value in radians
 
     with apu.set_enabled_equivalencies(apu.dimensionless_angles()):
         return np.exp(-rms_rad ** 2)
@@ -257,8 +256,8 @@ def phase(K_coeff, notilt, pr, resolution=1000):
     pr : `float`
         Primary reflector radius in length units.
     resolution : `int`
-        Resolution for the phase-error map, usually used ``resolution = 1e3``
-        in the pyoof package.
+        Resolution for the phase-error map, usually used ``resolution = 1000``
+        in the `~pyoof` package.
 
     Returns
     -------

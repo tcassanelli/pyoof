@@ -127,7 +127,7 @@ def line_equation(P1, P2, x):
     return y
 
 
-def rms(phase, radius=None):
+def rms(phase, circ=False):
     """
     Computes the root-mean-square value from a aperture phase distribution
     map, :math:`\\varphi(x, y)`.
@@ -136,18 +136,17 @@ def rms(phase, radius=None):
     ----------
     phase : `~numpy.ndarray` or `~astropy.units.quantity.Quantity`
         One or two dimensional array for the aperture phase distribution.
-    radius : `bool`
-        The limit radios where the phase-error map is contained in length
-        units. By default it is set to None, meaning that will include the
-        entire array.
+    circ : `bool`
+        If `True` it will take the `phase.shape` as the diameter of a circle
+        and calculate the root-mean-square only in that portion.
     """
 
-    if radius is not None:
-        x = np.linspace(-radius, radius, phase.shape[0])
-        y = np.linspace(-radius, radius, phase.shape[1])
+    if circ:
+        x = np.linspace(-1, 1, phase.shape[0])
+        y = np.linspace(-1, 1, phase.shape[1])
         xx, yy = np.meshgrid(x, y)
 
-        phase[xx ** 2 + yy ** 2 > radius ** 2] = np.nan
+        phase[xx ** 2 + yy ** 2 > 1 ** 2] = np.nan
         phase_real = phase[~np.isnan(phase)]
         _rms = np.sqrt(np.nansum(np.square(phase_real)) / phase_real.size)
     else:

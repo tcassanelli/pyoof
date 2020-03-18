@@ -77,17 +77,17 @@ def test_line_equation():
 def test_rms():
 
     x1 = np.array([1] * 10 + [-1] * 10)
-    rms1 = pyoof.rms(x1)
+    rms1 = pyoof.rms(x1, False)
     rms1_true = 1.0
 
     with NumpyRNGContext(0):
         x2 = np.random.uniform(-20, 20, 5)
-    rms2 = pyoof.rms(x2)
+    rms2 = pyoof.rms(x2, False)
     rms2_true = 4.6335342124813295
 
     with NumpyRNGContext(1):
         x3 = np.random.uniform(-20, 20, 100).reshape(10, -1)
-    rms3 = pyoof.rms(x3, 3 * apu.m)
+    rms3 = pyoof.rms(x3, True)
     rms3_true = 11.665405508342806
 
     assert_equal(rms1, rms1_true)

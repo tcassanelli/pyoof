@@ -47,12 +47,10 @@ print('len(beam_data):', len(beam_data))
 fig, ax = plt.subplots(figsize=(14, 8), ncols=3)
 for i in range(3):
     print('norm{}:'.format(i), pyoof.norm(beam_data[i]))
-    
+
     ax[i].plot(pyoof.norm(beam_data[i]))
 
 plt.show()
-
-
 
 # fig1 = pyoof.plot_data(
 #     u_data=u_data,

@@ -38,8 +38,7 @@ def test_e_rs():
     with NumpyRNGContext(0):
         phase = np.sort(np.random.uniform(-2.5, 2.5, (5, 5))) * apu.rad
 
-    radius = 3.25 * apu.m
-    e_rs = pyoof.aperture.e_rs(phase=phase, radius=radius)
+    e_rs = pyoof.aperture.e_rs(phase=phase, circ=True)
 
     assert_quantity_allclose(e_rs, 0.12678749)
 
