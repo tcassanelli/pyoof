@@ -137,8 +137,8 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
     N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
     K_coeff = np.random.normal(0., .1, N_K_coeff)
 
-    x, y, phi_notilt = aperture.phase(K_coeff=K_coeff, notilt=True, pr=pr)
-    phi_tilt = aperture.phase(K_coeff=K_coeff, notilt=False, pr=pr)[2]
+    x, y, phi_notilt = aperture.phase(K_coeff=K_coeff, tilt=False, pr=pr)
+    phi_tilt = aperture.phase(K_coeff=K_coeff, tilt=True, pr=pr)[2]
 
     levels = np.linspace(-2, 2, 9)
 
@@ -158,8 +158,7 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
     ax[0].set_title('$\\varphi(x, y)$ no-tilt')
     ax[1].set_title('$\\varphi(x, y)$')
 
-
-To study the aberration in the aperture phase distribution it is necessary to remove some telescope effects. These are the *tilt terms* that are related to the telescope's pointing, and become irrelevant. The tilt terms also represent the average slope in the :math:`x` and :math:`y` directions. In the Zernike circle polynomials the tilt terms are :math:`K^1_1` and :math:`K^{-1}_1`. To erase their dependence they are set to zero with the option ``notilt = True``.
+To study the aberration in the aperture phase distribution it is necessary to remove some telescope effects. These are the *tilt terms* that are related to the telescope's pointing, and become irrelevant. The tilt terms also represent the average slope in the :math:`x` and :math:`y` directions. In the Zernike circle polynomials coefficients, the tilt terms are :math:`K^1_1` and :math:`K^{-1}_1`. To erase their dependence they are set to zero with the option ``tilt = False``.
 
 Aperture distribution :math:`\underline{E_\text{a}}(x, y)`
 ----------------------------------------------------------

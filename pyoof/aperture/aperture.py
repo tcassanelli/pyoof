@@ -51,7 +51,7 @@ def e_rs(phase, circ=False):
     >>> from pyoof import aperture
     >>> pr = 50 * u.m
     >>> K_coeff = np.array([0.1] * 21)  # see aperture.phase
-    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, notilt=True, pr=pr)
+    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, tilt=False, pr=pr)
     >>> aperture.e_rs(phase=phi, circ=True)
     <Quantity 0.27564826>
     """
@@ -234,7 +234,7 @@ def wavefront(rho, theta, K_coeff):
     return W
 
 
-def phase(K_coeff, notilt, pr, resolution=1000):
+def phase(K_coeff, tilt, pr, resolution=1000):
     """
     Aperture phase distribution (or phase-error), :math:`\\varphi(x, y)`, for
     an specific telescope primary reflector. In general, the tilt (average
@@ -248,7 +248,7 @@ def phase(K_coeff, notilt, pr, resolution=1000):
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
         only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`.
-    notilt : `bool`
+    tilt : `bool`
         Boolean to include or exclude the tilt coefficients in the aperture
         phase distribution. The Zernike circle polynomials are related to tilt
         through :math:`U^{-1}_1(\\varrho, \\varphi)` and
@@ -293,15 +293,15 @@ def phase(K_coeff, notilt, pr, resolution=1000):
     >>> n = 5                               # order polynomial
     >>> N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
     >>> K_coeff = np.random.normal(0., .1, N_K_coeff)
-    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, notilt=True, pr=pr)
+    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, tilt=False, pr=pr)
     """
 
     _K_coeff = K_coeff.copy()
 
     # Erasing tilt dependence
-    if notilt:
-        _K_coeff[1] = 0  # For value K(-1, 1) = 0
-        _K_coeff[2] = 0  # For value K(1, 1) = 0
+    if not tilt:
+        _K_coeff[1] = 0  # For coefficient K(-1, 1) = 0
+        _K_coeff[2] = 0  # For coefficient K(1, 1) = 0
 
     x = np.linspace(-pr, pr, resolution)
     y = np.linspace(-pr, pr, resolution)

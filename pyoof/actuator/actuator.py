@@ -250,7 +250,6 @@ class EffelsbergActuator():
             for k in range(96):
                 row = np.around(
                     lookup_table[:, k], 0).astype(np.int).astype(str)
-                print(row)
                 file.write(f'NR {k + 1} ffff ' + '  '.join(tuple(row)) + '\n')
 
     def fit_zpoly(self, phase_pr, alpha):
@@ -280,7 +279,7 @@ class EffelsbergActuator():
         def residual_phase(K_coeff, phase_data):
             phase_model = phase(
                 K_coeff=K_coeff,
-                notilt=False,
+                tilt=True,
                 pr=self.pr,
                 resolution=self.resolution
                 )[2].to_value(apu.rad).flatten()
@@ -291,7 +290,9 @@ class EffelsbergActuator():
             res_lsq_K = optimize.least_squares(
                 fun=residual_phase,
                 x0=np.array([0.1] * self.N_K_coeff),
-                args=(phase_pr[_alpha, :, :].to_value(apu.rad).flatten(),)
+                args=(phase_pr[_alpha, :, :].to_value(apu.rad).flatten(),),
+                method='trf',
+                tr_solver='exact'
                 )
             K_coeff_alpha[_alpha, :] = res_lsq_K.x
 
@@ -338,7 +339,9 @@ class EffelsbergActuator():
             res_lsq_G = optimize.least_squares(
                 fun=residual_grav_deformation_model,
                 x0=[0, 0, 0],
-                args=(K_coeff_alpha[:, N], alpha,)
+                args=(K_coeff_alpha[:, N], alpha,),
+                method='trf',
+                tr_solver='exact'
                 )
             G_coeff[N, :] = res_lsq_G.x
 
@@ -403,7 +406,7 @@ class EffelsbergActuator():
 
             phases[a, :, :] = phase(
                 K_coeff=K_coeff,
-                notilt=False,
+                tilt=False,
                 pr=self.pr
                 )[2]
 

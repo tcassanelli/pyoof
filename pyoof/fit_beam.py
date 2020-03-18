@@ -544,7 +544,7 @@ def fit_zpoly(
         # Final phase from fit in the telescope's primary reflector
         _phase = phase(
             K_coeff=params_solution[4:],
-            notilt=True,
+            tilt=False,
             pr=telgeo[2]
             )[2].to_value(apu.rad)
 

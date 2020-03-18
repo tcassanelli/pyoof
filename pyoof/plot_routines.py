@@ -318,7 +318,7 @@ def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     return fig
 
 
-def plot_phase(K_coeff, notilt, pr, title):
+def plot_phase(K_coeff, tilt, pr, title):
     """
     Aperture phase distribution (phase-error), :math:`\\varphi(x, y)`, figure,
     given the Zernike circle polynomial coefficients, ``K_coeff``, solution
@@ -330,7 +330,7 @@ def plot_phase(K_coeff, notilt, pr, title):
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
         only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`.
-    notilt : `bool`
+    tilt : `bool`
         Boolean to include or exclude the tilt coefficients in the aperture
         phase distribution. The Zernike circle polynomials are related to tilt
         through :math:`U^{-1}_1(\\varrho, \\varphi)` and
@@ -348,7 +348,7 @@ def plot_phase(K_coeff, notilt, pr, title):
         reflector.
     """
 
-    if notilt:
+    if not tilt:
         cbartitle = (
             '$\\varphi_{\\scriptsize{\\textrm{no-tilt}}}(x,y)$ amplitude rad'
             )
@@ -357,7 +357,7 @@ def plot_phase(K_coeff, notilt, pr, title):
 
     extent = [-pr.to_value(apu.m), pr.to_value(apu.m)] * 2
     levels = np.linspace(-2, 2, 9)  # radians
-    _x, _y, _phase = phase(K_coeff=K_coeff, notilt=notilt, pr=pr)
+    _x, _y, _phase = phase(K_coeff=K_coeff, tilt=tilt, pr=pr)
 
     fig, ax = plt.subplots(figsize=(6, 5.8))
 
@@ -620,7 +620,7 @@ def plot_fit_path(
             '{} phase-error $d_z=\\pm {}$ cm ' +
             '$n={}$ $\\alpha={}$ deg'
             ).format(obs_object, round(d_z[2].to_value(apu.cm), 3), n, meanel),
-        notilt=True,
+        tilt=False,
         pr=telgeo[2]
         )
 
