@@ -25,7 +25,7 @@ active surface.
 path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data2019/pyoof_out'
 path2save = 'grav_deformation'
 
-resolution = 1000c
+resolution = 1000
 n = 5
 
 actuator = EffelsbergActuator(
