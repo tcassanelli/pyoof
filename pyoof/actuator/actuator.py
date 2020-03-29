@@ -12,8 +12,6 @@ from ..aperture import phase
 
 __all__ = ['EffelsbergActuator']
 
-path_lookup = get_pkg_data_filename('../data/lookup_effelsberg.txt')
-
 
 class EffelsbergActuator():
     """
@@ -39,12 +37,13 @@ class EffelsbergActuator():
         in the `~pyoof` package.
     path_lookup : `str`
         Path for the current look up table that controls the active surface
-        with the Finite Element Method (FEM) model.
+        control system. If `None` it will select the default table from the
+        FEM model.
     """
 
     def __init__(
         self, wavel, nrot=3, sign=-1, order=5, sr=3.25 * apu.m, pr=50 * apu.m,
-        resolution=1000, path_lookup=path_lookup
+        resolution=1000, path_lookup=None
             ):
         self.wavel = wavel
         self.nrot = nrot
@@ -54,7 +53,11 @@ class EffelsbergActuator():
         self.n = order
         self.N_K_coeff = (self.n + 1) * (self.n + 2) // 2
         self.resolution = resolution
-        self.path_lookup = path_lookup
+
+        if path_lookup is None:
+            self.path_lookup = get_pkg_data_filename(
+                '../data/lookup_effelsberg.txt'
+                )
 
         self.alpha_lookup, self.actuator_sr_lookup = self.read_lookup()
         self.phase_pr_lookup = self.transform(self.actuator_sr_lookup)
@@ -119,7 +122,7 @@ class EffelsbergActuator():
 
         return alpha_lookup, actuator_sr_lookup
 
-    def grav_deformation_model(self, G, alpha):
+    def grav_deformation(self, G, alpha):
         """
         Simple decomposition of the telescope elastic structure and
         gravitational force into a gravitational deformation model. The model
@@ -128,7 +131,7 @@ class EffelsbergActuator():
 
         Parameters
         ----------
-        G : `~np.ndarray` or `list`
+        G : `~numpy.ndarray` or `list`
             It has the list of three gravitational/elastic coefficients to
             supply the model.
         alpha : `~astropy.units.quantity.Quantity`
@@ -144,7 +147,7 @@ class EffelsbergActuator():
         if type(alpha) == apu.Quantity:
             alpha = alpha.to_value(apu.rad)
 
-        K = G[0] * np.sin(alpha) + G[1] * np.cos(alpha) + G[2]
+        K = G[0] * np.sin(alpha) + G[1] * np.cos(alpha) + G[2] * alpha + G[3]
 
         return K
 
@@ -237,13 +240,13 @@ class EffelsbergActuator():
         lookup_table = np.zeros((11, 96))
         for j in range(11):
 
-            intrp = interpolate.RegularGridInterpolator(
-                points=(x.to_value(apu.mm), y.to_value(apu.mm)),
-                values=actuator_sr.to_value(apu.um)[j, :, :].T,
-                method='linear'
+            intrp = interpolate.RectBivariateSpline(
+                x.to_value(apu.mm), y.to_value(apu.mm),
+                z=actuator_sr.to_value(apu.um)[j, :, :].T,
+                kx=5, ky=5
                 )
 
-            lookup_table[j, :] = intrp(np.array([act_x, act_y]).T)
+            lookup_table[j, :] = intrp(act_x, act_y, grid=False)
 
         # writing the file row per row
         with open(fname, 'w') as file:
@@ -303,7 +306,7 @@ class EffelsbergActuator():
 
         return K_coeff_alpha
 
-    def fit_grav_deformation_model(self, K_coeff_alpha, alpha):
+    def fit_grav_deformation(self, K_coeff_alpha, alpha):
         """
         Finds the full set for a gravitational deformation model given a list
         of elevations in ``alpha``. The list of Zernike circle polynomials
@@ -324,21 +327,22 @@ class EffelsbergActuator():
             Two dimensional array for the gravitational deformation
             coefficients found in the least-squares minimization. The shape of
             the array will be given by the Zernike circle polynomial order
-            ``n``.
+            ``n`` and the size of the ``G`` coefficients in
+            `~pyoof.actuator.EffelsbergActuator.grav_deformation`.
         """
         start_time = time.time()
         print('\n ***** PYOOF FIT GRAVITATIONAL DEFORMATION MODEL ***** \n')
 
-        def residual_grav_deformation_model(G, Knl, alpha):
-            Knl_model = self.grav_deformation_model(G, alpha)
+        def residual_grav_deformation(G, Knl, alpha):
+            Knl_model = self.grav_deformation(G, alpha)
             return Knl - Knl_model
 
-        G_coeff = np.zeros((self.N_K_coeff, 3))
+        G_coeff = np.zeros((self.N_K_coeff, 4))
         for N in range(self.N_K_coeff):
 
             res_lsq_G = optimize.least_squares(
-                fun=residual_grav_deformation_model,
-                x0=[0, 0, 0],
+                fun=residual_grav_deformation,
+                x0=[0, 0, 0, 0],
                 args=(K_coeff_alpha[:, N], alpha,),
                 method='trf',
                 tr_solver='exact'
@@ -357,11 +361,31 @@ class EffelsbergActuator():
         Wrapper for all least-squares minimizations, Zernike circle
         polynomials (`~pyoof.actuator.EffelsbergActuator.fit_zpoly`) and
         gravitational deformation model
-        (`~pyoof.actuator.EffelsbergActuator.fit_grav_deformation_model`).
+        (`~pyoof.actuator.EffelsbergActuator.fit_grav_deformation`).
+
+        Parameters
+        ----------
+        phase_pr : `~astropy.units.quantity.Quantity`
+            Phase-error map for the primary dish. It must have shape
+            ``(alpha.size, resolution, resolution)``.
+        alpha : `~astropy.units.quantity.Quantity`
+            List of elevation angles related to ``phase_pr.shape[0]``.
+
+        Returns
+        -------
+        G_coeff : `~numpy.ndarray`
+            Two dimensional array for the gravitational deformation
+            coefficients found in the least-squares minimization. The shape of
+            the array will be given by the Zernike circle polynomial order
+            ``n`` and the size of the ``G`` coefficients in
+            `~pyoof.actuator.EffelsbergActuator.grav_deformation`.
+        K_coeff_alpha : `~numpy.ndarray`
+            Two dimensional array for the Zernike circle polynomials
+            coefficients. The shape is ``(alpha.size, N_K_coeff)``.
         """
 
         K_coeff_alpha = self.fit_zpoly(phase_pr=phase_pr, alpha=alpha)
-        G_coeff = self.fit_grav_deformation_model(
+        G_coeff = self.fit_grav_deformation(
             K_coeff_alpha=K_coeff_alpha,
             alpha=alpha
             )
@@ -379,7 +403,8 @@ class EffelsbergActuator():
             Two dimensional array for the gravitational deformation
             coefficients found in the least-squares minimization. The shape of
             the array will be given by the Zernike circle polynomial order
-            ``n``.
+            ``n`` and the size of the ``G`` coefficients in
+            `~pyoof.actuator.EffelsbergActuator.grav_deformation`.
         alpha : `~astropy.units.quantity.Quantity`
             List of new elevation angles.
 
@@ -399,7 +424,7 @@ class EffelsbergActuator():
             K_coeff = np.zeros((self.N_K_coeff))
             for k in range(self.N_K_coeff):
 
-                K_coeff[k] = self.grav_deformation_model(
+                K_coeff[k] = self.grav_deformation(
                     G=G_coeff[k, :],
                     alpha=_alpha
                     )

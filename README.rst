@@ -130,12 +130,12 @@ pyoof is licensed under a 3-clause BSD style license - see the `LICENSE <https:/
 
 Improvements future versions
 ============================
-- Including plot tests for `plot_routines.py` code :white_check_mark:
+- Including plot tests for `plot_routines.py` code
 - Integrate Astropy units :white_check_mark:
 - Reduce the size of the test files
 - Include automatic setup for the FFT resolution ``pyoof.fit_zpoly(resolution)``
 - Include cosine taper illumination function
-- Add actuator correction (sub-module) and its translation from phase-error (specific for Effelsberg) :white_check_mark:
+- Add actuator correction (sub-package) and its translation from phase-error (specific for Effelsberg) :white_check_mark:
 - Add option for 2 or more beam maps
 
 Contact

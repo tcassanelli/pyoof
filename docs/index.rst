@@ -361,6 +361,7 @@ Available modules
     :maxdepth: 2
 
     aperture/index
+    actuator/index
     telgeometry/index
     zernike/index
 
