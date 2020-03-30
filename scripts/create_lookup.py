@@ -23,7 +23,7 @@ active surface.
 
 # we need to call the output from the pyoof
 path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data2019/pyoof_out'
-path2save = 'grav_deformation'
+path2save = 'data_generated/grav_deformation'
 
 resolution = 1000
 n = 5

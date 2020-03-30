@@ -75,9 +75,9 @@ def compute_phase_error(pathfits, order_max):
 
 if __name__ == '__main__':
 
-    # pth2data = '/home/tcassanelli/data/pyoof'                    # natasha
-    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S7mm_FEM'  # local
-    pth2data = '/scratch/v/vanderli/cassane/pyoof_data/*.fits'        # scinet
+    # pth2data = '/home/tcassanelli/data/pyoof'                      # natasha
+    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S7mm_FEM'    # local
+    pth2data = '/scratch/v/vanderli/cassane/pyoof_data/*.fits'       # scinet
     files = glob.glob(pth2data)
 
     for _f in files:
