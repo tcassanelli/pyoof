@@ -13,6 +13,7 @@ cd $SCRATCH
 # INPUT 
 file1="pyoof_effelsberg.py"
 file2="create_lookup.py"
+
 directory="/home/v/vanderli/cassane/pyoof/scripts/"
 path2file=$directory$file
 

@@ -2,12 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # Author: Tomas Cassanelli
-import os
 import glob
 from astropy import units as u
-from pyoof import (
-    aperture, telgeometry, fit_zpoly, extract_data_effelsberg, actuator
-    )
+from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 
 # telescope = [blockage, delta, pr, name]
 telescope = dict(
