@@ -11,7 +11,8 @@ module load texlive
 cd $SCRATCH
 
 # INPUT 
-file="pyoof_effelsberg.py"
+file1="pyoof_effelsberg.py"
+file2="create_lookup.py"
 directory="/home/v/vanderli/cassane/pyoof/scripts/"
 path2file=$directory$file
 
@@ -19,4 +20,5 @@ path2file=$directory$file
 APY3="/home/v/vanderli/cassane/anaconda3/bin/python"
 
 # # EXECUTION COMMAND
-$APY3 $path2file
+$APY3 $path2file1
+$APY3 $path2file2

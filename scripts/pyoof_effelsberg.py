@@ -53,24 +53,24 @@ def compute_phase_error(pathfits, order_max):
         # work_dir='/scratch/v/vanderli/cassane'
         )
 
-    num_list = ["%03d" % i for i in range(101)]
-    for j in range(len(num_list)):
-        path_pyoof_out = os.path.join(
-            pthto, 'pyoof_out', name + '-' + num_list[j]
-            )
-        if not os.path.exists(path_pyoof_out):
-            path_pyoof_out = os.path.join(
-                pthto, 'pyoof_out', name + '-' + num_list[j - 1]
-                )
-            break
+    # num_list = ["%03d" % i for i in range(101)]
+    # for j in range(len(num_list)):
+    #     path_pyoof_out = os.path.join(
+    #         pthto, 'pyoof_out', name + '-' + num_list[j]
+    #         )
+    #     if not os.path.exists(path_pyoof_out):
+    #         path_pyoof_out = os.path.join(
+    #             pthto, 'pyoof_out', name + '-' + num_list[j - 1]
+    #             )
+    #         break
 
-    for order in range(1, order_max + 1):
-        actuator.actuator_displacement(
-            path_pyoof_out=path_pyoof_out,
-            order=order,
-            edge=None,
-            make_plots=True
-            )
+    # for order in range(1, order_max + 1):
+    #     actuator.actuator_displacement(
+    #         path_pyoof_out=path_pyoof_out,
+    #         order=order,
+    #         edge=None,
+    #         make_plots=True
+    #         )
 
 
 if __name__ == '__main__':
