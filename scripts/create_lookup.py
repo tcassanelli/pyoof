@@ -48,7 +48,7 @@ for k, _f in enumerate(files):
 
     alpha_obs[k] = pyoof_info['meanel'] * u.deg
     phase_pr_obs[k, :, :] = np.genfromtxt(
-        os.path.join(_f, f'phase_n{actautor.n}.csv')
+        os.path.join(_f, f'phase_n{actuator.n}.csv')
         ) * u.rad
 
 # Generating the G coeff for the look-up table
