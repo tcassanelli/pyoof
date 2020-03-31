@@ -4,6 +4,7 @@
 # Author: Tomas Cassanelli
 import time
 import numpy as np
+import astropy
 from astropy import units as apu
 from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
@@ -94,6 +95,12 @@ class EffelsbergActuator():
         # Actuator positions
         act_x = np.outer(R, np.cos(theta)).reshape(-1)
         act_y = np.outer(R, np.sin(theta)).reshape(-1)
+        # np.outer may not preserve units in some astropy version
+
+        # workaround units and the new astropy version
+        if astropy.__version__ < '4':
+            act_x *= R.unit
+            act_y *= R.unit
 
         # Generating new grid same as pyoof output
         x_ng = np.linspace(-self.sr, self.sr, self.resolution)
