@@ -26,23 +26,21 @@ active surface.
 path_pyoof_out = '/scratch/v/vanderli/cassane/pyoof_data/pyoof_out'
 path2save = os.path.join(path_pyoof_out, 'grav_deformation')
 
-resolution = 1000
-n = 5
-
 actuator = EffelsbergActuator(
     wavel=7 * u.mm,
     nrot=3,
     sign=-1,
-    order=n,
+    order=5,
     sr=3.25 * u.m,
     pr=50 * u.m,
-    resolution=resolution,
+    resolution=1000,
     )
 
 # reading data from the pyoof_out
 files = glob.glob(os.path.join(path_pyoof_out, '*'))
 alpha_obs = np.zeros((len(files))) << u.deg
-phase_pr_obs = np.zeros((len(files), resolution, resolution)) << u.rad
+phase_pr_obs = np.zeros(
+    (len(files), actuator.resolution, actuator.resolution)) << u.rad
 for k, _f in enumerate(files):
 
     with open(os.path.join(_f, 'pyoof_info.yml'), 'r') as inputfile:
@@ -50,13 +48,13 @@ for k, _f in enumerate(files):
 
     alpha_obs[k] = pyoof_info['meanel'] * u.deg
     phase_pr_obs[k, :, :] = np.genfromtxt(
-        os.path.join(_f, f'phase_n{n}.csv')
+        os.path.join(_f, f'phase_n{actautor.n}.csv')
         ) * u.rad
 
 # Generating the G coeff for the look-up table
 try:
     path_G_coeff_lookup = os.path.join(
-        path2save, f'G_coeff_lookup_{wavel.to_value(u.mm)}mm.npy'
+        path2save, f'G_coeff_lookup_{actuator.wavel.to_value(u.mm)}mm.npy'
         )
     G_coeff_lookup = np.load(path_G_coeff_lookup, allow_pickle=True)
     # G_coeff.shape = (21, 3)
