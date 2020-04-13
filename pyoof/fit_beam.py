@@ -414,10 +414,10 @@ def fit_zpoly(
     if config_params_file is None:
         config_params_pyoof = get_pkg_data_filename('data/config_params.yml')
         with open(config_params_pyoof, 'r') as yaml_config:
-            config_params = yaml.safe_load(yaml_config)
+            config_params = yaml.load(yaml_config, Loader=yaml.Loader)
     else:
         with open(config_params_file, 'r') as yaml_config:
-            config_params = yaml.safe_load(yaml_config)
+            config_params = yaml.load(yaml_config, Loader=yaml.Loader)
 
     # Storing files in pyoof_out directory
     if not os.path.exists(os.path.join(work_dir, 'pyoof_out')):
@@ -573,17 +573,21 @@ def fit_zpoly(
                 obs_object=obs_object,
                 obs_date=obs_date,
                 d_z=d_z.to_value(apu.m).tolist(),
-                wavel=wavel.to_value(apu.m),
-                frequency=freq.to_value(apu.Hz),
+                wavel=float(wavel.to_value(apu.m)),
+                frequency=float(freq.to_value(apu.Hz)),
                 illumination=illum_func.__qualname__,
-                meanel=meanel.to_value(apu.deg),
+                meanel=float(meanel.to_value(apu.deg)),
                 fft_resolution=resolution,
                 box_factor=box_factor,
                 )
 
             with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:
                 outf.write('# pyoof relevant information\n')
-                yaml.dump(pyoof_info, outf, default_flow_style=False)
+                yaml.dump(
+                    pyoof_info, outf,
+                    default_flow_style=False,
+                    Dumper=yaml.Dumper
+                    )
 
         # To store large files in csv format
         save_to_csv = [

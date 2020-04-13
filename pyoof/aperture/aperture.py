@@ -513,7 +513,6 @@ def radiation_pattern(
     u, v = np.fft.fftfreq(x.size, dx), np.fft.fftfreq(y.size, dy)
 
     # workaround units and the new astropy version
-
     if type(x) == apu.quantity.Quantity:
         if astropy.__version__ < '4':
             u_shift = np.fft.fftshift(u) * u.unit * wavel * apu.rad

@@ -44,7 +44,7 @@ phase_pr_obs = np.zeros(
 for k, _f in enumerate(files):
 
     with open(os.path.join(_f, 'pyoof_info.yml'), 'r') as inputfile:
-        pyoof_info = yaml.safe_load(inputfile)
+        pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
 
     alpha_obs[k] = pyoof_info['meanel'] * u.deg
     phase_pr_obs[k, :, :] = np.genfromtxt(

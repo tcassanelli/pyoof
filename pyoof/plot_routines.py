@@ -567,7 +567,7 @@ def plot_fit_path(
     fitpar = ascii.read(os.path.join(path_pyoof, 'fitpar_n{}.csv'.format(n)))
 
     with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
-        pyoof_info = yaml.safe_load(inputfile)
+        pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
 
     obs_object = pyoof_info['obs_object']
     meanel = round(pyoof_info['meanel'], 2)
