@@ -6,11 +6,7 @@ import os
 import glob
 import yaml
 import numpy as np
-import matplotlib.pyplot as plt
-import warnings
-from scipy import constants
 from astropy import units as u
-from pyoof import aperture
 from pyoof.actuator import EffelsbergActuator
 
 """
@@ -80,26 +76,29 @@ phase_pr_lookup = actuator.generate_phase_pr(
     alpha=alpha_obs
     )
 
-# Generating the G coeff for the observations
-G_coeff_obs = actuator.fit_all(
-    phase_pr=phase_pr_obs,
-    alpha=alpha_obs
-    )[0]
-
-phase_pr_obs = actuator.generate_phase_pr(
-    G_coeff=G_coeff_obs,
-    alpha=alpha_obs
-    )
-
 # Corrected phase the observed minus the original look-up table
 phase_pr_real = phase_pr_obs - phase_pr_lookup
+# TODO: not so sure about this minus sign, since the observed phase already has
+# the correction should we subtract it or add it to the real phase? I guess
+# it would depend on the true orientation nrot and sign
 
-G_coeff_obs = actuator.fit_all(
+# Now we calculate the G coeff for the real case
+G_coeff_real = actuator.fit_all(
     phase_pr=phase_pr_real,
     alpha=alpha_obs
     )[0]
 
+# transformation to the phase in the pr to the actuators in the sr
+# and find values for the look-up table elevations
+actuator_sr_real = actuator.itransform(
+    phase_pr=actuator.generate_phase_pr(
+        G_coeff=G_coeff_real,
+        alpha=[7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * u.deg
+        )
+    )
+
+# Finally write the look-up table in .txt format
 actuator.write_lookup(
     fname=os.path.join(path2save, 'lookup_table_Dec2019.txt'),
-    actuator_sr=actuator.itransform(phase_pr=phase_pr_real)
+    actuator_sr=actuator_sr_real
     )
