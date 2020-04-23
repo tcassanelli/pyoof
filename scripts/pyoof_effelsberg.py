@@ -75,7 +75,7 @@ if __name__ == '__main__':
     # pth2data = '/home/tcassanelli/data/pyoof'                      # natasha
     # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S7mm_FEM'    # local
     # pth2data = '/scratch/v/vanderli/cassane/pyoof_data/*.fits'       # scinet
-    pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2017_offset/S9mm_offset/*.fits'
+    pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2017_offset/S9mm_nooffset/*.fits'
     files = glob.glob(pth2data)
 
     for _f in files:

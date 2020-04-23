@@ -33,7 +33,7 @@ actuator = EffelsbergActuator(
     )
 
 # reading data from the pyoof_out
-files = glob.glob(os.path.join(path_pyoof_out, '*'))
+files = glob.glob(os.path.join(path_pyoof_out, '*-000'))
 alpha_obs = np.zeros((len(files))) << u.deg
 phase_pr_obs = np.zeros(
     (len(files), actuator.resolution, actuator.resolution)) << u.rad
