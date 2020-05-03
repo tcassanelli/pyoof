@@ -76,7 +76,9 @@ class EffelsbergActuator():
             sub-reflector in the standard grid format from `~pyoof`.
         """
 
-        alpha_lookup = [7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * apu.deg
+        # transforming zenith angels to elevation angles in look-up table
+        alpha_lookup = 90 * apu.deg - [
+            7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * apu.deg
         names = [
             'NR', 'N', 'ffff'
             ] + alpha_lookup.value.astype(int).astype(str).tolist()
@@ -217,8 +219,9 @@ class EffelsbergActuator():
         """
         Easy writer for the active surface standard formatting at the
         Effelsberg telescope. The writer admits the actuator sub-reflector
-        perpendicular displacement in the same shape as the `~pyoof` format,
-        then it grids the data to the active surface look-up format.
+        perpendicular displacement in the same shape as the `~pyoof` format (
+        with the exact angle list as in ``alpha_lookup`` format), then it
+        grids the data to the active surface look-up format.
 
         Parameters
         ----------
@@ -227,7 +230,8 @@ class EffelsbergActuator():
         actuator_sr : `~astropy.units.quantity.Quantity`
             Two dimensional array, in the `~pyoof` format, for the actuators
             displacement in the sub-reflector. It must have shape
-            ``(alpha.size, resolution, resolution)``
+            ``(alpha.size, resolution, resolution)``. The angles must be same
+            as ``alpha_lookup``.
         """
 
         # Generating the mesh from technical drawings
