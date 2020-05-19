@@ -46,8 +46,8 @@ def compute_phase_error(pathfits, order_max):
         config_params_file=None,   # default or add path config_file.yaml
         make_plots=True,           # for now testing only the software
         verbose=2,
-        # work_dir=None
-        work_dir='/scratch/v/vanderli/cassane'
+        work_dir=None
+        # work_dir='/scratch/v/vanderli/cassane'
         )
 
     # num_list = ["%03d" % i for i in range(101)]
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     # pth2data = '/home/tcassanelli/data/pyoof'                      # natasha
     # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/S7mm_FEM'    # local
-    pth2data = '/home/v/vanderli/cassane/data/pyoof_noFEM2017/*.fits'       # scinet
+    pth2data = '/scratch/v/vanderli/cassane/pyoof_data/S9*.fits'     # scinet
     # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2017_offset/S9mm_nooffset/*.fits'
     files = glob.glob(pth2data)
 
