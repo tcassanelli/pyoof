@@ -77,8 +77,7 @@ class EffelsbergActuator():
         """
 
         # transforming zenith angels to elevation angles in look-up table
-        alpha_lookup = 90 * apu.deg - [
-            7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * apu.deg
+        alpha_lookup = [7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * apu.deg
         names = [
             'NR', 'N', 'ffff'
             ] + alpha_lookup.value.astype(int).astype(str).tolist()

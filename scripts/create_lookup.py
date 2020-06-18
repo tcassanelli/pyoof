@@ -93,7 +93,7 @@ G_coeff_real = actuator.fit_all(
 actuator_sr_real = actuator.itransform(
     phase_pr=actuator.generate_phase_pr(
         G_coeff=G_coeff_real,
-        alpha=[7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * u.deg
+        alpha=actuator.alpha_lookup
         )
     )
 
