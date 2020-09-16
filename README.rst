@@ -2,7 +2,7 @@
 pyoof
 *****
 
-- *Version: 0.2*
+- *Version: 0.3*
 - *Author: Tomas Cassanelli*
 - *User manual:* `stable <http://pyoof.readthedocs.io/en/stable/>`__ |
   `developer <http://pyoof.readthedocs.io/en/latest/>`__
@@ -71,12 +71,12 @@ So far the pyoof package uses the common Python packages, it is recommended to i
 
 pyoof has the following strict requirements:
 
-- `Python <http://www.python.org/>`__ 3.5 or later.
+- `Python <http://www.python.org/>`__ 3.6 or later.
 
 - `setuptools <https://pypi.python.org/pypi/setuptools>`__: Used for the
   package installation.
 
-- `NumPy <http://www.numpy.org/>`__ 1.11 or later.
+- `NumPy <http://www.numpy.org/>`__ 1.4 or later.
 
 - `SciPy <https://scipy.org/>`__: 0.15 or later.
 
@@ -87,7 +87,7 @@ pyoof has the following strict requirements:
 - `matplotlib <http://matplotlib.org/>`__ 1.5 or later: To provide plotting
   functionality.
 
-- `PyYAML <http://pyyaml.org>`__ 3.11 or later.
+- `PyYAML <http://pyyaml.org>`__ 5.3.1 or later.
 
 For future versions dependencies will be reduced.
 

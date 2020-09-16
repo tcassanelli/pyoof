@@ -18,8 +18,8 @@ active surface.
 """
 
 # we need to call the output from the pyoof
-# path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data2019/pyoof_out'
-path_pyoof_out = '/scratch/v/vanderli/cassane/pyoof_data/pyoof_out'
+path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data2019/pyoof_out'
+# path_pyoof_out = '/scratch/v/vanderli/cassane/pyoof_data/pyoof_out'
 path2save = os.path.join(path_pyoof_out, 'grav_deformation')
 
 actuator = EffelsbergActuator(
@@ -78,6 +78,7 @@ phase_pr_lookup = actuator.generate_phase_pr(
 
 # Corrected phase the observed minus the original look-up table
 phase_pr_real = phase_pr_obs - phase_pr_lookup
+
 # TODO: not so sure about this minus sign, since the observed phase already has
 # the correction should we subtract it or add it to the real phase? I guess
 # it would depend on the true orientation nrot and sign

@@ -169,7 +169,7 @@ class EffelsbergActuator():
         actuator_sr : `~astropy.units.quantity.Quantity`
             Two dimensional array, in the `~pyoof` format, for the actuators
             displacement in the sub-reflector. It must have shape
-            ``(alpha.size, resolution, resolution)``
+            ``(alpha.size, resolution, resolution)``.
 
         Returns
         -------
@@ -177,10 +177,20 @@ class EffelsbergActuator():
             Phase-error map for the primary dish. It must have shape
             ``(alpha.size, resolution, resolution)``.
         """
+
+        if actuator_sr.ndim == 3:
+            axes = (1, 2)
+        else:
+            axes = (0, 1)
+
         factor = self.sign * 4 * np.pi * apu.rad / self.wavel
 
         phase_pr = (
-            factor * np.rot90(m=actuator_sr, axes=(1, 2), k=self.nrot)
+            factor * np.rot90(
+                m=actuator_sr,
+                axes=axes,
+                k=self.nrot
+                )
             ).to(apu.rad)
 
         return phase_pr
@@ -201,14 +211,19 @@ class EffelsbergActuator():
         actuator_sr : `~astropy.units.quantity.Quantity`
             Two dimensional array, in the `~pyoof` format, for the actuators
             displacement in the sub-reflector. It must have shape
-            ``(alpha.size, resolution, resolution)``
+            ``(alpha.size, resolution, resolution)``.
         """
+
+        if phase_pr.ndim == 3:
+            axes = (1, 2)
+        else:
+            axes = (0, 1)
 
         factor = self.wavel / (self.sign * 4 * np.pi * apu.rad)
 
         actuator_sr = np.rot90(
             m=(phase_pr * factor).to(apu.um),
-            axes=(1, 2),
+            axes=axes,
             k=-self.nrot
             )
 
