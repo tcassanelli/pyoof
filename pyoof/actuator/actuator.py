@@ -195,7 +195,7 @@ class EffelsbergActuator():
 
         return phase_pr
 
-    def itransform(self, phase_pr):
+    def itransform(self, phase_pr, limits_amplitude=[-5, 5] * u.mm):
         """
         Inverse transformation for
         `~pyoof.actuator.EffeslbergActuator.transform`.
@@ -212,6 +212,10 @@ class EffelsbergActuator():
             Two dimensional array, in the `~pyoof` format, for the actuators
             displacement in the sub-reflector. It must have shape
             ``(alpha.size, resolution, resolution)``.
+        limits_amplitude : `~astropy.units.quantity.Quantity`
+            This is the maximum and minimum amplitude that the actuators
+            can make in a displacement, for the Effelsberg active surface
+            control system is :math:`\\pm5 \\mathrm{mm}`.
         """
 
         if phase_pr.ndim == 3:
@@ -226,6 +230,11 @@ class EffelsbergActuator():
             axes=axes,
             k=-self.nrot
             )
+
+        # replacing larger values for maximum/minimum displacement
+        [min_amplitude, max_amplitude] = limits_amplitude
+        actuator_sr[actuator_sr > max_amplitude] = max_amplitude
+        actuator_sr[actuator_sr < min_amplitude] = min_amplitude
 
         return actuator_sr
 
