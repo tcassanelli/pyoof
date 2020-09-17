@@ -195,7 +195,7 @@ class EffelsbergActuator():
 
         return phase_pr
 
-    def itransform(self, phase_pr, limits_amplitude=[-5, 5] * u.mm):
+    def itransform(self, phase_pr, limits_amplitude=[-5, 5] * apu.mm):
         """
         Inverse transformation for
         `~pyoof.actuator.EffeslbergActuator.transform`.
