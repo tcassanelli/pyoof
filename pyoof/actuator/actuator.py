@@ -36,6 +36,10 @@ class EffelsbergActuator():
     resolution : `int`
         Resolution for the phase-error map, usually used ``resolution = 1000``
         in the `~pyoof` package.
+    limits_amplitude : `~astropy.units.quantity.Quantity`
+            This is the maximum and minimum amplitude that the actuators
+            can make in a displacement, for the Effelsberg active surface
+            control system is :math:`\\pm5 \\mathrm{mm}`.
     path_lookup : `str`
         Path for the current look up table that controls the active surface
         control system. If `None` it will select the default table from the
@@ -44,7 +48,7 @@ class EffelsbergActuator():
 
     def __init__(
         self, wavel, nrot=3, sign=-1, order=5, sr=3.25 * apu.m, pr=50 * apu.m,
-        resolution=1000, path_lookup=None
+        resolution=1000, limits_amplitude=[-5, 5] * apu.mm, path_lookup=None
             ):
         self.wavel = wavel
         self.nrot = nrot
@@ -54,6 +58,7 @@ class EffelsbergActuator():
         self.n = order
         self.N_K_coeff = (self.n + 1) * (self.n + 2) // 2
         self.resolution = resolution
+        self.limits_amplitude = limits_amplitude
 
         if path_lookup is None:
             self.path_lookup = get_pkg_data_filename(
@@ -195,7 +200,7 @@ class EffelsbergActuator():
 
         return phase_pr
 
-    def itransform(self, phase_pr, limits_amplitude=[-5, 5] * apu.mm):
+    def itransform(self, phase_pr):
         """
         Inverse transformation for
         `~pyoof.actuator.EffeslbergActuator.transform`.
@@ -212,10 +217,6 @@ class EffelsbergActuator():
             Two dimensional array, in the `~pyoof` format, for the actuators
             displacement in the sub-reflector. It must have shape
             ``(alpha.size, resolution, resolution)``.
-        limits_amplitude : `~astropy.units.quantity.Quantity`
-            This is the maximum and minimum amplitude that the actuators
-            can make in a displacement, for the Effelsberg active surface
-            control system is :math:`\\pm5 \\mathrm{mm}`.
         """
 
         if phase_pr.ndim == 3:
@@ -232,7 +233,7 @@ class EffelsbergActuator():
             )
 
         # replacing larger values for maximum/minimum displacement
-        [min_amplitude, max_amplitude] = limits_amplitude
+        [min_amplitude, max_amplitude] = self.limits_amplitude
         actuator_sr[actuator_sr > max_amplitude] = max_amplitude
         actuator_sr[actuator_sr < min_amplitude] = min_amplitude
 
@@ -280,9 +281,19 @@ class EffelsbergActuator():
                 kx=5, ky=5
                 )
 
-            lookup_table[j, :] = intrp(act_x, act_y, grid=False)
+            lookup_table[j, :] = intrp(
+                act_x.to_value(apu.mm),
+                act_y.to_value(apu.mm),
+                grid=False
+                )
 
-        # writing the file row per row
+        # after interpolation there may be values that have higher amplitude
+        # than the lookup table maximum, we need to correct this
+        [min_amplitude, max_amplitude] = self.limits_amplitude.to_value(apu.um)
+        lookup_table[lookup_table > max_amplitude] = max_amplitude
+        lookup_table[lookup_table < min_amplitude] = min_amplitude
+
+        # writing the file row per row in specific format
         with open(fname, 'w') as file:
             for k in range(96):
                 row = np.around(

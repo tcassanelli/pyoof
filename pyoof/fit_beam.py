@@ -122,13 +122,16 @@ def residual_true(
 
             # The calculated beam needs to be transformed!
             intrp = interpolate.RegularGridInterpolator(
-                points=(u, v),  # points defining grid
+                points=(u.to_value(apu.rad), v.to_value(apu.rad)),
                 values=power_norm.T,    # data in grid
                 method='linear'         # linear or nearest
                 )
 
             # input interpolation function is the real beam grid
-            beam_model.append(intrp(np.array([u_data[i], v_data[i]]).T))
+            beam_model.append(intrp(np.array([
+                    u_data[i].to_value(apu.rad),
+                    v_data[i].to_value(apu.rad)
+                    ]).T))
             # TODO: fix this, there must be a nicer way to do it
             # units are lost when concatenating with np.array([])
 
@@ -430,14 +433,14 @@ def fit_zpoly(
             break
 
     print(
-        'Maximum order to be fitted: {}'.format(order_max),
-        'Telescope name: {}'.format(tel_name),
-        'File name: {}'.format(name),
-        'Obs frequency: {}'.format(freq.to(apu.GHz)),
-        'Obs Wavelength: {}'.format(wavel.to(apu.cm)),
-        'Mean elevation {}'.format(meanel.to(apu.deg)),
-        'd_z (out-of-focus): {}'.format(d_z.to(apu.cm)),
-        'Illumination to be fitted: {}'.format(illum_func.__qualname__),
+        f'Maximum order to be fitted: {order_max}',
+        f'Telescope name: {tel_name}',
+        f'File name: {name}',
+        f'Obs frequency: {freq.to(apu.GHz)}',
+        f'Obs Wavelength: {wavel.to(apu.cm)}',
+        f'Mean elevation {meanel.to(apu.deg)}',
+        f'd_z (out-of-focus): {d_z.to(apu.cm)}',
+        f'Illumination to be fitted: {illum_func.__qualname__}',
         sep='\n',
         end='\n'
         )
@@ -573,10 +576,10 @@ def fit_zpoly(
                 obs_object=obs_object,
                 obs_date=obs_date,
                 d_z=d_z.to_value(apu.m).tolist(),
-                wavel=float(wavel.to_value(apu.m)),
-                frequency=float(freq.to_value(apu.Hz)),
+                wavel=wavel.to_value(apu.m),
+                frequency=freq.to_value(apu.Hz),
                 illumination=illum_func.__qualname__,
-                meanel=float(meanel.to_value(apu.deg)),
+                meanel=meanel.to_value(apu.deg),
                 fft_resolution=resolution,
                 box_factor=box_factor,
                 )

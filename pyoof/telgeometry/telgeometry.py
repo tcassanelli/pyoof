@@ -128,6 +128,7 @@ def block_effelsberg(x, y):
 
     # Angle shade effect in aperture plane
     alpha = 20 * apu.deg  # triangle angle
+    # alpha = 10 * apu.deg  # triangle angle
 
     block = np.zeros(x.shape)  # or y.shape same
     block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
