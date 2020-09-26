@@ -45,7 +45,7 @@ recursive-include pyoof *.npz *.npy
 include pyoof/data/config_params.yml              # config file parameters
 include pyoof/data/pyoof.mplstyle                 # Matplotlib style plots
 include pyoof/data/example0.fits                  # example fits
-include pyoof/data/lookup_effelsberg.txt          # lookup table Effelsberg
+include pyoof/data/lookup_effelsberg.data         # lookup table Effelsberg
 
 # Data for pytest
 include pyoof/tests/data/*.npy

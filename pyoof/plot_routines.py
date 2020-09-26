@@ -18,7 +18,8 @@ from .aux_functions import uv_ratio
 from .math_functions import norm
 
 __all__ = [
-    'plot_beam', 'plot_data', 'plot_phase', 'plot_variance', 'plot_fit_path'
+    'plot_beam', 'plot_beam_data', 'plot_phase', 'plot_phase_data',
+    'plot_variance', 'plot_fit_path'
     ]
 
 # Plot style added from relative path
@@ -196,7 +197,7 @@ def plot_beam(
     return fig
 
 
-def plot_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
+def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     """
     Real data beam maps, :math:`P^\\mathrm{obs}(x, y)`, figures given
     given 3 out-of-focus radial offsets, :math:`d_z`.
@@ -378,6 +379,67 @@ def plot_phase(K_coeff, tilt, pr, title):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.03)
     cb = fig.colorbar(im, cax=cax)
+    cb.ax.set_ylabel(cbartitle)
+
+    ax.set_title(title)
+    ax.set_ylabel('$y$ m')
+    ax.set_xlabel('$x$ m')
+    ax.grid(False)
+
+    fig.tight_layout()
+
+    return fig
+
+
+def plot_phase_data(phase_data, pr, title):
+    """
+    Aperture phase distribution (phase-error), :math:`\\varphi(x, y)`, figure.
+    The plot is made by giving the phase_data in radians and the primary
+    reflector in length units. Notice that if the tilt term is not required
+    this has to be removed manually from the ``phase_data`` array.
+
+    Parameters
+    ----------
+    phase_data : `astropy.units.quantity.Quantity`
+        Aperture phase distribution data in angle or radian units.
+    pr : `astropy.units.quantity.Quantity`
+        Primary reflector radius in length units.
+    title : `str`
+        Figure title.
+
+    Returns
+    -------
+    fig : `~matplotlib.figure.Figure`
+        Aperture phase distribution represented for the telescope's primary
+        reflector.
+    """
+
+    _x = np.linspace(-pr, pr, phase_data.shape[0])
+    _y = np.linspace(-pr, pr, phase_data.shape[0])
+
+    extent = [-pr.to_value(apu.m), pr.to_value(apu.m)] * 2
+    levels = np.linspace(-2, 2, 9)  # radians
+
+    fig, ax = plt.subplots(figsize=(6, 5.8))
+
+    im = ax.imshow(X=phase_data.to_value(apu.rad), extent=extent)
+
+    # Partial solution for contour Warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        ax.contour(
+            _x.to_value(apu.m),
+            _y.to_value(apu.m),
+            phase_data.to_value(apu.rad),
+            levels=levels,
+            colors='k',
+            alpha=0.3
+            )
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="3%", pad=0.03)
+    cb = fig.colorbar(im, cax=cax)
+    cbartitle = '$\\varphi(x, y)$ amplitude rad'
     cb.ax.set_ylabel(cbartitle)
 
     ax.set_title(title)
@@ -588,7 +650,7 @@ def plot_fit_path(
     corr = np.genfromtxt(os.path.join(path_pyoof, 'corr_n{}.csv'.format(n)))
 
     if n == 1:
-        fig_data = plot_data(
+        fig_data = plot_beam_data(
             u_data=u_data,
             v_data=v_data,
             beam_data=beam_data,
@@ -624,7 +686,7 @@ def plot_fit_path(
         pr=telgeo[2]
         )
 
-    fig_res = plot_data(
+    fig_res = plot_beam_data(
         u_data=u_data,
         v_data=v_data,
         beam_data=res,

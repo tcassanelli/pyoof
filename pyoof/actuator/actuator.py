@@ -62,8 +62,10 @@ class EffelsbergActuator():
 
         if path_lookup is None:
             self.path_lookup = get_pkg_data_filename(
-                '../data/lookup_effelsberg.txt'
+                '../data/lookup_effelsberg.data'
                 )
+        else:
+            self.path_lookup = path_lookup
 
         self.alpha_lookup, self.actuator_sr_lookup = self.read_lookup()
         self.phase_pr_lookup = self.transform(self.actuator_sr_lookup)
@@ -82,13 +84,17 @@ class EffelsbergActuator():
         """
 
         # transforming zenith angels to elevation angles in look-up table
+        file_open = open(self.path_lookup, "r")
+        file_read = file_open.read()
+        file_open.close()
+
         alpha_lookup = [7, 10, 20, 30, 32, 40, 50, 60, 70, 80, 90] * apu.deg
         names = [
             'NR', 'N', 'ffff'
             ] + alpha_lookup.value.astype(int).astype(str).tolist()
 
         lookup_table = QTable.read(
-            self.path_lookup, names=names, format='ascii'
+            file_read.split('**ENDE**')[0], names=names, format='ascii'
             )
 
         for n in names[3:]:
@@ -299,6 +305,7 @@ class EffelsbergActuator():
                 row = np.around(
                     lookup_table[:, k], 0).astype(np.int).astype(str)
                 file.write(f'NR {k + 1} ffff ' + '  '.join(tuple(row)) + '\n')
+            file.write('**ENDE**\n')
 
     def fit_zpoly(self, phase_pr, alpha):
         """
