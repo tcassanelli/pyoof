@@ -3,7 +3,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=12:00:00
 #SBATCH --job-name pyoof_run
-#SBATCH --output=/scratch/v/vanderli/cassane/output/mpi_ex_%j.txt
+#SBATCH --output=/scratch/v/vanderli/cassane/output/pyoof_%j.txt
 #SBATCH --mail-type=ALL
 
 module load texlive
@@ -11,8 +11,8 @@ module load texlive
 cd $SCRATCH
 
 # INPUT 
-# file="pyoof_effelsberg.py"
-file="create_lookup.py"
+file="pyoof_effelsberg.py"
+# file="create_lookup.py"
 
 directory="/home/v/vanderli/cassane/pyoof/scripts/"
 path2file=$directory$file
