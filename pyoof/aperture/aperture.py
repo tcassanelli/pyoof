@@ -303,6 +303,7 @@ def phase(K_coeff, tilt, pr, resolution=1000):
         _K_coeff[1] = 0  # For coefficient K(-1, 1) = 0
         _K_coeff[2] = 0  # For coefficient K(1, 1) = 0
 
+    # TODO: change resolution name here, not the same as the one in radiation_pattern
     x = np.linspace(-pr, pr, resolution)
     y = np.linspace(-pr, pr, resolution)
     x_grid, y_grid = np.meshgrid(x, y)
