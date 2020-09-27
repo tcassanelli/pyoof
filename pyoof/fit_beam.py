@@ -576,10 +576,10 @@ def fit_zpoly(
                 obs_object=obs_object,
                 obs_date=obs_date,
                 d_z=d_z.to_value(apu.m).tolist(),
-                wavel=wavel.to_value(apu.m),
-                frequency=freq.to_value(apu.Hz),
+                wavel=float(wavel.to_value(apu.m)),
+                frequency=float(freq.to_value(apu.Hz)),
                 illumination=illum_func.__qualname__,
-                meanel=meanel.to_value(apu.deg),
+                meanel=float(meanel.to_value(apu.deg)),
                 fft_resolution=resolution,
                 box_factor=box_factor,
                 )
