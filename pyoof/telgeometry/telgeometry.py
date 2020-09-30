@@ -100,7 +100,7 @@ def opd_manual(Fp, F):
     return opd_func
 
 
-def block_effelsberg(x, y):
+def block_effelsberg(alpha=10 * apu.deg):
     """
     Truncation in the aperture (amplitude) distribution, :math:`B(x, y)`,
     given by the telescope's structure; i.e. support legs, sub-reflector and
@@ -112,10 +112,14 @@ def block_effelsberg(x, y):
         Grid value for the :math:`x` variable in length units.
     y : `~astropy.units.quantity.Quantity`
         Grid value for the :math:`y` variable in length units.
+    alpha : `~astropy.units.quantity.Quantity`
+        Inclination of the shade effect done by the support legs on the
+        aperture plane, a larger angle will have a broader shade. It is
+        measured in angle units.
 
     Returns
     -------
-    block : `~astropy.units.quantity.Quantity`
+    block_func : `function`
         Aperture (amplitude) distribution truncation, :math:`B(x, y)`. Values
         that are zero correspond to blocked values.
     """
@@ -126,53 +130,51 @@ def block_effelsberg(x, y):
     L = 20 * apu.m     # Length support structure (from the edge of the sr)
     a = 1 * apu.m      # Half-width support structure
 
-    # Angle shade effect in aperture plane
-    alpha = 20 * apu.deg  # triangle angle
-    # alpha = 10 * apu.deg  # triangle angle
+    def block_func(x, y):
+        block = np.zeros(x.shape)  # or y.shape same
+        block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
 
-    block = np.zeros(x.shape)  # or y.shape same
-    block[(x ** 2 + y ** 2 < pr ** 2) & (x ** 2 + y ** 2 > sr ** 2)] = 1
+        block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
+        block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
+        # block[(x ** 2 + y ** 2 < sr ** 2)] = 0.8
 
-    block[(-(sr + L) < x) & (x < (sr + L)) & (-a < y) & (y < a)] = 0
-    block[(-(sr + L) < y) & (y < (sr + L)) & (-a < x) & (x < a)] = 0
-    # block[(x ** 2 + y ** 2 < sr ** 2)] = 0.8
+        csc2 = np.sin(alpha) ** (-2)  # squared cosecant
 
-    csc2 = np.sin(alpha) ** (-2)  # squared cosecant
+        # base of the triangle
+        d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
 
-    # base of the triangle
-    d = (-a + np.sqrt(a ** 2 - (a ** 2 - pr ** 2) * csc2)) / csc2
+        # points for the triangle coordinates
+        A = sr + L
+        B = a
+        C = d / np.tan(alpha)
+        D = a + d
 
-    # points for the triangle coordinates
-    A = sr + L
-    B = a
-    C = d / np.tan(alpha)
-    D = a + d
+        y1 = line_equation((A, B), (C, D), x)
+        y2 = line_equation((A, -B), (C, -D), x)
+        x3 = line_equation((-A, B), (-C, D), y)
+        x4 = line_equation((-A, -B), (-C, -D), y)
+        y5 = line_equation((-A, -B), (-C, -D), x)
+        y6 = line_equation((-A, B), (-C, D), x)
+        x7 = line_equation((A, -B), (C, -D), y)
+        x8 = line_equation((A, B), (C, D), y)
 
-    y1 = line_equation((A, B), (C, D), x)
-    y2 = line_equation((A, -B), (C, -D), x)
-    x3 = line_equation((-A, B), (-C, D), y)
-    x4 = line_equation((-A, -B), (-C, -D), y)
-    y5 = line_equation((-A, -B), (-C, -D), x)
-    y6 = line_equation((-A, B), (-C, D), x)
-    x7 = line_equation((A, -B), (C, -D), y)
-    x8 = line_equation((A, B), (C, D), y)
+        def circ(s):
+            return np.sqrt(np.abs(pr ** 2 - s ** 2))
 
-    def circ(s):
-        return np.sqrt(np.abs(pr ** 2 - s ** 2))
+        block[(A < x) & (C > x) & (y1 > y) & (y2 < y)] = 0
+        block[(pr > x) & (C < x) & (circ(x) > y) & (-circ(x) < y)] = 0
 
-    block[(A < x) & (C > x) & (y1 > y) & (y2 < y)] = 0
-    block[(pr > x) & (C < x) & (circ(x) > y) & (-circ(x) < y)] = 0
+        block[(-A > y) & (-C < y) & (x4 < x) & (x3 > x)] = 0
+        block[(-pr < y) & (-C > y) & (circ(y) > x) & (-circ(y) < x)] = 0
 
-    block[(-A > y) & (-C < y) & (x4 < x) & (x3 > x)] = 0
-    block[(-pr < y) & (-C > y) & (circ(y) > x) & (-circ(y) < x)] = 0
+        block[(-A > x) & (-C < x) & (y5 < y) & (y6 > y)] = 0
+        block[(-pr < x) & (-C > x) & (circ(x) > y) & (-circ(x) < y)] = 0
 
-    block[(-A > x) & (-C < x) & (y5 < y) & (y6 > y)] = 0
-    block[(-pr < x) & (-C > x) & (circ(x) > y) & (-circ(x) < y)] = 0
+        block[(A < y) & (C > y) & (x7 < x) & (x8 > x)] = 0
+        block[(pr > y) & (C < y) & (circ(x) > y) & (-circ(x) < y)] = 0
+        return block
 
-    block[(A < y) & (C > y) & (x7 < x) & (x8 > x)] = 0
-    block[(pr > y) & (C < y) & (circ(x) > y) & (-circ(x) < y)] = 0
-
-    return block
+    return block_func
 
 
 def block_manual(pr, sr, a, L):
