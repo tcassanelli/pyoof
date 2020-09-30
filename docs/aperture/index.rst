@@ -186,7 +186,7 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
     xx, yy = np.meshgrid(x, x)
 
     # For these functions see telgeometry sub-package
-    telgeo = [telgeometry.block_effelsberg, telgeometry.opd_effelsberg, pr]
+    telgeo = [telgeometry.block_effelsberg(), telgeometry.opd_effelsberg, pr]
 
     Ea = []
     for d_z in [-2.2, 0, 2.2] * u.cm:
@@ -247,7 +247,7 @@ In contrast the voltage reception pattern has the same inputs, except for the `~
     taper = np.random.randint(-20, -8) * u.dB  # random illumination taper
     I_coeff = [1, taper, 0 * u.m, 0 * u.m]
 
-    telgeo = [telgeometry.block_effelsberg, telgeometry.opd_effelsberg, pr]
+    telgeo = [telgeometry.block_effelsberg(), telgeometry.opd_effelsberg, pr]
 
     F = aperture.radiation_pattern(
         K_coeff=K_coeff,

@@ -2,16 +2,16 @@
 bound_max:
 - 1       # i_amp (illumination amplitude)
 - -8      # c_dB (illumination taper)
-- 0.01   # x0 (illumination x-axis offset)
-- 0.01   # y0 (illumination y-axis offset)
-- 5       # K(0, 0) (First Zernike circle polynomial coefficient)
+- 0.001   # x0 (illumination x-axis offset)
+- 0.001   # y0 (illumination y-axis offset)
+- 1       # K(0, 0) (First Zernike circle polynomial coefficient)
 
 bound_min:
 - 0       # i_amp
 - -25     # c_dB
-- -0.01  # x0
-- -0.01  # y0
-- -5      # K(0, 0)
+- -0.001  # x0
+- -0.001  # y0
+- -1      # K(0, 0)
 
 # not commented means excluded parameter
 excluded:

@@ -284,7 +284,7 @@ The properties of the receiver and the telescope can be found in the sub-package
     # telescope = [block_dist, opd_func, pr, name]
     telescope = dict(
         effelsberg=[
-            telgeometry.block_effelsberg,
+            telgeometry.block_effelsberg(),
             telgeometry.opd_effelsberg,
             pr,
             'effelsberg'
