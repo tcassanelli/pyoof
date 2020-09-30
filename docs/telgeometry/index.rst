@@ -37,7 +37,7 @@ The blockage distribution corresponds to the elements that block incoming radiat
     x = np.linspace(-pr, pr, 1000)
     xx, yy = np.meshgrid(x, x)
 
-    B = telgeometry.block_effelsberg(xx, yy)
+    B = telgeometry.block_effelsberg()(xx, yy)
 
     fig, ax  = plt.subplots()
     ax.imshow(B, extent=[-pr.value, pr.value] * 2, cmap='viridis')

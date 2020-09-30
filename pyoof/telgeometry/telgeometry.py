@@ -100,7 +100,7 @@ def opd_manual(Fp, F):
     return opd_func
 
 
-def block_effelsberg(alpha=10 * apu.deg):
+def block_effelsberg(alpha=20 * apu.deg):
     """
     Truncation in the aperture (amplitude) distribution, :math:`B(x, y)`,
     given by the telescope's structure; i.e. support legs, sub-reflector and

@@ -27,7 +27,7 @@ d_z = 0.022 * apu.m
 wavel = 0.0093685143125 * apu.m
 
 telgeo = [
-    pyoof.telgeometry.block_effelsberg,
+    pyoof.telgeometry.block_effelsberg(alpha=20 * apu.deg),
     pyoof.telgeometry.opd_effelsberg,
     pr
     ]

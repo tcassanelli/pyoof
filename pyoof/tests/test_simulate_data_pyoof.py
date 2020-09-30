@@ -22,7 +22,7 @@ d_z = [2.2, 0, -2.2] * apu.cm              # radial offset
 
 # Making example for the Effelsberg telescope
 effelsberg_telescope = [
-    pyoof.telgeometry.block_effelsberg,  # blockage distribution
+    pyoof.telgeometry.block_effelsberg(alpha=20 * apu.deg),  # blockage
     pyoof.telgeometry.opd_effelsberg,    # OPD function
     50. * apu.m,                         # primary reflector radius
     'effelsberg'                         # telescope name

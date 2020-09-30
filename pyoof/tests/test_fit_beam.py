@@ -23,7 +23,7 @@ d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 noise_level = .2                                # noise added to gen data
 
 effelsberg_telescope = [
-    pyoof.telgeometry.block_effelsberg,         # blockage distribution
+    pyoof.telgeometry.block_effelsberg(alpha=20 * apu.deg),  # blockage
     pyoof.telgeometry.opd_effelsberg,           # OPD function
     50. * apu.m,                                # primary reflector radius m
     'effelsberg'                                # telescope name

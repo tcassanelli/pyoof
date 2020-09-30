@@ -47,7 +47,8 @@ def test_opd_manual():
 
 def test_block_effelsberg():
 
-    _block_effelsberg = pyoof.telgeometry.block_effelsberg(x=xx, y=yy)
+    _block_effelsberg = pyoof.telgeometry.block_effelsberg(
+        alpha=20 * apu.deg)(x=xx, y=yy)
 
     block_effelsberg_true = np.load(
         get_pkg_data_filename('data/block_effelsberg.npy')
