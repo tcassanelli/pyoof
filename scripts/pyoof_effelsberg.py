@@ -33,6 +33,13 @@ telescope = dict(
         telgeometry.opd_effelsberg,
         pr,
         'effelsberg (sub-reflector only blockage)'
+        ],
+    effelsberg_empty=[
+        telgeometry.block_manual(
+            pr=50 * u.m, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
+        telgeometry.opd_effelsberg,
+        pr,
+        'effelsberg (sub-reflector only blockage)'
         ]
     )
 
@@ -47,7 +54,8 @@ def compute_phase_error(pathfits, order_max):
     [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-    for configuration in telescope.keys():
+    # for configuration in telescope.keys():
+    for configuration in ['effelsberg_empty']:
         fit_zpoly(
             data_info=data_info,
             data_obs=[beam_data, u_data, v_data],
@@ -56,7 +64,7 @@ def compute_phase_error(pathfits, order_max):
             # illum_func=aperture.illum_gauss,
             telescope=telescope[configuration],
             fit_previous=True,                   # True is recommended
-            resolution=2 ** 9,         # standard is 2 ** 8
+            resolution=2 ** 8,         # standard is 2 ** 8
             box_factor=5,              # box_size = 5 * pr
             config_params_file=None,   # default or add path config_file.yaml
             make_plots=True,           # for now testing only the software
@@ -67,8 +75,8 @@ def compute_phase_error(pathfits, order_max):
 
 
 if __name__ == '__main__':
-    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2020/Sep2020/*.fits'
-    pth2data = '/scratch/v/vanderli/cassane/pyoof_data/Sep2020/*.fits'
+    pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2020/Sep2020/*.fits'
+    # pth2data = '/scratch/v/vanderli/cassane/pyoof_data/Sep2020/*.fits'
     files = glob.glob(pth2data)
 
     for _f in files:
