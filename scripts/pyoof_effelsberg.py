@@ -54,8 +54,8 @@ def compute_phase_error(pathfits, order_max):
     [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
     [beam_data, u_data, v_data] = data_obs
 
-    # for configuration in telescope.keys():
-    for configuration in ['effelsberg_empty']:
+    for configuration in telescope.keys():
+    # for configuration in ['effelsberg_empty']:
         fit_zpoly(
             data_info=data_info,
             data_obs=[beam_data, u_data, v_data],
