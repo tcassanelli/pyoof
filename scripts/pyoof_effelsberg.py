@@ -75,7 +75,8 @@ def compute_phase_error(pathfits, order_max):
 
 
 if __name__ == '__main__':
-    pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2020/Sep2020/*.fits'
+    pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec2020/*.fits'
+    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2020/Sep2020/*.fits'
     # pth2data = '/scratch/v/vanderli/cassane/pyoof_data/Sep2020/*.fits'
     files = glob.glob(pth2data)
 
