@@ -6,6 +6,14 @@ import glob
 from astropy import units as u
 from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 
+import mpi4py.rc
+mpi4py.rc.threads = False
+
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
+
 # telescope = [blockage, delta, pr, name]
 pr = 50 * u.m
 telescope = dict(
@@ -69,16 +77,17 @@ def compute_phase_error(pathfits, order_max):
             config_params_file=None,   # default or add path config_file.yaml
             make_plots=True,           # for now testing only the software
             verbose=2,
-            work_dir=None
-            # work_dir='/scratch/v/vanderli/cassane'
+            work_dir=None,
+            work_dir='/scratch/v/vanderli/cassane'
             )
 
 
-if __name__ == '__main__':
-    pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec2020/*.fits'
-    # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data2020/Sep2020/*.fits'
-    # pth2data = '/scratch/v/vanderli/cassane/pyoof_data/Sep2020/*.fits'
-    files = glob.glob(pth2data)
+comm.Barrier()
+pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec2020/*.fits'
+# pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec2019/*.fits'
 
-    for _f in files:
-        compute_phase_error(pathfits=_f, order_max=6)
+files = glob.glob(pth2data)
+files_per_rank = np.array_split(files, size)
+
+for _f in files[rank]:
+    compute_phase_error(pathfits=_f, order_max=6)
