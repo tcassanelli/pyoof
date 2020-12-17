@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Author: Tomas Cassanelli
+import numpy as np
 import glob
 from astropy import units as u
 from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
@@ -77,7 +78,6 @@ def compute_phase_error(pathfits, order_max):
             config_params_file=None,   # default or add path config_file.yaml
             make_plots=True,           # for now testing only the software
             verbose=2,
-            work_dir=None,
             work_dir='/scratch/v/vanderli/cassane'
             )
 
