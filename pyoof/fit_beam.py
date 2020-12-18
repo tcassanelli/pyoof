@@ -424,12 +424,12 @@ def fit_zpoly(
 
     # Storing files in pyoof_out directory
     if not os.path.exists(os.path.join(work_dir, 'pyoof_out')):
-        os.makedirs(os.path.join(work_dir, 'pyoof_out'))
+        os.makedirs(os.path.join(work_dir, 'pyoof_out'), exist_ok=True)
 
     for j in ["%03d" % i for i in range(101)]:
         name_dir = os.path.join(work_dir, 'pyoof_out', name + '-' + j)
         if not os.path.exists(name_dir):
-            os.makedirs(name_dir)
+            os.makedirs(name_dir, exist_ok=True)
             break
 
     print(
