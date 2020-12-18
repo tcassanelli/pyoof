@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --nodes=4
-#SBATCH --ntasks-per-node=5
+#SBATCH --nodes=5
+#SBATCH --ntasks-per-node=3
 #SBATCH --time=12:00:00
 #SBATCH --job-name pyoof_run
 #SBATCH --output=/scratch/v/vanderli/cassane/output/pyoof_%j.txt
@@ -23,4 +23,4 @@ path2file=$directory$file
 APY3="/home/v/vanderli/cassane/anaconda3/bin/python"
 
 # # EXECUTION COMMAND
-mpirun -np 20 $APY3 $path2file
+mpirun -np 15 $APY3 $path2file
