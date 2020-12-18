@@ -13,7 +13,7 @@ module load texlive
 cd $SCRATCH
 
 # INPUT 
-file="pyoof_effelsberg.py"
+file="pyoof_effelsberg_mpi.py"
 # file="create_lookup.py"
 
 directory="/home/v/vanderli/cassane/pyoof/scripts/"
