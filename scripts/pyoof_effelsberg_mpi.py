@@ -48,7 +48,7 @@ telescope = dict(
             pr=50 * u.m, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
         telgeometry.opd_effelsberg,
         pr,
-        'effelsberg (sub-reflector only blockage)'
+        'effelsberg (no blockage)'
         ]
     )
 
@@ -72,7 +72,7 @@ def compute_phase_error(pathfits, order_max):
             illum_func=aperture.illum_pedestal,
             # illum_func=aperture.illum_gauss,
             telescope=telescope[configuration],
-            fit_previous=True,                   # True is recommended
+            fit_previous=True,         # True is recommended
             resolution=2 ** 8,         # standard is 2 ** 8
             box_factor=5,              # box_size = 5 * pr
             config_params_file=None,   # default or add path config_file.yaml
@@ -83,7 +83,7 @@ def compute_phase_error(pathfits, order_max):
 
 
 comm.Barrier()
-# pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec2020/*.fits'
+
 pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec*/*[!offset].fits'
 
 files = glob.glob(pth2data)

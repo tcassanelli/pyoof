@@ -18,88 +18,118 @@ active surface.
 """
 
 # we need to call the output from the pyoof
-path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data2019/pyoof_out'
-# path_pyoof_out = '/scratch/v/vanderli/cassane/pyoof_data/pyoof_out'
-path2save = os.path.join(path_pyoof_out, 'grav_deformation')
+# path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data2019/pyoof_out'
+path_pyoof_out = '/scratch/v/vanderli/cassane/OOFH/pyoof_out'
+path2save = '/scratch/v/vanderli/cassane/OOFH'
 
-actuator = EffelsbergActuator(
-    wavel=7 * u.mm,
-    nrot=3,
-    sign=-1,
-    order=5,
-    sr=3.25 * u.m,
-    pr=50 * u.m,
-    resolution=1000,
-    )
+# nrot = 3
+# sign = -1
 
-# reading data from the pyoof_out
-files = glob.glob(os.path.join(path_pyoof_out, '*-000'))
-alpha_obs = np.zeros((len(files))) << u.deg
-phase_pr_obs = np.zeros(
-    (len(files), actuator.resolution, actuator.resolution)) << u.rad
-for k, _f in enumerate(files):
+import mpi4py.rc
+mpi4py.rc.threads = False
 
-    with open(os.path.join(_f, 'pyoof_info.yml'), 'r') as inputfile:
-        pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
 
-    alpha_obs[k] = pyoof_info['meanel'] * u.deg
-    phase_pr_obs[k, :, :] = np.genfromtxt(
-        os.path.join(_f, f'phase_n{actuator.n}.csv')
-        ) * u.rad
+nrot = [0, 1, 2, 3][rank]
 
-# Generating the G coeff for the look-up table
-try:
-    path_G_coeff_lookup = os.path.join(
-        path2save, f'G_coeff_lookup_{actuator.wavel.to_value(u.mm)}mm.npy'
+for sign in [1, -1]:
+
+    if sign == -1:
+        signl = 'neg'
+    else:
+        signl = 'pos'
+
+    actuator = EffelsbergActuator(
+        wavel=7 * u.mm,
+        nrot=nrot,
+        sign=sign,
+        order=5,
+        sr=3.25 * u.m,
+        pr=50 * u.m,
+        resolution=1000,
         )
-    G_coeff_lookup = np.load(path_G_coeff_lookup, allow_pickle=True)
-    # G_coeff.shape = (21, 3)
 
-except FileNotFoundError:
+    # reading data from the pyoof_out
+    files = glob.glob(os.path.join(path_pyoof_out, '*-000'))
 
-    if not os.path.exists(path2save):
-        os.makedirs(path2save, exist_ok=True)
+    alpha_obs = np.zeros((len(files))) << u.deg
+    phase_pr_obs = np.zeros(
+        (len(files), actuator.resolution, actuator.resolution)) << u.rad
+    for k, _f in enumerate(files):
 
-    G_coeff_lookup = actuator.fit_all(
-        phase_pr=actuator.phase_pr_lookup,
-        alpha=actuator.alpha_lookup
+        with open(os.path.join(_f, 'pyoof_info.yml'), 'r') as inputfile:
+            pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
+
+        alpha_obs[k] = pyoof_info['meanel'] * u.deg
+        phase_pr_obs[k, :, :] = np.genfromtxt(
+            os.path.join(_f, f'phase_n{actuator.n}.csv')
+            ) * u.rad
+
+    # Generating the G coeff for the look-up table
+    try:
+        path_G_coeff_lookup = os.path.join(
+            path2save, f'G_coeff_lookup_nrot{nrot}_sign{signl}_{actuator.wavel.to_value(u.mm)}mm.npy'
+            )
+        G_coeff_lookup = np.load(path_G_coeff_lookup, allow_pickle=True)
+        # G_coeff.shape = (21, 3)
+
+    except FileNotFoundError:
+
+        if not os.path.exists(path2save):
+            os.makedirs(path2save, exist_ok=True)
+
+        G_coeff_lookup = actuator.fit_all(
+            phase_pr=actuator.phase_pr_lookup,
+            alpha=actuator.alpha_lookup
+            )[0]
+
+        np.save(
+            file=path_G_coeff_lookup[:-4],
+            arr=G_coeff_lookup
+            )
+
+    # Generating the phase from the original look-up table
+    phase_pr_lookup = actuator.generate_phase_pr(
+        G_coeff=G_coeff_lookup,
+        alpha=alpha_obs
+        )
+
+    # Corrected phase the observed minus the original look-up table
+    phase_pr_real = phase_pr_obs - phase_pr_lookup
+
+    # TODO: not so sure about this minus sign, since the observed phase already has
+    # the correction should we subtract it or add it to the real phase? I guess
+    # it would depend on the true orientation nrot and sign
+
+    # Now we calculate the G coeff for the real case
+    G_coeff_real = actuator.fit_all(
+        phase_pr=phase_pr_real,
+        alpha=alpha_obs
         )[0]
 
-    np.save(
-        file=path_G_coeff_lookup[:-4],
-        arr=G_coeff_lookup
-        )
+    # transformation to the phase in the pr to the actuators in the sr
+    # and find values for the look-up table elevations
 
-# Generating the phase from the original look-up table
-phase_pr_lookup = actuator.generate_phase_pr(
-    G_coeff=G_coeff_lookup,
-    alpha=alpha_obs
-    )
-
-# Corrected phase the observed minus the original look-up table
-phase_pr_real = phase_pr_obs - phase_pr_lookup
-
-# TODO: not so sure about this minus sign, since the observed phase already has
-# the correction should we subtract it or add it to the real phase? I guess
-# it would depend on the true orientation nrot and sign
-
-# Now we calculate the G coeff for the real case
-G_coeff_real = actuator.fit_all(
-    phase_pr=phase_pr_real,
-    alpha=alpha_obs
-    )[0]
-
-# transformation to the phase in the pr to the actuators in the sr
-# and find values for the look-up table elevations
-actuator_sr_real = actuator.itransform(
-    phase_pr=actuator.generate_phase_pr(
+    # real phase in terms of the lookup table elevation angles
+    phase_pr_real_al = actuator.generate_phase_pr(
         G_coeff=G_coeff_real,
         alpha=actuator.alpha_lookup
         )
-    )
+    np.save(
+        file=os.path.join(path2save, f'phase_real_al_nrot{nrot}_sign{signl}'),
+        arr=phase_pr_real_al.to_value(u.rad)
+        )
 
-# Finally write the look-up table in .txt format
-actuator.write_lookup(
-    fname=os.path.join(path2save, 'lookup_table_Dec2019.txt'),
-    actuator_sr=actuator_sr_real
-    )
+    actuator_sr_real = actuator.itransform(
+        phase_pr=phase_pr_real_al
+        )
+
+    # Finally write the look-up table in .txt format
+    actuator.write_lookup(
+        fname=os.path.join(
+            path2save, f'lookup_nrot{nrot}_sign{signl}.txt'),
+        actuator_sr=actuator_sr_real
+        )
