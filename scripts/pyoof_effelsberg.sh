@@ -24,4 +24,4 @@ APY3="/home/v/vanderli/cassane/anaconda3/bin/python"
 
 # # EXECUTION COMMAND
 mpirun -np 15 $APY3 $path2file
-mpirun -np 4 $APY3 /home/v/vanderli/cassane/pyoof/scripts/create_lookup.py
+# mpirun -np 4 $APY3 /home/v/vanderli/cassane/pyoof/scripts/create_lookup.py

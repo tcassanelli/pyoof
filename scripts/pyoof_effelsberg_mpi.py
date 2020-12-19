@@ -78,16 +78,16 @@ def compute_phase_error(pathfits, order_max):
             config_params_file=None,   # default or add path config_file.yaml
             make_plots=True,           # for now testing only the software
             verbose=2,
-            work_dir='/scratch/v/vanderli/cassane/OOFH'
+            work_dir='/scratch/v/vanderli/cassane/OOFH2'
             )
 
 
 comm.Barrier()
 
-pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec*/*[!offset].fits'
+pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec*/*.fits'
 
 files = glob.glob(pth2data)
 files_per_rank = np.array_split(files, size)
 
 for _f in files_per_rank[rank]:
-    compute_phase_error(pathfits=_f, order_max=5)
+    compute_phase_error(pathfits=_f, order_max=6)
