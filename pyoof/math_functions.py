@@ -3,6 +3,7 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
+from scipy import interpolate
 from astropy import units as apu
 
 __all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms', 'norm', 'snr']
@@ -185,9 +186,25 @@ def snr(
         The signal-to-noise ratio.
     """
 
-    uu, vv = np.meshgrid(u_data, v_data)
+    if beam_data.ndim == 1:
+        u_ng = np.linspace(u_data.min(), u_data.max(), 300)
+        v_ng = np.linspace(v_data.min(), v_data.max(), 300)
+
+        beam_ng = interpolate.griddata(
+            # coordinates of grid points to interpolate from.
+            points=(u_data, v_data),
+            values=beam_data,
+            # coordinates of grid points to interpolate to.
+            xi=tuple(np.meshgrid(u_ng, v_ng)),
+            method='cubic'
+            )
+
+        uu, vv = np.meshgrid(u_ng, v_ng)
+    else:
+        uu, vv = np.meshgrid(u_data, v_data)
+
     std = np.nanstd(
-        beam_data[(uu - centre) ** 2 + (vv - centre) ** 2 < radius ** 2]
+        beam_ng[(uu - centre) ** 2 + (vv - centre) ** 2 < radius ** 2]
         )
 
     snr = np.nanmax(beam_data) / std
