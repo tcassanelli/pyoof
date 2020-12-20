@@ -582,7 +582,7 @@ def fit_zpoly(
                 meanel=float(meanel.to_value(apu.deg)),
                 fft_resolution=resolution,
                 box_factor=box_factor,
-                snr=snr(u_data[1], v_data[1], beam_data_norm[1])
+                snr=float(snr(u_data[1], v_data[1], beam_data_norm[1]))
                 )
 
             with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:
