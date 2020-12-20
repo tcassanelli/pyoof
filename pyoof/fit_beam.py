@@ -461,9 +461,6 @@ def fit_zpoly(
         # Beam normalization
         beam_data_norm = [norm(beam_data[i]) for i in range(3)]
 
-        print('u_data[1], v_data[1], beam_data_norm[1]', u_data[1], v_data[1], beam_data_norm[1])
-        beam_data_snr = snr(u_data[1], v_data[1], beam_data_norm[1])
-
         n = order                           # order polynomial to fit
         N_K_coeff = (n + 1) * (n + 2) // 2  # number of K(n, l) to fit
 
@@ -585,7 +582,7 @@ def fit_zpoly(
                 meanel=float(meanel.to_value(apu.deg)),
                 fft_resolution=resolution,
                 box_factor=box_factor,
-                snr=beam_data_snr
+                snr=snr(u_data[1], v_data[1], beam_data_norm[1])
                 )
 
             with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:

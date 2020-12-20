@@ -209,4 +209,4 @@ def snr(
 
     snr = np.nanmax(beam_data) / std
 
-    return snr
+    return snr.decompose().value
