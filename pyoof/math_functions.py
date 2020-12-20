@@ -200,13 +200,17 @@ def snr(
             )
 
         uu, vv = np.meshgrid(u_ng, v_ng)
+
+        std = np.nanstd(
+            beam_ng[(uu - centre) ** 2 + (vv - centre) ** 2 < radius ** 2]
+            )
+        snr = np.nanmax(beam_ng) / std
+
     else:
         uu, vv = np.meshgrid(u_data, v_data)
-
-    std = np.nanstd(
-        beam_ng[(uu - centre) ** 2 + (vv - centre) ** 2 < radius ** 2]
-        )
-
-    snr = np.nanmax(beam_data) / std
+        std = np.nanstd(
+            beam_data[(uu - centre) ** 2 + (vv - centre) ** 2 < radius ** 2]
+            )
+        snr = np.nanmax(beam_data) / std
 
     return snr.decompose().value
