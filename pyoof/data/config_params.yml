@@ -13,7 +13,7 @@ bound_min:
 - -0.001  # y0
 - -1      # K(0, 0)
 
-# not commented means excluded parameter
+# commented means included parameter
 excluded:
 - 0       # i_amp
 # - 1     # c_dB

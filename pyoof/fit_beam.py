@@ -12,7 +12,7 @@ import os
 import time
 import yaml
 from .aperture import radiation_pattern, phase
-from .math_functions import co_matrices, norm
+from .math_functions import co_matrices, norm, snr
 from .plot_routines import plot_fit_path
 from .aux_functions import store_data_csv, store_data_ascii
 
@@ -461,6 +461,8 @@ def fit_zpoly(
         # Beam normalization
         beam_data_norm = [norm(beam_data[i]) for i in range(3)]
 
+        beam_data_snr = snr(u_data[1], v_data[1], beam_data[1])
+
         n = order                           # order polynomial to fit
         N_K_coeff = (n + 1) * (n + 2) // 2  # number of K(n, l) to fit
 
@@ -582,6 +584,7 @@ def fit_zpoly(
                 meanel=float(meanel.to_value(apu.deg)),
                 fft_resolution=resolution,
                 box_factor=box_factor,
+                snr=beam_data_snr
                 )
 
             with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:

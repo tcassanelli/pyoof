@@ -3,8 +3,9 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
+from astropy import units as apu
 
-__all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms', 'norm']
+__all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms', 'norm', 'snr']
 
 
 def norm(P):
@@ -153,3 +154,42 @@ def rms(phase, circ=False):
         _rms = np.sqrt(np.nansum(np.square(phase)) / phase.size)
 
     return _rms
+
+
+def snr(
+    u_data, v_data, beam_data, centre=0.03 * apu.deg, radius=0.01 * apu.deg
+        ):
+
+    """
+    Computes a simple signal-to-noise ratio estimate for a centered beam (or
+    in focus) power patter.
+
+    Parameters
+    ----------
+    beam_data_norm : `np.ndarray`
+        The ``beam_data`` is an array with a single observed beam map in-focus,
+        :math:`P^\\mathrm{obs}(u, v)`, it can be normalized or not.
+    u_data : `~astropy.units.quantity.Quantity`
+        :math:`x` axis value for the single in-focus beam map.
+    v_data : `~astropy.units.quantity.Quantity`
+        :math:`y` axis value for the single in-focus beam map.
+    centre : `~astropy.units.quantity.Quantity`
+        Position where to measure the standard deviation, measured in angles
+        (map sky angles).
+    radius : `~astropy.units.quantity.Quantity`
+        Section in units of angles on where to measure the standard deviation.
+
+    Returns
+    -------
+    snr : `float`
+        The signal-to-noise ratio.
+    """
+
+    uu, vv = np.meshgrid(u_data, v_data)
+    std = np.nanstd(
+        beam_data[(uu - centre) ** 2 + (vv - centre) ** 2 < radius ** 2]
+        )
+
+    snr = np.nanmax(beam_data) / std
+
+    return snr
