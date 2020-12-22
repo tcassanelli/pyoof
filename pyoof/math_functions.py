@@ -26,14 +26,23 @@ def norm(P):
         Normalized power pattern.
     """
 
+    # none
+    # P_norm = P
+
     # normalization by it's maximum
     # P_norm = P / P.max()
 
     # normalization
     P_norm = (P - P.min()) / (P.max() - P.min())
 
+    # mean normalization
+    # P_norm = (P - P.mean()) / (P.max() - P.min())
+
     # standardization
     # P_norm = (P - P.mean()) / P.std()
+
+    # standardization
+    # P_norm = (P - P.mean()) / (P.std() * np.sqrt(P.size))
 
     return P_norm
 

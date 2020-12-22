@@ -10,38 +10,38 @@ from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 # telescope = [blockage, delta, pr, name]
 pr = 50 * u.m
 telescope = dict(
-    effelsberg_20deg=[
-        telgeometry.block_effelsberg(alpha=20 * u.deg),
-        telgeometry.opd_effelsberg,
-        pr,
-        'effelsberg (20 deg blockage)'
-        ],
+    # effelsberg_20deg=[
+    #     telgeometry.block_effelsberg(alpha=20 * u.deg),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (20 deg blockage)'
+    #     ],
     effelsberg_10deg=[
         telgeometry.block_effelsberg(alpha=10 * u.deg),
         telgeometry.opd_effelsberg,
         pr,
         'effelsberg (10 deg blockage)'
         ],
-    effelsberg_0deg=[
-        telgeometry.block_effelsberg(alpha=0 * u.deg),
-        telgeometry.opd_effelsberg,
-        pr,
-        'effelsberg (0 deg blockage)'
-        ],
-    effelsberg_sr_only=[
-        telgeometry.block_manual(
-            pr=50 * u.m, sr=3.25 * u.m, a=0 * u.m, L=0 * u.m),
-        telgeometry.opd_effelsberg,
-        pr,
-        'effelsberg (sub-reflector only blockage)'
-        ],
-    effelsberg_empty=[
-        telgeometry.block_manual(
-            pr=50 * u.m, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
-        telgeometry.opd_effelsberg,
-        pr,
-        'effelsberg (sub-reflector only blockage)'
-        ]
+    # effelsberg_0deg=[
+    #     telgeometry.block_effelsberg(alpha=0 * u.deg),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (0 deg blockage)'
+    #     ],
+    # effelsberg_sr_only=[
+    #     telgeometry.block_manual(
+    #         pr=pr, sr=3.25 * u.m, a=0 * u.m, L=0 * u.m),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (sub-reflector only blockage)'
+    #     ],
+    # effelsberg_empty=[
+    #     telgeometry.block_manual(
+    #         pr=pr, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (sub-reflector only blockage)'
+    #     ]
     )
 
 
@@ -70,12 +70,14 @@ def compute_phase_error(pathfits, order_max):
             config_params_file=None,   # default or add path config_file.yaml
             make_plots=True,           # for now testing only the software
             verbose=2,
-            work_dir='/scratch/v/vanderli/cassane/OOFH'
+            work_dir='/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/config_tests'
             )
 
 
-pth2data = '/home/v/vanderli/cassane/data/pyoof_Dec*/*offset*.fits'
-files = glob.glob(pth2data)
+pth2data = ['/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_66deg_5425-5443_LB-offset.fits']
+files = pth2data
+
+# files = glob.glob(pth2data)
 
 for _f in files:
     compute_phase_error(pathfits=_f, order_max=5)

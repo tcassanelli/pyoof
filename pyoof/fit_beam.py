@@ -128,10 +128,12 @@ def residual_true(
                 )
 
             # input interpolation function is the real beam grid
-            beam_model.append(intrp(np.array([
+            beam_model.append(
+                intrp(np.array([
                     u_data[i].to_value(apu.rad),
                     v_data[i].to_value(apu.rad)
-                    ]).T))
+                    ]).T)
+                )
             # TODO: fix this, there must be a nicer way to do it
             # units are lost when concatenating with np.array([])
 
@@ -520,6 +522,7 @@ def fit_zpoly(
                 ),
             bounds=tuple([bound_min_true, bound_max_true]),
             method='trf',
+            tr_solver='exact',
             verbose=verbose,
             max_nfev=None
             )
