@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --nodes=3
-#SBATCH --ntasks-per-node=3
-#SBATCH --time=12:00:00
+#SBATCH --nodes=8
+#SBATCH --ntasks-per-node=4
+#SBATCH --time=15:00:00
 #SBATCH --job-name pyoof_run
 #SBATCH --output=/scratch/v/vanderli/cassane/output/pyoof_%j.txt
 #SBATCH --mail-type=ALL
@@ -23,5 +23,5 @@ path2file=$directory$file
 APY3="/home/v/vanderli/cassane/anaconda3/bin/python"
 
 # # EXECUTION COMMAND
-mpirun -np 7 $APY3 $path2file
+mpirun -np 32 $APY3 $path2file
 # mpirun -np 4 $APY3 /home/v/vanderli/cassane/pyoof/scripts/create_lookup.py
