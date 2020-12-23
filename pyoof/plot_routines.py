@@ -154,7 +154,7 @@ def plot_beam(
 
     ax[1].set_yticklabels([])
     ax[2].set_yticklabels([])
-    ax[0].set_ylabel('$v$ {}'.format(angle))
+    ax[0].set_ylabel(f'$v$ {angle}')
 
     cax = [ax[i + 3] for i in range(3)]
 
@@ -178,7 +178,7 @@ def plot_beam(
             )
 
         ax[i].set_title(subtitle[i])
-        ax[i].set_xlabel('$u$ {}'.format(angle))
+        ax[i].set_xlabel(f'$u$ {angle}')
 
         # limits don't work with astropy units
         ax[i].set_ylim(*plim_v)
@@ -266,7 +266,7 @@ def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
 
     ax[1].set_yticklabels([])
     ax[2].set_yticklabels([])
-    ax[0].set_ylabel('$v$ {}'.format(angle))
+    ax[0].set_ylabel(f'$v$ {angle}')
 
     cax = [ax[i + 3] for i in range(3)]
 
@@ -303,7 +303,7 @@ def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
             linewidths=0.4
             )
 
-        ax[i].set_xlabel('$u$ {}'.format(angle))
+        ax[i].set_xlabel(f'$u$ {angle}')
         ax[i].set_title(subtitle[i])
         ax[i].grid(False)
 
@@ -626,7 +626,7 @@ def plot_fit_path(
 
     # Reading least squares minimization output
     n = order
-    fitpar = ascii.read(os.path.join(path_pyoof, 'fitpar_n{}.csv'.format(n)))
+    fitpar = ascii.read(os.path.join(path_pyoof, f'fitpar_n{n}.csv'))
 
     with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
         pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
@@ -636,7 +636,7 @@ def plot_fit_path(
 
     # Beam and residual
     beam_data = np.genfromtxt(os.path.join(path_pyoof, 'beam_data.csv'))
-    res = np.genfromtxt(os.path.join(path_pyoof, 'res_n{}.csv'.format(n)))
+    res = np.genfromtxt(os.path.join(path_pyoof, f'res_n{n}.csv'))
 
     # fixing astropy units
     u_data = np.genfromtxt(os.path.join(path_pyoof, 'u_data.csv')) * apu.rad
@@ -646,8 +646,8 @@ def plot_fit_path(
     d_z = np.array(pyoof_info['d_z']) * apu.m
 
     # Covariance and Correlation matrix
-    cov = np.genfromtxt(os.path.join(path_pyoof, 'cov_n{}.csv'.format(n)))
-    corr = np.genfromtxt(os.path.join(path_pyoof, 'corr_n{}.csv'.format(n)))
+    cov = np.genfromtxt(os.path.join(path_pyoof, f'cov_n{n}.csv'))
+    corr = np.genfromtxt(os.path.join(path_pyoof, f'corr_n{n}.csv'))
 
     if n == 1:
         fig_data = plot_beam_data(
@@ -713,12 +713,11 @@ def plot_fit_path(
         )
 
     if save:
-        fig_beam.savefig(os.path.join(path_plot, 'fitbeam_n{}.pdf'.format(n)))
-        fig_phase.savefig(
-            os.path.join(path_plot, 'fitphase_n{}.pdf'.format(n)))
-        fig_res.savefig(os.path.join(path_plot, 'residual_n{}.pdf'.format(n)))
-        fig_cov.savefig(os.path.join(path_plot, 'cov_n{}.pdf'.format(n)))
-        fig_corr.savefig(os.path.join(path_plot, 'corr_n{}.pdf'.format(n)))
+        fig_beam.savefig(os.path.join(path_plot, f'fitbeam_n{n}.pdf'))
+        fig_phase.savefig(os.path.join(path_plot, f'fitphase_n{n}.pdf'))
+        fig_res.savefig(os.path.join(path_plot, f'residual_n{n}.pdf'))
+        fig_cov.savefig(os.path.join(path_plot, f'cov_n{n}.pdf'))
+        fig_corr.savefig(os.path.join(path_plot, f'corr_n{n}.pdf'))
 
         if n == 1:
             fig_data.savefig(os.path.join(path_plot, 'obsbeam.pdf'))
