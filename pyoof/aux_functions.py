@@ -70,10 +70,10 @@ def extract_data_pyoof(pathfits):
     obs_object = hdulist[0].header['OBJECT']
     obs_date = hdulist[0].header['DATE_OBS']
 
-    beam_data = [hdulist[i].data['BEAM'] for i in range(1, 4)]
-    u_data = [hdulist[i].data['U'] * apu.rad for i in range(1, 4)]
-    v_data = [hdulist[i].data['V'] * apu.rad for i in range(1, 4)]
-    d_z = [hdulist[i].header['DZ'] for i in range(1, 4)] * apu.m
+    beam_data = np.array([hdulist[i].data['BEAM'] for i in range(1, 4)])
+    u_data = np.array([hdulist[i].data['U'] for i in range(1, 4)]) * apu.rad
+    v_data = np.array([hdulist[i].data['V'] for i in range(1, 4)]) * apu.rad
+    d_z = np.array([hdulist[i].header['DZ'] for i in range(1, 4)]) * apu.m
 
     data_file = [name, pthto]
     data_info = data_file + [obs_object, obs_date, freq, wavel, d_z, meanel]
@@ -123,11 +123,11 @@ def extract_data_effelsberg(pathfits):
     meanel = hdulist[0].header['MEANEL'] * apu.deg
     obs_object = hdulist[0].header['OBJECT']        # observed object
     obs_date = hdulist[0].header['DATE_OBS']        # observation date
-    d_z = [hdulist[i].header['DZ'] for i in pos] * apu.m
+    d_z = np.array([hdulist[i].header['DZ'] for i in pos]) * apu.m
 
-    beam_data = [hdulist[i].data['fnu'] for i in pos]
-    u_data = [hdulist[i].data['DX'] * apu.rad for i in pos]
-    v_data = [hdulist[i].data['DY'] * apu.rad for i in pos]
+    beam_data = np.array([hdulist[i].data['fnu'] for i in pos])
+    u_data = np.array([hdulist[i].data['DX'] for i in pos]) * apu.rad
+    v_data = np.array([hdulist[i].data['DY'] for i in pos]) * apu.rad
 
     # path or directory where the fits file is located
     pthto = os.path.split(pathfits)[0]
