@@ -22,7 +22,7 @@ __all__ = [
 
 
 def residual_true(
-    params, beam_data_norm, u_data, v_data, d_z, wavel, illum_func, telgeo,
+    params, beam_data, u_data, v_data, d_z, wavel, illum_func, telgeo,
     resolution, box_factor, interp
         ):
     """
@@ -36,15 +36,14 @@ def residual_true(
     params : `~numpy.ndarray`
         Two stacked arrays, the illumination and Zernike circle polynomials
         coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
-    beam_data_norm : `list`
-        The ``beam_data_norm`` is a list with the three observed beam maps,
-        :math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`, minus, zero and plus
-        out-of-focus. The data has to be initially normalized.
-    u_data : `list`
+    beam_data : `np.ndarray`
+        The ``beam_data`` is an array with the three observed beam maps,
+        :math:`P^\\mathrm{obs}(u, v)`, minus, zero and plus out-of-focus.
+    u_data : `~astropy.units.quantity.Quantity`
         :math:`x` axis value for the 3 beam maps in radians. The values have
         to be flatten, in one dimension, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
-    v_data : `list`
+    v_data : `~astropy.units.quantity.Quantity`
         :math:`y` axis value for the 3 beam maps in radians. The values have
         to be flatten, one dimensional, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
@@ -78,10 +77,9 @@ def residual_true(
         (`~numpy.fft.fft2`).
     interp : `bool`
         If `True`, it will process the correspondent interpolation between
-        the observed grid (:math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`) and
-        the computed grid (:math:`P_\\mathrm{norm}(u, v)`) for the FFT2
-        aperture distribution model (:math:`\\underline{E_\\mathrm{a}}(x,
-        y)`).
+        the observed grid (:math:`P^\\mathrm{obs}(u, v)`) and the computed
+        grid (:math:`P(u, v)`) for the FFT2 aperture distribution model
+        (:math:`\\underline{E_\\mathrm{a}}(x, y)`).
 
     Returns
     -------
@@ -94,11 +92,8 @@ def residual_true(
     """
 
     I_coeff, K_coeff = params[:4], params[4:]
-
-    # TODO: change this to a numpy array instead of list
-    beam_model = []
+    beam_model = np.zeros_like(beam_data)
     for i in range(3):
-
         u, v, F = radiation_pattern(
             I_coeff=I_coeff,
             K_coeff=K_coeff,
@@ -112,45 +107,32 @@ def residual_true(
 
         power_pattern = np.abs(F) ** 2
 
-        # Normalized power pattern model (Beam model)
-        power_norm = norm(power_pattern)
-
         if interp:
-            # # Generated beam u and v: wave-vectors -> radians
-            # u_rad = u * wavel  # radians
-            # v_rad = v * wavel  # radians
 
             # The calculated beam needs to be transformed!
             intrp = interpolate.RegularGridInterpolator(
                 points=(u.to_value(apu.rad), v.to_value(apu.rad)),
-                values=power_norm.T,    # data in grid
+                values=power_pattern.T,    # data in grid
                 method='linear'         # linear or nearest
                 )
 
             # input interpolation function is the real beam grid
-            beam_model.append(
+            beam_model[i, ...] = (
                 intrp(np.array([
-                    u_data[i].to_value(apu.rad),
-                    v_data[i].to_value(apu.rad)
+                    u_data[i, ...].to_value(apu.rad),
+                    v_data[i, ...].to_value(apu.rad)
                     ]).T)
                 )
-            # TODO: fix this, there must be a nicer way to do it
-            # units are lost when concatenating with np.array([])
-
         else:
-            beam_model.append(power_norm)
+            beam_model[i, ...] = power_pattern
 
-    beam_model_all = np.hstack(beam_model)
-    beam_data_all = np.hstack(beam_data_norm)
+    _residual_true = norm(beam_data) - norm(beam_model)
 
-    # Residual = data - model
-    _residual_true = beam_data_all - beam_model_all
-
-    return _residual_true
+    return _residual_true.flatten()
 
 
 def residual(
-    params, idx, N_K_coeff, beam_data_norm, u_data, v_data, d_z, wavel,
+    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, wavel,
     illum_func, telgeo, resolution, box_factor, interp, config_params
         ):
     """
@@ -174,15 +156,14 @@ def residual(
         Total number of Zernike circle polynomials coefficients to fit. It is
         obtained from the order to be fitted with the formula
         ``N_K_coeff = (n + 1) * (n + 2) // 2.``.
-    beam_data_norm : `list`
-        The ``beam_data_norm`` is a list with the three observed beam maps,
-        :math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`, minus, zero and plus
-        out-of-focus. The data has to be initially normalized.
-    u_data : `list`
+    beam_data : `np.ndarray`
+        The ``beam_data`` is an array with the three observed beam maps,
+        :math:`P^\\mathrm{obs}(u, v)`, minus, zero and plus out-of-focus.
+    u_data : `~astropy.units.quantity.Quantity`
         :math:`x` axis value for the 3 beam maps in radians. The values have
         to be flatten, in one dimension, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
-    v_data : `list`
+    v_data : `~astropy.units.quantity.Quantity`
         :math:`y` axis value for the 3 beam maps in radians. The values have
         to be flatten, one dimensional, and stacked in the same order as the
         ``d_z = [d_z-, 0., d_z+]`` values from each beam map.
@@ -216,10 +197,9 @@ def residual(
         (`~numpy.fft.fft2`).
     interp : `bool`
         If `True`, it will process the correspondent interpolation between
-        the observed grid (:math:`P^\\mathrm{obs}_\\mathrm{norm}(u, v)`) and
-        the computed grid (:math:`P_\\mathrm{norm}(u, v)`) for the FFT2
-        aperture distribution model (:math:`\\underline{E_\\mathrm{a}}(x,
-        y)`).
+        the observed grid (:math:`P^\\mathrm{obs}(u, v)`) and the computed
+        grid (:math:`P(u, v)`) for the FFT2 aperture distribution model
+        (:math:`\\underline{E_\\mathrm{a}}(x, y)`).
     config_params : `dict`
         Contains the values for the fixed parameters (excluded from the least
         squares minimization), by default four parameters are kept fixed,
@@ -249,7 +229,7 @@ def residual(
 
     _residual_true = residual_true(
         params=params_res,
-        beam_data_norm=beam_data_norm,
+        beam_data=beam_data,
         u_data=u_data,
         v_data=v_data,
         d_z=d_z,
@@ -454,14 +434,11 @@ def fit_zpoly(
 
         # Setting limits for plotting fitted beam
         plim = np.array([
-            u_data[0].min().to_value(apu.rad),
-            u_data[0].max().to_value(apu.rad),
-            v_data[0].min().to_value(apu.rad),
-            v_data[0].max().to_value(apu.rad)
-            ]) * u_data[0].unit
-
-        # Beam normalization
-        beam_data_norm = [norm(beam_data[i]) for i in range(3)]
+            u_data[0, ...].min().to_value(apu.rad),
+            u_data[0, ...].max().to_value(apu.rad),
+            v_data[0, ...].min().to_value(apu.rad),
+            v_data[0, ...].max().to_value(apu.rad)
+            ]) * u_data.unit
 
         n = order                           # order polynomial to fit
         N_K_coeff = (n + 1) * (n + 2) // 2  # number of K(n, l) to fit
@@ -508,7 +485,7 @@ def fit_zpoly(
             args=(               # Conserve this order in arguments!
                 idx,             # Index of parameters to be excluded (params)
                 N_K_coeff,       # Total Zernike circle polynomial coeff
-                beam_data_norm,  # Normalized beam maps
+                beam_data,       # Power pattern maps
                 u_data,          # x coordinate beam map
                 v_data,          # y coordinate beam map
                 d_z,             # Radial offset
@@ -585,7 +562,9 @@ def fit_zpoly(
                 meanel=float(meanel.to_value(apu.deg)),
                 fft_resolution=resolution,
                 box_factor=box_factor,
-                snr=float(snr(u_data[1], v_data[1], beam_data_norm[1]))
+                snr=float(
+                    snr(u_data[1, ...], v_data[1, ...], beam_data[1, ...])
+                    )
                 )
 
             with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:
@@ -598,8 +577,8 @@ def fit_zpoly(
 
         # To store large files in csv format
         save_to_csv = [
-            beam_data, u_data, v_data, res_optim, jac_optim, grad_optim,
-            _phase, cov_ptrue, cor_ptrue
+            beam_data, u_data.to_value(apu.rad), v_data.to_value(apu.rad),
+            res_optim, jac_optim, grad_optim, _phase, cov_ptrue, cor_ptrue
             ]
 
         store_data_csv(
