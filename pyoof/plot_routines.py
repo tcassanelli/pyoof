@@ -94,10 +94,12 @@ def plot_beam(
         :math:`0` and :math:`d_z^+`.
     """
 
-    u, v, F = [], [], []
-    for _d_z in d_z:
+    F = np.zeros((d_z.size, resolution, resolution), dtype=np.complex64)
+    u = np.zeros((d_z.size, resolution), dtype=np.float64) << apu.rad
+    v = np.zeros((d_z.size, resolution), dtype=np.float64) << apu.rad
+    for k, _d_z in enumerate(d_z):
 
-        _u, _v, _F = radiation_pattern(
+        u[k, :], v[k, :], F[k, ...] = radiation_pattern(
             K_coeff=K_coeff,
             I_coeff=I_coeff,
             d_z=_d_z,
@@ -108,12 +110,7 @@ def plot_beam(
             box_factor=box_factor
             )
 
-        u.append(_u)  # radians
-        v.append(_v)  # radians
-        F.append(_F)
-
-    power_pattern = np.abs(F) ** 2
-    power_norm = [norm(power_pattern[i]) for i in range(3)]
+    power_norm = norm(np.abs(F) ** 2, axis=(1, 2))
 
     # Limits, they need to be transformed to degrees
     if plim is None:
@@ -123,8 +120,8 @@ def plot_beam(
 
         # Finding central point for shifted maps
         uu, vv = np.meshgrid(_u, _v)
-        u_offset = uu[power_norm[1] == power_norm[1].max()][0]
-        v_offset = vv[power_norm[1] == power_norm[1].max()][0]
+        u_offset = uu[power_norm[1, ...] == power_norm[1, ...].max()][0]
+        v_offset = vv[power_norm[1, ...] == power_norm[1, ...].max()][0]
 
         plim = [
             (-s_bw + u_offset).to_value(apu.rad),
@@ -159,19 +156,25 @@ def plot_beam(
     cax = [ax[i + 3] for i in range(3)]
 
     for i in range(3):
-        vmin, vmax = power_norm[i].min(), power_norm[i].max()
+        vmin, vmax = power_norm[i, ...].min(), power_norm[i, ...].max()
 
         extent = [
-            u[i].to_value(angle).min(), u[i].to_value(angle).max(),
-            v[i].to_value(angle).min(), v[i].to_value(angle).max()
+            u[i, :].to_value(angle).min(), u[i, :].to_value(angle).max(),
+            v[i, :].to_value(angle).min(), v[i, :].to_value(angle).max()
             ]
         levels = np.linspace(vmin, vmax, 10)
 
-        im = ax[i].imshow(X=power_norm[i], extent=extent, vmin=vmin, vmax=vmax)
+        im = ax[i].imshow(
+            X=power_norm[i, ...],
+            extent=extent,
+            vmin=vmin,
+            vmax=vmax
+            )
+
         ax[i].contour(
-            u[i].to_value(angle),
-            v[i].to_value(angle),
-            power_norm[i],
+            u[i, :].to_value(angle),
+            v[i, :].to_value(angle),
+            power_norm[i, ...],
             levels=levels,
             colors='k',
             linewidths=0.4
@@ -242,7 +245,7 @@ def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
 
     if not res_mode:
         # Power pattern normalization
-        beam_data = [norm(beam_data[i]) for i in range(3)]
+        beam_data = norm(beam_data, axis=1)
 
     subtitle = [
         '$P_{\\textrm{\\scriptsize{norm}}}(u,v)$ $d_z=' +
@@ -273,14 +276,14 @@ def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     for i in range(3):
         # new grid for beam_data
         u_ng = np.linspace(
-            u_data[i].to(angle).min(), u_data[i].to(angle).max(), 300)
+            u_data[i, :].to(angle).min(), u_data[i, :].to(angle).max(), 300)
         v_ng = np.linspace(
-            v_data[i].to(angle).min(), v_data[i].to(angle).max(), 300)
+            v_data[i, :].to(angle).min(), v_data[i, :].to(angle).max(), 300)
 
         beam_ng = interpolate.griddata(
             # coordinates of grid points to interpolate from.
-            points=(u_data[i].to(angle), v_data[i].to(angle)),
-            values=beam_data[i],
+            points=(u_data[i, :].to(angle), v_data[i, :].to(angle)),
+            values=beam_data[i, :],
             # coordinates of grid points to interpolate to.
             xi=tuple(np.meshgrid(u_ng, v_ng)),
             method='cubic'
