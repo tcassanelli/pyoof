@@ -10,7 +10,7 @@ from ..zernike import U
 
 __all__ = [
     'illum_pedestal', 'illum_gauss', 'wavefront', 'phase', 'aperture',
-    'radiation_pattern', 'e_rs', 'illum_nikolic'
+    'radiation_pattern', 'e_rs'
     ]
 
 
@@ -161,26 +161,6 @@ def illum_gauss(x, y, I_coeff, pr):
     The Gaussian illumination function has the same formula of a normalized
     Gaussian distribution.
     """
-    i_amp, c_dB, x0, y0 = I_coeff
-
-    # workaround for units
-    if type(c_dB) == apu.quantity.Quantity:
-        sigma = 10 ** (c_dB / 20. / apu.dB)
-    else:
-        sigma = 10 ** (c_dB / 20.)
-    if type(x0) != apu.quantity.Quantity:
-        x0 *= apu.m
-    if type(y0) != apu.quantity.Quantity:
-        y0 *= apu.m
-
-    Ea = (
-        i_amp * np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (pr ** 2)) * -sigma
-        )
-
-    return Ea
-
-
-def illum_nikolic(x, y, I_coeff, pr):
     i_amp, c_dB, x0, y0 = I_coeff
 
     # workaround for units
