@@ -245,7 +245,7 @@ def store_data_ascii(name, name_dir, order, params_solution, params_init):
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
-    params_names = ['i_amp', 'c_dB', 'x_0', 'y_0']
+    params_names = ['i_amp', 'c_dB', 'q', 'x_0', 'y_0']
     for i in range(N_K_coeff):
         params_names.append(f'K({N[i]}, {L[i]})')
 

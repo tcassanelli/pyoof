@@ -62,7 +62,7 @@ def e_rs(phase, circ=False):
         return np.exp(-rms_rad ** 2)
 
 
-def illum_pedestal(x, y, I_coeff, pr, q=2):
+def illum_pedestal(x, y, I_coeff, pr):
     """
     Illumination function, :math:`E_\\mathrm{a}(x, y)`, parabolic taper on a
     pedestal, sometimes called apodization, taper or window. Represents the
@@ -107,7 +107,7 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
         C=10^{\\frac{c_\\mathrm{dB}}{20}}.
     """
 
-    i_amp, c_dB, x0, y0 = I_coeff
+    i_amp, c_dB, q, x0, y0 = I_coeff
 
     # workaround for units
     if type(c_dB) == apu.quantity.Quantity:

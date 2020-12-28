@@ -91,7 +91,7 @@ def residual_true(
         squares minimization `~scipy.optimize.least_squares` package.
     """
 
-    I_coeff, K_coeff = params[:4], params[4:]
+    I_coeff, K_coeff = params[:5], params[5:]
     beam_model = np.zeros_like(beam_data)
     for i in range(3):
         u, v, F = radiation_pattern(
@@ -282,27 +282,24 @@ def params_complete(params, idx, N_K_coeff, config_params):
     """
 
     # Fixed values for parameters, in case they're excluded, see idx
-    [i_amp_f, c_dB_f, x0_f, y0_f, K_f] = config_params['fixed']
+    [i_amp_f, c_dB_f, q_f, x0_f, y0_f, K_f] = config_params['fixed']
 
     # N_K_coeff number of Zernike circle polynomials coefficients
-    if params.size != (4 + N_K_coeff):
+    if params.size != (5 + N_K_coeff):
         params_updated = params.copy()
         for i in idx:
             if i == 0:
                 params_updated = np.insert(params_updated, i, i_amp_f)
-                # assigned value for i_amp
             elif i == 1:
                 params_updated = np.insert(params_updated, i, c_dB_f)
-                # assigned value for c_dB
             elif i == 2:
-                params_updated = np.insert(params_updated, i, x0_f)
-                # assigned value for x0
+                params_updated = np.insert(params_updated, i, q_f)
             elif i == 3:
+                params_updated = np.insert(params_updated, i, x0_f)
+            elif i == 4:
                 params_updated = np.insert(params_updated, i, y0_f)
-                # assigned value for y0
             else:
                 params_updated = np.insert(params_updated, i, K_f)
-                # assigned value for any other
     else:
         params_updated = params
 
