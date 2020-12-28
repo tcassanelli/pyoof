@@ -6,7 +6,7 @@ import pytest
 import os
 import numpy as np
 from astropy import units as apu
-from astropy.io import ascii
+from astropy.table import Table
 from numpy.testing import assert_allclose
 import pyoof
 
@@ -23,11 +23,13 @@ d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 noise_level = .2                                # noise added to gen data
 
 effelsberg_telescope = [
-    pyoof.telgeometry.block_effelsberg(alpha=20 * apu.deg),  # blockage
+    pyoof.telgeometry.block_effelsberg(alpha=10 * apu.deg),  # blockage
     pyoof.telgeometry.opd_effelsberg,           # OPD function
     50. * apu.m,                                # primary reflector radius m
     'effelsberg'                                # telescope name
     ]
+
+illum_func = pyoof.aperture.illum_pedestal
 
 # Least squares minimization
 resolution = 2 ** 8
@@ -35,7 +37,7 @@ box_factor = 5
 
 # True values to be compared at the end
 K_coeff_true = np.hstack((0, np.random.normal(0., .06, N_K_coeff)))
-I_coeff_true = [1, c_dB, 0 * apu.m, 0 * apu.m]  # illumination coefficients
+I_coeff_true = [1., c_dB, 0 * apu.m, 0 * apu.m]  # illumination coefficients
 
 I_coeff_true_dimensionless = [
     I_coeff_true[0]] + [I_coeff_true[i].value for i in range(1, 4)]
@@ -53,27 +55,31 @@ def oof_work_dir(tmpdir_factory):
         wavel=wavel,
         d_z=d_z,
         telgeo=effelsberg_telescope[:-1],
-        illum_func=pyoof.aperture.illum_pedestal,
+        illum_func=illum_func,
         noise=noise_level,
         resolution=resolution,
         box_factor=box_factor,
         work_dir=tdir
         )
 
-    print('files directory: ', tdir)
+    print('temp directory: ', tdir)
 
     # Reading the generated data
     pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
     data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
 
-    for i in range(3):
-        print('snr:', data_obs[0][i].max() / data_obs[0][i].std())
+    snr = pyoof.snr(
+        beam_data=data_obs[0][1, ...],
+        u_data=data_obs[1][1, ...],
+        v_data=data_obs[2][1, ...],
+        )
+    print('snr:', snr)
 
     pyoof.fit_zpoly(
         data_info=data_info,
         data_obs=data_obs,
         order_max=n,
-        illum_func=pyoof.aperture.illum_pedestal,
+        illum_func=illum_func,
         telescope=effelsberg_telescope,
         fit_previous=True,
         resolution=resolution,
@@ -94,9 +100,9 @@ def test_fit_beam(oof_work_dir):
 
     # lets compare the params from the last order
     fit_pars = os.path.join(
-        oof_work_dir, 'pyoof_out', 'test000-000', 'fitpar_n{}.csv'.format(n)
+        oof_work_dir, 'pyoof_out', 'test000-000', f'fitpar_n{n}.csv'
         )
 
-    params = ascii.read(fit_pars)['parfit']
-    assert_allclose(params[4:], K_coeff_true, rtol=1e-9, atol=1e-1)
-    assert_allclose(params[:4], I_coeff_true_dimensionless, rtol=1e-4, atol=0)
+    params = Table.read(fit_pars, format='ascii')['parfit']
+    assert_allclose(params[4:], K_coeff_true, rtol=1e-8, atol=1e-1)
+    assert_allclose(params[:4], I_coeff_true_dimensionless, rtol=1e-7, atol=0)
