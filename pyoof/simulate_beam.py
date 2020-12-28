@@ -168,17 +168,15 @@ def simulate_data_pyoof(
         os.makedirs(os.path.join(work_dir, 'data_generated'))
 
     for j in ["%03d" % i for i in range(101)]:
-        name_file = os.path.join(
-            work_dir, 'data_generated', 'test{}.fits'.format(j)
-            )
+        name_file = os.path.join(work_dir, 'data_generated', f'test{j}.fits')
         if not os.path.exists(name_file):
 
             prihdr = fits.Header()
             prihdr['FREQ'] = freq.to_value(apu.Hz)
             prihdr['WAVEL'] = wavel.to_value(apu.m)
             prihdr['MEANEL'] = 0
-            prihdr['OBJECT'] = 'test{}'.format(j)
-            prihdr['DATE_OBS'] = 'test{}'.format(j)
+            prihdr['OBJECT'] = f'test{j}'
+            prihdr['DATE_OBS'] = f'test{j}'
             prihdr['COMMENT'] = 'Generated data pyoof package'
             prihdr['AUTHOR'] = 'Tomas Cassanelli'
             prihdu = fits.PrimaryHDU(header=prihdr)

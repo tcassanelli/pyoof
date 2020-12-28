@@ -195,10 +195,10 @@ def store_data_csv(name, name_dir, order, save_to_csv):
         ]
 
     fnames = [
-        '/beam_data.csv', '/u_data.csv', '/v_data.csv',
-        '/res_n{}.csv'.format(order), '/jac_n{}.csv'.format(order),
-        '/grad_n{}.csv'.format(order), '/phase_n{}.csv'.format(order),
-        '/cov_n{}.csv'.format(order), '/corr_n{}.csv'.format(order)
+        f'beam_data.csv', f'u_data.csv', f'v_data.csv',
+        f'res_n{order}.csv', f'jac_n{order}.csv',
+        f'grad_n{order}.csv', f'phase_n{order}.csv',
+        f'cov_n{order}.csv', f'corr_n{order}.csv'
         ]
 
     if order != 1:
@@ -208,9 +208,9 @@ def store_data_csv(name, name_dir, order, save_to_csv):
 
     for fname, header, file in zip(fnames, headers, save_to_csv):
         np.savetxt(
-            fname=name_dir + fname,
+            fname=os.path.join(name_dir, fname),
             X=file,
-            header=header + ' ' + name
+            header=' '.join((header, name))
             )
 
 
@@ -247,14 +247,14 @@ def store_data_ascii(name, name_dir, order, params_solution, params_init):
 
     params_names = ['i_amp', 'c_dB', 'x_0', 'y_0']
     for i in range(N_K_coeff):
-        params_names.append('K({}, {})'.format(N[i], L[i]))
+        params_names.append(f'K({N[i]}, {L[i]})')
 
     # To store fit information and found parameters in ascii file
     ascii.write(
         table=[params_names, params_solution, params_init],
-        output=name_dir + '/fitpar_n{}.csv'.format(n),
+        output=os.path.join(name_dir, f'fitpar_n{n}.csv'),
         names=['parname', 'parfit', 'parinit'],
-        comment='Fitted parameters ' + name,
+        comment=' '.join(('Fitted parameters', name)),
         overwrite=True
         )
 
