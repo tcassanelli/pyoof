@@ -488,9 +488,13 @@ def plot_variance(matrix, order, diag, cbtitle, title):
     L = np.array(ln)[:, 0]
     N = np.array(ln)[:, 1]
 
-    params_names = ['$A_{E_\mathrm{a}}$', '$c_\\mathrm{dB}$', '$x_0$', '$y_0$']
+    params_names = [
+        '$A_{E_\\mathrm{a}}$', '$c_\\mathrm{dB}$', 'q', '$x_0$', '$y_0$'
+        ]
     for i in range(N_K_coeff):
-        params_names.append('$K_{' + str(N[i]) + '\,' + str(L[i]) + '}$')
+        params_names.append(
+            ''.join(('$K_{', f'{N[i]}', '\\,', f'{L[i]}', '}$'))
+            )
     params_names = np.array(params_names)
     params_used = [int(i) for i in matrix[:1][0]]
     _matrix = matrix[1:]

@@ -107,7 +107,7 @@ def illum_pedestal(x, y, I_coeff, pr):
         C=10^{\\frac{c_\\mathrm{dB}}{20}}.
     """
 
-    i_amp, c_dB, q, x0, y0 = I_coeff
+    [i_amp, c_dB, q, x0, y0] = I_coeff
 
     # workaround for units
     if type(c_dB) == apu.quantity.Quantity:
