@@ -630,7 +630,7 @@ def plot_fit_path(
 
     # Reading least squares minimization output
     n = order
-    fitpar = ascii.read(os.path.join(path_pyoof, f'fitpar_n{n}.csv'))
+    params = ascii.read(os.path.join(path_pyoof, f'fitpar_n{n}.csv'))
 
     with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
         pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
@@ -666,8 +666,8 @@ def plot_fit_path(
             )
 
     fig_beam = plot_beam(
-        I_coeff=fitpar['parfit'][:4],
-        K_coeff=fitpar['parfit'][4:],
+        I_coeff=params['parfit'][:5],
+        K_coeff=params['parfit'][5:],
         title='{} fit power pattern  $n={}$ $\\alpha={}$ degrees'.format(
             obs_object, n, meanel),
         d_z=d_z,
@@ -681,7 +681,7 @@ def plot_fit_path(
         )
 
     fig_phase = plot_phase(
-        K_coeff=fitpar['parfit'][4:],
+        K_coeff=params['parfit'][5:],
         title=(
             '{} phase-error $d_z=\\pm {}$ cm ' +
             '$n={}$ $\\alpha={}$ deg'

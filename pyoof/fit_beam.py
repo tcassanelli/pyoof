@@ -518,8 +518,8 @@ def fit_zpoly(
             jac=res_lsq.jac,
             n_pars=params_init_true.size        # number of parameters fitted
             )
-        cov_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), cov))
-        cor_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 4), idx), cor))
+        cov_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 5), idx), cov))
+        cor_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 5), idx), cor))
 
         # Final phase from fit in the telescope's primary reflector
         _phase = phase(
