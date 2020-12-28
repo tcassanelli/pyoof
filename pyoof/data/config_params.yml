@@ -17,7 +17,7 @@ bound_min:
 
 # commented means included parameter
 excluded:
-# - 0       # i_amp
+- 0       # i_amp
 # - 1       # c_dB
 # - 2       # q
 - 3       # x0
@@ -25,7 +25,7 @@ excluded:
 - 5       # K(0, 0)
 
 fixed:
-- 1.0     # i_amp
+- 1.      # i_amp
 - -12.    # c_dB
 - 2       # q
 - 0.      # x0
