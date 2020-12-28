@@ -24,6 +24,7 @@ __all__ = [
 
 # Plot style added from relative path
 plt.style.use(get_pkg_data_filename('data/pyoof.mplstyle'))
+# TODO: Generalize this functions for multiple d_z
 
 
 def plot_beam(

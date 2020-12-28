@@ -126,7 +126,7 @@ def residual_true(
         else:
             beam_model[i, ...] = power_pattern
 
-    _residual_true = norm(beam_data) - norm(beam_model)
+    _residual_true = norm(beam_data, axis=1) - norm(beam_model, axis=1)
 
     return _residual_true.flatten()
 
@@ -563,7 +563,7 @@ def fit_zpoly(
                 fft_resolution=resolution,
                 box_factor=box_factor,
                 snr=float(
-                    snr(u_data[1, ...], v_data[1, ...], beam_data[1, ...])
+                    snr(beam_data[1, ...], u_data[1, ...], v_data[1, ...])
                     )
                 )
 
