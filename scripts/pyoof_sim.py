@@ -18,39 +18,43 @@ d_z = [2.2, 0, -2.2] * u.cm     # radial offset
 
 # Making example for the Effelsberg telescope
 effelsberg_telescope = [
-    pyoof.telgeometry.block_effelsberg,  # blockage distribution
+    pyoof.telgeometry.block_effelsberg(alpha=10 * u.deg),
     pyoof.telgeometry.opd_effelsberg,    # OPD function
-    50. * u.m,                         # primary reflector radius
+    50. * u.m,                           # primary reflector radius
     'effelsberg'                         # telescope name
     ]
 
 # simulte data
-# pyoof.simulate_data_pyoof(
-#     I_coeff=I_coeff,
-#     K_coeff=K_coeff,
-#     wavel=wavel,
-#     d_z=d_z,
-#     illum_func=pyoof.aperture.illum_pedestal,
-#     telgeo=effelsberg_telescope[:-1],
-#     noise=0,
-#     resolution=2 ** 8,
-#     box_factor=5,
-#     work_dir=None
-#     )
+pyoof.simulate_data_pyoof(
+    I_coeff=I_coeff,
+    K_coeff=K_coeff,
+    wavel=wavel,
+    d_z=d_z,
+    illum_func=pyoof.aperture.illum_pedestal,
+    telgeo=effelsberg_telescope[:-1],
+    noise=0,
+    resolution=2 ** 8,
+    box_factor=5,
+    work_dir=None
+    )
 
-data_info, data_obs = pyoof.extract_data_pyoof('data_generated/test000.fits')
+data_info, data_obs = pyoof.extract_data_pyoof('data_generated/test003.fits')
 [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
 [beam_data, u_data, v_data] = data_obs
 
-print('len(beam_data):', len(beam_data))
+print('beam_data.shape', beam_data.shape)
+print('u_data.shape', u_data.shape)
+print('v_data.shape', v_data.shape)
 
-fig, ax = plt.subplots(figsize=(14, 8), ncols=3)
-for i in range(3):
-    print('norm{}:'.format(i), pyoof.norm(beam_data[i]))
+# print('len(beam_data):', len(beam_data))
 
-    ax[i].plot(pyoof.norm(beam_data[i]))
+# fig, ax = plt.subplots(figsize=(14, 8), ncols=3)
+# for i in range(3):
+#     print(f'norm{i}:', pyoof.norm(beam_data[i]))
 
-plt.show()
+#     ax[i].plot(pyoof.norm(beam_data[i]))
+
+# plt.show()
 
 # fig1 = pyoof.plot_data(
 #     u_data=u_data,

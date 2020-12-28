@@ -3,6 +3,8 @@
 
 # Author: Tomas Cassanelli
 import glob
+import numpy as np
+from functools import partial
 from astropy import units as u
 from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 
@@ -16,12 +18,12 @@ telescope = dict(
     #     pr,
     #     'effelsberg (20 deg blockage)'
     #     ],
-    effelsberg_10deg=[
-        telgeometry.block_effelsberg(alpha=10 * u.deg),
-        telgeometry.opd_effelsberg,
-        pr,
-        'effelsberg (10 deg blockage)'
-        ],
+    # effelsberg_10deg=[
+    #     telgeometry.block_effelsberg(alpha=10 * u.deg),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (10 deg blockage)'
+    #     ],
     # effelsberg_0deg=[
     #     telgeometry.block_effelsberg(alpha=0 * u.deg),
     #     telgeometry.opd_effelsberg,
@@ -35,13 +37,13 @@ telescope = dict(
     #     pr,
     #     'effelsberg (sub-reflector only blockage)'
     #     ],
-    # effelsberg_empty=[
-    #     telgeometry.block_manual(
-    #         pr=pr, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
-    #     telgeometry.opd_effelsberg,
-    #     pr,
-    #     'effelsberg (sub-reflector only blockage)'
-    #     ]
+    effelsberg_empty=[
+        telgeometry.block_manual(
+            pr=pr, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
+        telgeometry.opd_effelsberg,
+        pr,
+        'effelsberg (sub-reflector only blockage)'
+        ]
     )
 
 
@@ -57,12 +59,15 @@ def compute_phase_error(pathfits, order_max):
 
     for configuration in telescope.keys():
     # for configuration in ['effelsberg_empty']:
+ 
+        # for _q in np.linspace(1, 2, 10):
+            # try:
         fit_zpoly(
             data_info=data_info,
             data_obs=[beam_data, u_data, v_data],
             order_max=order_max,
-            illum_func=aperture.illum_pedestal,
             # illum_func=aperture.illum_gauss,
+            illum_func=partial(aperture.illum_pedestal, q=2),
             telescope=telescope[configuration],
             fit_previous=True,                   # True is recommended
             resolution=2 ** 8,         # standard is 2 ** 8
@@ -70,13 +75,20 @@ def compute_phase_error(pathfits, order_max):
             config_params_file=None,   # default or add path config_file.yaml
             make_plots=True,           # for now testing only the software
             verbose=2,
-            work_dir='/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/config_tests'
+            work_dir='/Users/tomascassanelli/MPIfR/OOF/data/illum'
             )
 
+            # except ValueError:
+            #     print(f'q={_q} skipped')
 
-pth2data = ['/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_66deg_5425-5443_LB-offset.fits']
+
+pth2data = [
+    '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_66deg_5425-5443_LB-offset.fits',
+    # '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_51deg_5547-5554_L-offset.fits'
+    ]
 files = pth2data
 
+# pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/*2019/*.fits'
 # files = glob.glob(pth2data)
 
 for _f in files:

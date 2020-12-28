@@ -1,36 +1,36 @@
 # Default parameters pyoof package
 bound_max:
-- 1       # i_amp (illumination amplitude)
-- -5      # c_dB (illumination taper)
+- 10      # i_amp (illumination amplitude)
+- -1.     # c_dB (illumination taper)
 - 0.01    # x0 (illumination x-axis offset)
 - 0.01    # y0 (illumination y-axis offset)
-- 1       # K(0, 0) (First Zernike circle polynomial coefficient)
+- 1.      # K(0, 0) (First Zernike circle polynomial coefficient)
 
 bound_min:
 - 0       # i_amp
-- -25     # c_dB
+- -25.    # c_dB
 - -0.01   # x0
 - -0.01   # y0
-- -1      # K(0, 0)
+- -1.     # K(0, 0)
 
 # commented means included parameter
 excluded:
-- 0       # i_amp
-- 1       # c_dB
+# - 0       # i_amp
+# - 1       # c_dB
 - 2       # x0
 - 3       # y0
 - 4       # K(0, 0)
 
 fixed:
 - 1.0     # i_amp
-- -12      # c_dB
-- 0       # x0
-- 0       # y0
-- 0       # K(0, 0)
+- -12.     # c_dB
+- 0.      # x0
+- 0.      # y0
+- 0.      # K(0, 0)
 
 init:
-- 0.1     # i_amp
-- -15     # c_dB
-- 0       # x0
-- 0       # y0
-- 0       # K(0, 0)
+- 100     # i_amp
+- -10.    # c_dB
+- 0.      # x0
+- 0.      # y0
+- 0.      # K(0, 0)
