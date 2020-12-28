@@ -18,32 +18,32 @@ telescope = dict(
     #     pr,
     #     'effelsberg (20 deg blockage)'
     #     ],
-    # effelsberg_10deg=[
-    #     telgeometry.block_effelsberg(alpha=10 * u.deg),
-    #     telgeometry.opd_effelsberg,
-    #     pr,
-    #     'effelsberg (10 deg blockage)'
-    #     ],
+    effelsberg_10deg=[
+        telgeometry.block_effelsberg(alpha=10 * u.deg),
+        telgeometry.opd_effelsberg,
+        pr,
+        'effelsberg (10 deg blockage)'
+        ],
     # effelsberg_0deg=[
     #     telgeometry.block_effelsberg(alpha=0 * u.deg),
     #     telgeometry.opd_effelsberg,
     #     pr,
     #     'effelsberg (0 deg blockage)'
     #     ],
-    # effelsberg_sr_only=[
-    #     telgeometry.block_manual(
-    #         pr=pr, sr=3.25 * u.m, a=0 * u.m, L=0 * u.m),
-    #     telgeometry.opd_effelsberg,
-    #     pr,
-    #     'effelsberg (sub-reflector only blockage)'
-    #     ],
-    effelsberg_empty=[
+    effelsberg_sr_only=[
         telgeometry.block_manual(
-            pr=pr, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
+            pr=pr, sr=3.25 * u.m, a=0 * u.m, L=0 * u.m),
         telgeometry.opd_effelsberg,
         pr,
         'effelsberg (sub-reflector only blockage)'
-        ]
+        ],
+    # effelsberg_empty=[
+    #     telgeometry.block_manual(
+    #         pr=pr, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (sub-reflector only blockage)'
+    #     ]
     )
 
 
@@ -66,8 +66,8 @@ def compute_phase_error(pathfits, order_max):
             data_info=data_info,
             data_obs=[beam_data, u_data, v_data],
             order_max=order_max,
-            # illum_func=aperture.illum_gauss,
-            illum_func=partial(aperture.illum_pedestal, q=2),
+            illum_func=aperture.illum_pedestal,
+            # illum_func=partial(aperture.illum_pedestal, q=2),
             telescope=telescope[configuration],
             fit_previous=True,                   # True is recommended
             resolution=2 ** 8,         # standard is 2 ** 8
