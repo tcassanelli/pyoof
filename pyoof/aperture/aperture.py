@@ -125,7 +125,7 @@ def illum_pedestal(x, y, I_coeff, pr, q=2):
     # Parabolic taper on a pedestal
     Ea = i_amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** q)
 
-    return Ea
+    return np.nan_to_num(Ea.value)
 
 
 def illum_gauss(x, y, I_coeff, pr):
@@ -177,6 +177,12 @@ def illum_gauss(x, y, I_coeff, pr):
         i_amp * np.sqrt(2 * np.pi * sigma ** 2) *
         np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma * pr) ** 2))
         )
+
+    # Illumination function as defined by B. Nikolic and J. Dong
+    # Ea = (
+    #     i_amp *
+    #     np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / pr ** 2 * -sigma)
+    #     )
 
     return Ea
 
