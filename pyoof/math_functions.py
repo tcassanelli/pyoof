@@ -9,7 +9,7 @@ from astropy import units as apu
 __all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms', 'norm', 'snr']
 
 
-def norm(P, axis=1):
+def norm(P, axis=None):
     """
     Data normalization. This is a pre-process right before starting the least
     squares minimization.
@@ -17,8 +17,8 @@ def norm(P, axis=1):
     Parameters
     ----------
     P : `~numpy.ndarray`
-        Two-dimensional power pattern (or beam). Units are arbitrary, this
-        same process is applied to the observed and generated power pattern.
+        Power pattern (or beam). Units are arbitrary, this same process is
+        applied to the observed and generated power pattern.
 
     Returns
     -------
@@ -26,42 +26,16 @@ def norm(P, axis=1):
         Normalized power pattern.
     """
 
-    # none
-    P_norm = P
-
-    # normalization by it's maximum
-    # if axis is None:
-    #     P_norm = P / P.max()
-    # elif axis == 0:
-    #     P_norm = P / P.max(axis)
-    # else:
-    #     shape_corr = [-1] + [1] * (P.ndim - 1)
-    #     P_norm = P / P.max(axis).reshape(shape_corr)
-
     # normalization
-    # if axis is None:
-    #     P_norm = (P - P.min()) / (P.max() - P.min())
-    # elif axis == 0:
-    #     P_norm = (P - P.min(axis)) / (P.max(axis) - P.min(axis))
-    # else:
-    #     shape_corr = [-1] + [1] * (P.ndim - 1)
-    #     P_norm = (P - P.min(axis).reshape(shape_corr)) / (P.max(axis) - P.min(axis)).reshape(shape_corr)
+    if axis is None:
+        P_norm = (P - P.min()) / (P.max() - P.min())
+    elif axis == 0:
+        P_norm = (P - P.min(axis)) / (P.max(axis) - P.min(axis))
+    else:
+        P_norm = (P - P.min(axis).reshape(-1, 1)) / (
+            P.max(axis) - P.min(axis)).reshape(-1, 1)
 
-    # standardization
-    # if axis is None:
-    #     P_norm = (P - P.mean()) / (P.std() / np.sqrt(P.size))
-    # elif axis == 0:
-    #     P_norm = (P - P.mean(axis)) / (P.std(axis) / np.sqrt(P.shape[axis]))
-    # else:
-    #     n = 1
-    #     shape_corr = [-1]
-    #     for i in range(1, P.ndim):
-    #         n *= P.shape[i]
-    #         shape_corr.append(1)
-
-    #     P_norm = (P - P.mean(axis).reshape(shape_corr)) / (P.std(axis).reshape(shape_corr) / np.sqrt(n))
-
-    return P_norm
+    return np.nan_to_num(P_norm)
 
 
 def cart2pol(x, y):
