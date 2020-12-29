@@ -81,12 +81,10 @@ def illum_parabolic(x, y, I_coeff, pr):
         :math:`c_\\mathrm{dB}` and the two coordinate offset, :math:`(x_0,
         y_0)`. The illumination coefficients must be listed as follows,
         ``I_coeff = [i_amp, c_dB, q, x0, y0]``, with units as dimensionless,
-        decibels and length, respectively.
+        decibels and length, respectively. The coefficient ``q`` varies between
+        1 and 2 for reflector antennas.
     pr : `astropy.units.quantity.Quantity`
         Primary reflector radius in length units.
-    q : `int`
-        Order of the parabolic taper on a pedestal, it is commonly set at
-        :math:`q = 2`.
 
     Returns
     -------
@@ -161,7 +159,9 @@ def illum_gauss(x, y, I_coeff, pr):
     The Gaussian illumination function has the same formula of a normalized
     Gaussian distribution.
     """
-    i_amp, c_dB, x0, y0 = I_coeff
+
+    i_amp, c_dB = I_coeff[:2]
+    x0, y0 = I_coeff[:-2]
 
     # workaround for units
     if type(c_dB) == apu.quantity.Quantity:
