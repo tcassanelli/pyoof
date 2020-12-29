@@ -14,13 +14,15 @@ import pyoof
 # Initial fits file configuration
 n = 5                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
-c_dB = np.random.randint(-21, -10) * apu.dB     # illumination taper
-wavel = 0.0093685143125 * apu.m                 # wavelength
+i_amp = np.random.uniform(.001, 1, 1)[0]
+c_dB = np.random.randint(-21, -10) * apu.dB
+q = np.random.uniform(1, 2, 1)[0]
+wavel = 0.00862712109352518 * apu.m             # wavelength
 
-plus_minus = np.random.normal(0.025, 0.005)
+plus_minus = np.random.uniform(0.025, 0.005)
 d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 
-noise_level = .2                                # noise added to gen data
+noise_level = .1                                # noise added to gen data
 
 effelsberg_telescope = [
     pyoof.telgeometry.block_effelsberg(alpha=10 * apu.deg),  # blockage
@@ -29,7 +31,7 @@ effelsberg_telescope = [
     'effelsberg'                                # telescope name
     ]
 
-illum_func = pyoof.aperture.illum_pedestal
+illum_func = pyoof.aperture.illum_parabolic
 
 # Least squares minimization
 resolution = 2 ** 8
@@ -37,10 +39,12 @@ box_factor = 5
 
 # True values to be compared at the end
 K_coeff_true = np.hstack((0, np.random.normal(0., .06, N_K_coeff)))
-I_coeff_true = [1., c_dB, 0 * apu.m, 0 * apu.m]  # illumination coefficients
+I_coeff_true = [i_amp, c_dB, q, 0 * apu.m, 0 * apu.m]
 
 I_coeff_true_dimensionless = [
-    I_coeff_true[0]] + [I_coeff_true[i].value for i in range(1, 4)]
+    I_coeff_true[0], I_coeff_true[1].value, I_coeff_true[2],
+    I_coeff_true[3].value, I_coeff_true[4].value
+    ]
 
 
 # Generating temp file with pyoof fits and pyoof_out
@@ -104,5 +108,5 @@ def test_fit_beam(oof_work_dir):
         )
 
     params = Table.read(fit_pars, format='ascii')['parfit']
-    assert_allclose(params[4:], K_coeff_true, rtol=1e-8, atol=1e-1)
-    assert_allclose(params[:4], I_coeff_true_dimensionless, rtol=1e-7, atol=0)
+    assert_allclose(params[5:], K_coeff_true, rtol=1e-8, atol=1e-1)
+    assert_allclose(params[:5], I_coeff_true_dimensionless, rtol=1e-7, atol=0)
