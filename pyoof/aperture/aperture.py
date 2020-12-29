@@ -161,7 +161,7 @@ def illum_gauss(x, y, I_coeff, pr):
     """
 
     i_amp, c_dB = I_coeff[:2]
-    x0, y0 = I_coeff[:-2]
+    x0, y0 = I_coeff[-2:]
 
     # workaround for units
     if type(c_dB) == apu.quantity.Quantity:
