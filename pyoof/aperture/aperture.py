@@ -9,7 +9,7 @@ from ..math_functions import cart2pol, rms
 from ..zernike import U
 
 __all__ = [
-    'illum_pedestal', 'illum_gauss', 'wavefront', 'phase', 'aperture',
+    'illum_parabolic', 'illum_gauss', 'wavefront', 'phase', 'aperture',
     'radiation_pattern', 'e_rs'
     ]
 
@@ -62,7 +62,7 @@ def e_rs(phase, circ=False):
         return np.exp(-rms_rad ** 2)
 
 
-def illum_pedestal(x, y, I_coeff, pr):
+def illum_parabolic(x, y, I_coeff, pr):
     """
     Illumination function, :math:`E_\\mathrm{a}(x, y)`, parabolic taper on a
     pedestal, sometimes called apodization, taper or window. Represents the
@@ -76,11 +76,11 @@ def illum_pedestal(x, y, I_coeff, pr):
     y : `~astropy.units.quantity.Quantity`
         Grid value for the :math:`y` variable in length units.
     I_coeff : `list`
-        List which contains 4 parameters, the illumination amplitude,
+        List which contains 5 parameters, the illumination amplitude,
         :math:`A_{E_\\mathrm{a}}`, the illumination taper,
         :math:`c_\\mathrm{dB}` and the two coordinate offset, :math:`(x_0,
         y_0)`. The illumination coefficients must be listed as follows,
-        ``I_coeff = [i_amp, c_dB, x0, y0]``, with units as dimensionless,
+        ``I_coeff = [i_amp, c_dB, q, x0, y0]``, with units as dimensionless,
         decibels and length, respectively.
     pr : `astropy.units.quantity.Quantity`
         Primary reflector radius in length units.
@@ -364,7 +364,7 @@ def aperture(x, y, I_coeff, K_coeff, d_z, wavel, illum_func, telgeo):
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
         with the key **I_coeff**. The illumination functions available are
-        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+        `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
         (OPD) function, and the primary radius (`float`) in meters. The list
@@ -446,7 +446,7 @@ def radiation_pattern(
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
         with the key **I_coeff**. The illumination functions available are
-        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+        `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
         (OPD) function, and the primary radius (`float`) in meters. The list
