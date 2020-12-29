@@ -112,8 +112,8 @@ def residual_true(
             # The calculated beam needs to be transformed!
             intrp = interpolate.RegularGridInterpolator(
                 points=(u.to_value(apu.rad), v.to_value(apu.rad)),
-                values=power_pattern.T,    # data in grid
-                method='linear'         # linear or nearest
+                values=power_pattern.T,     # data in grid
+                method='linear'             # linear or nearest
                 )
 
             # input interpolation function is the real beam grid
@@ -548,7 +548,10 @@ def fit_zpoly(
 
         if n == 1:
             pyoof_info = dict(
-                telescope=tel_name,
+                tel_name=tel_name,
+                tel_blockage=telgeo[0].__qualname__,
+                tel_opd=telgeo[1].__qualname__,
+                pr=telgeo[2].to_value(apu.m),
                 name=name,
                 obs_object=obs_object,
                 obs_date=obs_date,
