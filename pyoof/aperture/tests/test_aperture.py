@@ -21,7 +21,7 @@ xx, yy = np.meshgrid(x, x)
 r, t = pyoof.cart2pol(xx, yy)
 r_norm = r / r.max()
 
-I_coeff = [1, -14 * apu.dB, 0 * apu.m, 0 * apu.m]
+I_coeff = [1, -14 * apu.dB, 2, 0 * apu.m, 0 * apu.m]
 K_coeff = np.array([0.1] * 21)
 d_z = 0.022 * apu.m
 wavel = 0.0093685143125 * apu.m
@@ -43,20 +43,20 @@ def test_e_rs():
     assert_quantity_allclose(e_rs, 0.12678749)
 
 
-def test_illum_pedestal():
+def test_illum_parabolic():
 
-    _illum_pedestal = pyoof.aperture.illum_pedestal(
+    _illum_parabolic = pyoof.aperture.illum_parabolic(
         x=xx,
         y=yy,
         I_coeff=I_coeff,
         pr=pr
         )
 
-    illum_pedestal_true = np.load(
-        get_pkg_data_filename('data/illum_pedestal.npy')
+    illum_parabolic_true = np.load(
+        get_pkg_data_filename('data/illum_parabolic.npy')
         )
 
-    assert_allclose(_illum_pedestal, illum_pedestal_true)
+    assert_allclose(_illum_parabolic, illum_parabolic_true)
 
 
 def test_illum_gauss():
@@ -69,7 +69,6 @@ def test_illum_gauss():
         )
 
     illum_gauss_true = np.load(get_pkg_data_filename('data/illum_gauss.npy'))
-
     assert_allclose(_illum_gauss, illum_gauss_true)
 
 
@@ -106,7 +105,7 @@ def test_aperture():
         I_coeff=I_coeff,
         d_z=d_z,
         wavel=wavel,
-        illum_func=pyoof.aperture.illum_pedestal,
+        illum_func=pyoof.aperture.illum_parabolic,
         telgeo=telgeo
         )
 
@@ -122,7 +121,7 @@ def test_radiation_pattern():
         I_coeff=I_coeff,
         d_z=d_z,
         wavel=wavel,
-        illum_func=pyoof.aperture.illum_pedestal,
+        illum_func=pyoof.aperture.illum_parabolic,
         telgeo=telgeo,
         resolution=2 ** 8,
         box_factor=5
