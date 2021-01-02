@@ -600,9 +600,7 @@ def fit_zpoly(
                 illum_func=illum_func,
                 plim=plim,
                 save=True,
-                angle=apu.deg,
-                resolution=resolution,
-                box_factor=box_factor
+                angle=apu.deg
                 )
 
             plt.close('all')

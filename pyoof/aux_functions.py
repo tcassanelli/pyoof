@@ -3,14 +3,19 @@
 
 # Author: Tomas Cassanelli
 import os
+import yaml
 import numpy as np
-from astropy.io import ascii, fits
+from astropy.io import fits
+from astropy.time import Time
+from astropy.table import Table, QTable
 from astropy import units as apu
 from astropy.constants import c as light_speed
+from .math_functions import rms
+from .aperture import e_rs
 
 __all__ = [
     'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
-    'store_data_csv', 'uv_ratio', 'store_data_ascii'
+    'store_data_csv', 'uv_ratio', 'store_data_ascii', 'table_pyoof_out'
     ]
 
 
@@ -250,11 +255,13 @@ def store_data_ascii(name, name_dir, order, params_solution, params_init):
         params_names.append(f'K({N[i]}, {L[i]})')
 
     # To store fit information and found parameters in ascii file
-    ascii.write(
-        table=[params_names, params_solution, params_init],
-        output=os.path.join(name_dir, f'fitpar_n{n}.csv'),
+    tab = Table(
+        data=[params_names, params_solution, params_init],
         names=['parname', 'parfit', 'parinit'],
-        comment=' '.join(('Fitted parameters', name)),
+        )
+
+    tab.write(
+        os.path.join(name_dir, f'fitpar_n{n}.csv'),
         overwrite=True
         )
 
@@ -286,3 +293,70 @@ def uv_ratio(u, v):
     width = ratio * 2.25 * height
 
     return width, height
+
+
+def table_pyoof_out(path_pyoof_out, order):
+    """
+    Auxiliary function to tabulate all data from a series of observations
+    gathered in a common pyoof_out directory.
+
+    Parameters
+    ----------
+    path_pyoof_out : `str`
+        Path to the directory ``pyoof_out/`` or where the output from the
+        `~pyoof` package is located.
+    order : `int`
+        Order used for the Zernike circle polynomial, :math:`n`.
+
+    Returns
+    -------
+    qt : `~astropy.table.table.QTable`
+        Table with units of the most important quantities from the `~pyoof`
+        package.
+    """
+
+    qt = QTable(
+        names=[
+        'name', 'tel_name', 'obs-object', 'meanel', 'beam-snr', 'obs-date',
+        'i_amp', 'c_dB', 'q', 'phase-rms', 'e_rs'
+            ],
+        dtype=[
+            np.string_, np.string_, np.string_, np.float, np.float, np.string_,
+            np.float, np.float, np.float, np.float, np.float
+            ]
+        )
+
+    for p, pyoof_out in enumerate(path_pyoof_out):
+
+        with open(os.path.join(pyoof_out, 'pyoof_info.yml'), 'r') as inputfile:
+            pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
+
+        phase = np.genfromtxt(os.path.join(pyoof_out, f'phase_n{order}.csv'))
+        phase_rms = rms(phase, circ=True)
+        phase_e_rs = e_rs(phase, circ=True)
+
+        params = Table.read(
+            os.path.join(pyoof_out, f'fitpar_n{order}.csv'),
+            format='ascii'
+            )
+
+        I_coeff = params['parfit'][:5]
+
+        qt.add_row([
+            pyoof_info['name'], pyoof_info['tel_name'],
+            pyoof_info['obs_object'], pyoof_info['meanel'], pyoof_info['snr'],
+            pyoof_info['obs_date'], I_coeff[0], I_coeff[1], I_coeff[2],
+            phase_rms, phase_e_rs
+            ])
+
+    # updating units
+    qt['phase-rms'] *= apu.rad
+    qt['meanel'] *= apu.deg
+    qt['obs-date'] = Time(qt['obs-date'], format='isot', scale='utc')
+    qt['c_dB'] *= apu.dB
+
+    qt.meta = {
+    'order': order
+        }
+
+    return qt

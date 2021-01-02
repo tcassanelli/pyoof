@@ -3,7 +3,8 @@
 
 # Author: Tomas Cassanelli
 import numpy as np
-import astropy  # only imported for workaround
+import warnings
+import astropy  # only used for workaround
 from astropy import units as apu
 from ..math_functions import cart2pol, rms
 from ..zernike import U
@@ -88,7 +89,7 @@ def illum_parabolic(x, y, I_coeff, pr):
 
     Returns
     -------
-    Ea : `~astropy.units.quantity.Quantity`
+    Ea : `~numpy.ndarray`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`.
 
     Notes
@@ -121,9 +122,15 @@ def illum_parabolic(x, y, I_coeff, pr):
     r = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
 
     # Parabolic taper on a pedestal
-    Ea = i_amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** q)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
 
-    return np.nan_to_num(Ea.value)
+        Ea = np.nan_to_num(
+            (i_amp * (c + (1. - c) * (1. - (r / pr) ** 2) ** q)).value
+            )
+        # some values of c_dB may introduce np.nan in the cross terms
+
+    return Ea
 
 
 def illum_gauss(x, y, I_coeff, pr):
@@ -151,7 +158,7 @@ def illum_gauss(x, y, I_coeff, pr):
 
     Returns
     -------
-    Ea : `~astropy.units.quantity.Quantity`
+    Ea : `~numpy.ndarray`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`.
 
     Notes
@@ -176,7 +183,7 @@ def illum_gauss(x, y, I_coeff, pr):
     Ea = (
         i_amp * np.sqrt(2 * np.pi * sigma ** 2) *
         np.exp(-((x - x0) ** 2 + (y - y0) ** 2) / (2 * (sigma * pr) ** 2))
-        )
+        ).value
 
     # Illumination function as defined by B. Nikolic and J. Dong
     # Ea = (
@@ -211,7 +218,7 @@ def wavefront(rho, theta, K_coeff):
 
     Returns
     -------
-    W : `~astropy.units.quantity.Quantity`
+    W : `~numpy.ndarray`
         Wavefront (aberration) distribution, :math:`W(x, y)`. Zernike circle
         polynomials already evaluated and multiplied by their coefficients.
 
@@ -235,7 +242,7 @@ def wavefront(rho, theta, K_coeff):
     W = sum(
         K_coeff[i] * U(*nl[i], rho, theta)
         for i in range(K_coeff.size)
-        )
+        ).value
 
     return W
 
@@ -306,8 +313,8 @@ def phase(K_coeff, tilt, pr, resolution=1000):
 
     # Erasing tilt dependence
     if not tilt:
-        _K_coeff[1] = 0  # For coefficient K(-1, 1) = 0
-        _K_coeff[2] = 0  # For coefficient K(1, 1) = 0
+        _K_coeff[1] = 0.  # For coefficient K(-1, 1) = 0
+        _K_coeff[2] = 0.  # For coefficient K(1, 1) = 0
 
     # TODO: change resolution name here, not the same as the one in radiation_pattern
     x = np.linspace(-pr, pr, resolution)
@@ -372,7 +379,7 @@ def aperture(x, y, I_coeff, K_coeff, d_z, wavel, illum_func, telgeo):
 
     Returns
     -------
-    E : `~astropy.units.quantity.Quantity`
+    E : `~numpy.ndarray`
         Grid value that contains general expression for aperture distribution,
         :math:`\\underline{E_\\mathrm{a}}(x, y)`.
 
@@ -411,7 +418,7 @@ def aperture(x, y, I_coeff, K_coeff, d_z, wavel, illum_func, telgeo):
     with apu.set_enabled_equivalencies(apu.dimensionless_angles()):
         E = B * Ea * np.exp(phi * 1j)  # Aperture distribution
 
-    return E
+    return E.decompose().value
 
 
 def radiation_pattern(

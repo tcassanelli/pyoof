@@ -14,12 +14,12 @@ import pyoof
 # Initial fits file configuration
 n = 5                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
-i_amp = np.random.uniform(.001, 1, 1)[0]
-c_dB = np.random.randint(-21, -10) * apu.dB
-q = np.random.uniform(1, 2, 1)[0]
+i_amp = np.random.uniform(.001, 1.1)
+c_dB = np.random.uniform(-21, -10) * apu.dB
+q = np.random.uniform(1, 2)
 wavel = 0.00862712109352518 * apu.m             # wavelength
 
-plus_minus = np.random.uniform(0.025, 0.005)
+plus_minus = np.random.uniform(0.019, 0.025)
 d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
 
 noise_level = .1                                # noise added to gen data

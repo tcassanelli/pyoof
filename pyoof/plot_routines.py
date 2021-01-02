@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
-from astropy.io import ascii
+from astropy.table import Table
 from astropy import units as apu
 from astropy.utils.data import get_pkg_data_filename
 import warnings
@@ -82,7 +82,7 @@ def plot_beam(
         Contains the maximum values for the :math:`u` and :math:`v`
         wave-vectors in angle units. The `~astropy.units.quantity.Quantity`
         must be in the following order, ``plim = [umin, umax, vmin, vmax]``.
-    angle : `~astropy.units.quantity.Quantity`
+    angle : `~astropy.units.quantity.Quantity` or `str`
         Angle unit. Axes for the power pattern.
     title : `str`
         Figure title.
@@ -95,12 +95,12 @@ def plot_beam(
         :math:`0` and :math:`d_z^+`.
     """
 
-    F = np.zeros((d_z.size, resolution, resolution), dtype=np.complex64)
+    power_norm = np.zeros((d_z.size, resolution, resolution), dtype=np.float64)
     u = np.zeros((d_z.size, resolution), dtype=np.float64) << apu.rad
     v = np.zeros((d_z.size, resolution), dtype=np.float64) << apu.rad
     for k, _d_z in enumerate(d_z):
 
-        u[k, :], v[k, :], F[k, ...] = radiation_pattern(
+        u[k, :], v[k, :], F = radiation_pattern(
             K_coeff=K_coeff,
             I_coeff=I_coeff,
             d_z=_d_z,
@@ -111,7 +111,7 @@ def plot_beam(
             box_factor=box_factor
             )
 
-    power_norm = norm(np.abs(F) ** 2, axis=(1, 2))
+        power_norm[k, ...] = norm(np.abs(F) ** 2)
 
     # Limits, they need to be transformed to degrees
     if plim is None:
@@ -201,7 +201,9 @@ def plot_beam(
     return fig
 
 
-def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
+def plot_beam_data(
+    u_data, v_data, beam_data, d_z, resolution, angle, title, res_mode
+        ):
     """
     Real data beam maps, :math:`P^\\mathrm{obs}(x, y)`, figures given
     given 3 out-of-focus radial offsets, :math:`d_z`.
@@ -221,13 +223,18 @@ def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
         flatten, one dimensional, and stacked in the same order as the ``d_z =
         [d_z-, 0., d_z+]`` values from each beam map. If ``res_mode = False``,
         the beam map will be normalized.
+    resolution : `int`
+        Fast Fourier Transform resolution for a rectangular grid. The input
+        value has to be greater or equal to the telescope resolution and with
+        power of 2 for faster FFT processing. It is recommended a value higher
+        than ``resolution = 2 ** 8``.
     d_z : `~astropy.units.quantity.Quantity`
         Radial offset :math:`d_z`, added to the sub-reflector in meters. This
         characteristic measurement adds the classical interference pattern to
         the beam maps, normalized squared (field) radiation pattern, which is
         an out-of-focus property. The radial offset list must be as follows,
         ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
-    angle : `~astropy.units.quantity.Quantity`
+    angle : `~astropy.units.quantity.Quantity` or `str`
         Angle unit. Axes for the power pattern.
     title : `str`
         Figure title.
@@ -277,9 +284,15 @@ def plot_beam_data(u_data, v_data, beam_data, d_z, angle, title, res_mode):
     for i in range(3):
         # new grid for beam_data
         u_ng = np.linspace(
-            u_data[i, :].to(angle).min(), u_data[i, :].to(angle).max(), 300)
+            u_data[i, :].to(angle).min(),
+            u_data[i, :].to(angle).max(),
+            resolution
+            )
         v_ng = np.linspace(
-            v_data[i, :].to(angle).min(), v_data[i, :].to(angle).max(), 300)
+            v_data[i, :].to(angle).min(),
+            v_data[i, :].to(angle).max(),
+            resolution
+            )
 
         beam_ng = interpolate.griddata(
             # coordinates of grid points to interpolate from.
@@ -556,11 +569,11 @@ def plot_variance(matrix, order, diag, cbtitle, title):
 
 
 def plot_fit_path(
-    path_pyoof, order, illum_func, telgeo, resolution, box_factor, angle,
-    plim, save
+    path_pyoof, order, illum_func, telgeo, angle='deg', plim=None, save=False
         ):
     """
     Plot all important figures after a least squares minimization.
+    TODO: Change all information to be read from the pyoof_out directory.
 
     Parameters
     ----------
@@ -576,18 +589,7 @@ def plot_fit_path(
         List that contains the blockage distribution, optical path difference
         (OPD) function, and the primary radius (`float`) in meters. The list
         must have the following order, ``telego = [block_dist, opd_func, pr]``.
-    resolution : `int`
-        Fast Fourier Transform resolution for a rectangular grid. The input
-        value has to be greater or equal to the telescope resolution and with
-        power of 2 for faster FFT processing. It is recommended a value higher
-        than ``resolution = 2 ** 8``.
-    box_factor : `int`
-        Related to the FFT resolution (**resolution** key), defines the image
-        pixel size level. It depends on the primary radius, ``pr``, of the
-        telescope, e.g. a ``box_factor = 5`` returns ``x = np.linspace(-5 *
-        pr, 5 * pr, resolution)``, an array to be used in the FFT2
-        (`~numpy.fft.fft2`).
-    angle : `~astropy.units.quantity.Quantity`
+    angle : `~astropy.units.quantity.Quantity` or `str`
         Angle unit. Axes for the power pattern.
     plim : `~astropy.units.quantity.Quantity`
         Contains the maximum values for the :math:`u` and :math:`v`
@@ -634,24 +636,28 @@ def plot_fit_path(
 
     # Reading least squares minimization output
     n = order
-    params = ascii.read(os.path.join(path_pyoof, f'fitpar_n{n}.csv'))
+    params = Table.read(
+        os.path.join(path_pyoof, f'fitpar_n{n}.csv'), format='ascii'
+        )
 
     with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
         pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
 
     obs_object = pyoof_info['obs_object']
     meanel = round(pyoof_info['meanel'], 2)
+    resolution = pyoof_info['fft_resolution']
+    box_factor = pyoof_info['box_factor']
 
     # Beam and residual
     beam_data = np.genfromtxt(os.path.join(path_pyoof, 'beam_data.csv'))
     res = np.genfromtxt(os.path.join(path_pyoof, f'res_n{n}.csv'))
 
-    # fixing astropy units
     u_data = np.genfromtxt(os.path.join(path_pyoof, 'u_data.csv')) * apu.rad
     v_data = np.genfromtxt(os.path.join(path_pyoof, 'v_data.csv')) * apu.rad
 
     wavel = pyoof_info['wavel'] * apu.m
     d_z = np.array(pyoof_info['d_z']) * apu.m
+    pr = pyoof_info['pr'] * apu.m
 
     # Covariance and Correlation matrix
     cov = np.genfromtxt(os.path.join(path_pyoof, f'cov_n{n}.csv'))
@@ -663,6 +669,7 @@ def plot_fit_path(
             v_data=v_data,
             beam_data=beam_data,
             d_z=d_z,
+            resolution=resolution,
             title='{} observed power pattern $\\alpha={}$ deg'.format(
                 obs_object, meanel),
             angle=angle,
@@ -673,7 +680,8 @@ def plot_fit_path(
         I_coeff=params['parfit'][:5],
         K_coeff=params['parfit'][5:],
         title='{} fit power pattern  $n={}$ $\\alpha={}$ degrees'.format(
-            obs_object, n, meanel),
+            obs_object, n, meanel
+            ),
         d_z=d_z,
         wavel=wavel,
         illum_func=illum_func,
@@ -687,11 +695,10 @@ def plot_fit_path(
     fig_phase = plot_phase(
         K_coeff=params['parfit'][5:],
         title=(
-            '{} phase-error $d_z=\\pm {}$ cm ' +
-            '$n={}$ $\\alpha={}$ deg'
+            '{} phase-error $d_z=\\pm {}$ cm $n={}$ $\\alpha={}$ deg'
             ).format(obs_object, round(d_z[2].to_value(apu.cm), 3), n, meanel),
         tilt=False,
-        pr=telgeo[2]
+        pr=pr
         )
 
     fig_res = plot_beam_data(
@@ -699,6 +706,7 @@ def plot_fit_path(
         v_data=v_data,
         beam_data=res,
         d_z=d_z,
+        resolution=resolution,
         title='{} residual $n={}$'.format(obs_object, n),
         angle=angle,
         res_mode=True
