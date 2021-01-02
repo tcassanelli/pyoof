@@ -13,7 +13,7 @@ import pyoof
 
 # Initial fits file configuration
 n = 5                                           # initial order
-N_K_coeff = (n + 1) * (n + 2) // 2 - 1          # total numb. polynomials
+N_K_coeff = (n + 1) * (n + 2) // 2 - 3          # total numb. polynomials
 i_amp = np.random.uniform(.001, 1.1)
 c_dB = np.random.uniform(-21, -10) * apu.dB
 q = np.random.uniform(1, 2)
@@ -38,7 +38,7 @@ resolution = 2 ** 8
 box_factor = 5
 
 # True values to be compared at the end
-K_coeff_true = np.hstack((0, np.random.normal(0., .06, N_K_coeff)))
+K_coeff_true = np.hstack((0., 0., 0., np.random.normal(0., .06, N_K_coeff)))
 I_coeff_true = [i_amp, c_dB, q, 0 * apu.m, 0 * apu.m]
 
 I_coeff_true_dimensionless = [

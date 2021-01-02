@@ -52,7 +52,9 @@ def e_rs(phase, circ=False):
     >>> from pyoof import aperture
     >>> pr = 50 * u.m
     >>> K_coeff = np.array([0.1] * 21)  # see aperture.phase
-    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, tilt=False, pr=pr)
+    >>> x, y, phi = aperture.phase(
+    ...    K_coeff=K_coeff, pr=pr, piston=False, tilt=False
+    ...    )
     >>> aperture.e_rs(phase=phi, circ=True)
     <Quantity 0.27564826>
     """
@@ -310,7 +312,9 @@ def phase(K_coeff, pr, piston, tilt, resolution=1000):
     >>> n = 5                               # order polynomial
     >>> N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
     >>> K_coeff = np.random.normal(0., .1, N_K_coeff)
-    >>> x, y, phi = aperture.phase(K_coeff=K_coeff, tilt=False, pr=pr)
+    >>> x, y, phi = aperture.phase(
+    ...    K_coeff=K_coeff, pr=pr, piston=False, tilt=False
+    ...    )
     """
 
     _K_coeff = K_coeff.copy()

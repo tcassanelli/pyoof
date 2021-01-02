@@ -51,8 +51,9 @@ class EffelsbergActuator():
     """
 
     def __init__(
-        self, wavel, nrot=3, sign=-1, order=5, sr=3.25 * apu.m, pr=50 * apu.m,
-        resolution=1000, limits_amplitude=[-5, 5] * apu.mm, path_lookup=None
+        self, wavel=7 * apu.mm, nrot=1, sign=-1, order=5, sr=3.25 * apu.m,
+        pr=50 * apu.m, resolution=1000, limits_amplitude=[-5, 5] * apu.mm,
+        path_lookup=None
             ):
         self.wavel = wavel
         self.nrot = nrot
@@ -314,7 +315,7 @@ class EffelsbergActuator():
                 file.write(f'NR {k + 1} ffff ' + '  '.join(tuple(row)) + '\n')
             file.write('**ENDE**\n')
 
-    def fit_zpoly(self, phase_pr, alpha):
+    def fit_zpoly(self, phase_pr, alpha, fem=True):
         """
         Simple Zernike circle polynomial fit to a single phase-error map. Do
         not confuse with the `~pyoof.fit_zpoly`, the later calculates the
@@ -328,6 +329,11 @@ class EffelsbergActuator():
             ``(alpha.size, resolution, resolution)``.
         alpha : `~astropy.units.quantity.Quantity`
             List of elevation angles related to ``phase_pr.shape[0]``.
+        fem : `bool`
+            If ``fem`` (Finite Element Method) is `True` then the Zernike
+            circle polynomials coefficients will be adjusted without tilt and
+            and overall amplitude. If False it will adjust all available
+            polynomials given by the ``order`` given to the class.
 
         Returns
         -------
@@ -338,25 +344,44 @@ class EffelsbergActuator():
         start_time = time.time()
         print('\n ***** PYOOF FIT POLYNOMIALS ***** \n')
 
-        def residual_phase(K_coeff, phase_data):
-            phase_model = phase(
-                K_coeff=K_coeff,
-                tilt=True,
-                pr=self.pr,
-                resolution=self.resolution
-                )[2].to_value(apu.rad).flatten()
-            return phase_data - phase_model
+        if fem:
+            def residual_phase(K_coeff, phase_data):
+                phase_model = phase(
+                    K_coeff=np.insert(K_coeff, [0] * 3, [0.] * 3),
+                    pr=self.pr,
+                    piston=False,
+                    tilt=False,
+                    resolution=self.resolution
+                    )[2].to_value(apu.rad).flatten()
+                return phase_data - phase_model
+            K_coeff_init = np.array([0.1] * (self.N_K_coeff - 3))
+            K_coeff_alpha = np.zeros((alpha.size, self.N_K_coeff - 3))
 
-        K_coeff_alpha = np.zeros((alpha.size, self.N_K_coeff))
+        else:
+            def residual_phase(K_coeff, phase_data):
+                phase_model = phase(
+                    K_coeff=K_coeff,
+                    pr=self.pr,
+                    piston=False,
+                    tilt=True,
+                    resolution=self.resolution
+                    )[2].to_value(apu.rad).flatten()
+                return phase_data - phase_model
+            K_coeff_init = np.array([0.1] * self.N_K_coeff)
+            K_coeff_alpha = np.zeros((alpha.size, self.N_K_coeff))
+
         for _alpha in range(alpha.size):
             res_lsq_K = optimize.least_squares(
                 fun=residual_phase,
-                x0=np.array([0.1] * self.N_K_coeff),
-                args=(phase_pr[_alpha, :, :].to_value(apu.rad).flatten(),),
+                x0=K_coeff_init,
+                args=(phase_pr[_alpha, ...].to_value(apu.rad).flatten(),),
                 method='trf',
                 tr_solver='exact'
                 )
             K_coeff_alpha[_alpha, :] = res_lsq_K.x
+
+        if K_coeff_alpha.shape[1] != self.N_K_coeff:
+            K_coeff_alpha = np.insert(K_coeff_alpha, [0] * 3, [0.] * 3, 1)
 
         final_time = np.round((time.time() - start_time) / 60, 2)
         print(
@@ -396,6 +421,7 @@ class EffelsbergActuator():
             Knl_model = self.grav_deformation(g_coeff, alpha)
             return Knl - Knl_model
 
+        # removing tilt and amplitude (K(0, 0)) terms from fit
         g_coeff = np.zeros((self.N_K_coeff, 4))
         for N in range(self.N_K_coeff):
 
@@ -490,8 +516,9 @@ class EffelsbergActuator():
 
             phases[a, :, :] = phase(
                 K_coeff=K_coeff,
+                pr=self.pr,
+                piston=False,
                 tilt=False,
-                pr=self.pr
                 )[2]
 
         return phases

@@ -75,7 +75,7 @@ def test_illum_gauss():
 def test_phase():
 
     _x, _y, _phase = pyoof.aperture.phase(
-        K_coeff=K_coeff, tilt=False, pr=pr, resolution=1000
+        K_coeff=K_coeff, piston=True, tilt=False, pr=pr, resolution=1000
         )
 
     data_phase = np.load(get_pkg_data_filename('data/phase.npz'))

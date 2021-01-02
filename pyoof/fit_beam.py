@@ -4,7 +4,7 @@
 # Author: Tomas Cassanelli
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.io import ascii
+from astropy.table import Table
 from astropy import units as apu
 from astropy.utils.data import get_pkg_data_filename
 from scipy import interpolate, optimize
@@ -455,7 +455,8 @@ def fit_zpoly(
                 )
 
             params_to_add = np.ones(N_K_coeff - N_K_coeff_previous) * 0.1
-            params_previous = ascii.read(path_params_previous)['parfit']
+            params_previous = Table.read(
+                path_params_previous, format='ascii')['parfit']
             params_init = np.hstack((params_previous, params_to_add))
 
             if not verbose == 0:
@@ -534,8 +535,8 @@ def fit_zpoly(
         _phase = phase(
             K_coeff=params_solution[5:],
             pr=telgeo[2],
-            piston=(5 in not idx_exclude),
-            tilt=((6 in not idx_exclude) and (7 in not idx_exclude))
+            piston=(5 not in idx_exclude),
+            tilt=((6 not in idx_exclude) and (7 not in idx_exclude))
             )[2].to_value(apu.rad)
 
         # Storing files in directory
@@ -552,9 +553,10 @@ def fit_zpoly(
 
         # Printing the results from saved ascii file
         if not verbose == 0:
-            print(
-                ascii.read(os.path.join(name_dir, 'fitpar_n{}.csv'.format(n)))
-                )
+            Table.read(
+                os.path.join(name_dir, f'fitpar_n{n}.csv'),
+                format='ascii'
+                ).pprint_all()
 
         if n == 1:
             pyoof_info = dict(
