@@ -247,7 +247,7 @@ def wavefront(rho, theta, K_coeff):
     return W
 
 
-def phase(K_coeff, tilt, pr, resolution=1000):
+def phase(K_coeff, pr, piston, tilt, resolution=1000):
     """
     Aperture phase distribution (or phase-error), :math:`\\varphi(x, y)`, for
     an specific telescope primary reflector. In general, the tilt (average
@@ -261,13 +261,17 @@ def phase(K_coeff, tilt, pr, resolution=1000):
         Constants coefficients, :math:`K_{n\\ell}`, for each of them there is
         only one Zernike circle polynomial, :math:`U^\\ell_n(\\varrho,
         \\varphi)`.
+    pr : `float`
+        Primary reflector radius in length units.
+    piston : `bool`
+        Boolean to include or exclude the piston coefficient in the aperture
+        phase distribution. The Zernike circle polynomials are related to
+        piston through :math:`U^{0}_0(\\varrho, \\varphi)`.
     tilt : `bool`
         Boolean to include or exclude the tilt coefficients in the aperture
         phase distribution. The Zernike circle polynomials are related to tilt
         through :math:`U^{-1}_1(\\varrho, \\varphi)` and
         :math:`U^1_1(\\varrho, \\varphi)`.
-    pr : `float`
-        Primary reflector radius in length units.
     resolution : `int`
         Resolution for the phase-error map, usually used ``resolution = 1000``
         in the `~pyoof` package.
@@ -312,6 +316,9 @@ def phase(K_coeff, tilt, pr, resolution=1000):
     _K_coeff = K_coeff.copy()
 
     # Erasing tilt dependence
+    if not piston:
+        _K_coeff[1] = 0.  # For coefficient K(0, 0) = 0
+
     if not tilt:
         _K_coeff[1] = 0.  # For coefficient K(-1, 1) = 0
         _K_coeff[2] = 0.  # For coefficient K(1, 1) = 0

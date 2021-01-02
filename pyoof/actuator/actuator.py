@@ -3,7 +3,11 @@
 
 # Author: Tomas Cassanelli
 import time
+import warnings
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Patch
 import astropy
 from astropy import units as apu
 from astropy.table import QTable
@@ -491,3 +495,69 @@ class EffelsbergActuator():
                 )[2]
 
         return phases
+
+    def plot(self, phases=None, figsize=(16, 5.5)):
+
+        if phases is None:
+            phases = self.phase_pr_lookup
+
+        nrow = 2
+        ncol = 6
+
+        # Make a new figure
+        fig = plt.figure(constrained_layout=True, figsize=figsize)
+
+        # Design your figure properties
+        gs = GridSpec(
+            nrow, ncol + 1,
+            figure=fig,
+            width_ratios=[1] * ncol + [0.1],
+            height_ratios=[1] * nrow
+            )
+
+        ax = []
+        for i in range(nrow):
+            for j in range(ncol):
+                ax.append(fig.add_subplot(gs[i, j]))
+        ax.append(fig.add_subplot(gs[:, ncol]))
+
+        x = np.linspace(-self.pr, self.pr, self.resolution)
+        y = x.copy()
+        levels = np.linspace(-2, 2, 9) * apu.rad
+        extent = [-self.pr.to_value(apu.m), self.pr.to_value(apu.m)] * 2
+        vmin, vmax = phases.min(), phases.max()
+
+        for j, _alpha in enumerate(self.alpha_lookup):
+
+            im = ax[j].imshow(
+                phases[j, ...].to_value(apu.rad),
+                extent=extent,
+                aspect='auto',
+                vmin=vmin.to_value(apu.rad),
+                vmax=vmax.to_value(apu.rad),
+                )
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                ax[j].contour(
+                    x.to_value(apu.m), y.to_value(apu.m),
+                    phases[j, ...].to_value(apu.rad),
+                    colors='k',
+                    alpha=0.3,
+                    levels=levels.to_value(apu.rad)
+                    )
+
+            patch = Patch(label=f'$\\alpha={_alpha.to_value(apu.deg)}$ deg')
+            ax[j].legend(handles=[patch], loc='lower right', handlelength=0)
+
+            ax[j].grid(False)
+            ax[j].xaxis.set_major_formatter(plt.NullFormatter())
+            ax[j].yaxis.set_major_formatter(plt.NullFormatter())
+            ax[j].xaxis.set_ticks_position('none')
+            ax[j].yaxis.set_ticks_position('none')
+
+        cb = fig.colorbar(im, cax=ax[-1])
+        cb.set_label('Phase rad')
+        fig.delaxes(ax[-2])
+
+        return fig
