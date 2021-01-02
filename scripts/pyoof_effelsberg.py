@@ -3,8 +3,6 @@
 
 # Author: Tomas Cassanelli
 import glob
-import numpy as np
-from functools import partial
 from astropy import units as u
 from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 
@@ -58,16 +56,12 @@ def compute_phase_error(pathfits, order_max):
     [beam_data, u_data, v_data] = data_obs
 
     for configuration in telescope.keys():
-    # for configuration in ['effelsberg_empty']:
  
-        # for _q in np.linspace(1, 2, 10):
-            # try:
         fit_zpoly(
             data_info=data_info,
             data_obs=[beam_data, u_data, v_data],
             order_max=order_max,
-            illum_func=aperture.illum_pedestal,
-            # illum_func=partial(aperture.illum_pedestal, q=2),
+            illum_func=aperture.illum_parabolic,
             telescope=telescope[configuration],
             fit_previous=True,                   # True is recommended
             resolution=2 ** 8,         # standard is 2 ** 8
@@ -75,21 +69,17 @@ def compute_phase_error(pathfits, order_max):
             config_params_file=None,   # default or add path config_file.yaml
             make_plots=True,           # for now testing only the software
             verbose=2,
-            work_dir='/Users/tomascassanelli/MPIfR/OOF/data/illum'
+            work_dir='/Users/tomascassanelli/MPIfR/OOF/data'
             )
 
-            # except ValueError:
-            #     print(f'q={_q} skipped')
-
-
-pth2data = [
-    '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_66deg_5425-5443_LB-offset.fits',
+# pth2data = [
+    # '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_66deg_5425-5443_LB-offset.fits',
     # '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_51deg_5547-5554_L-offset.fits'
-    ]
-files = pth2data
+    # ]
+# files = pth2data
 
-# pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/*2019/*.fits'
-# files = glob.glob(pth2data)
+pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/Dec*/*.fits'
+files = glob.glob(pth2data)
 
 for _f in files:
     compute_phase_error(pathfits=_f, order_max=5)

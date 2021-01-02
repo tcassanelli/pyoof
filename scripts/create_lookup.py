@@ -6,7 +6,11 @@ import os
 import glob
 import yaml
 import numpy as np
+import matplotlib.pyplot as plt
 from astropy import units as u
+from astropy.time import Time
+from astropy.table import Table
+import pyoof
 from pyoof.actuator import EffelsbergActuator
 
 """
@@ -17,119 +21,132 @@ Here we isolate the true deformations to apply directly a look-up table to the
 active surface.
 """
 
-# we need to call the output from the pyoof
-# path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data2019/pyoof_out'
-path_pyoof_out = '/scratch/v/vanderli/cassane/OOFH/pyoof_out'
-path2save = '/scratch/v/vanderli/cassane/OOFH'
+pyoof_run = '001'
+path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data/pyoof_out'
+n = 5
+resolution = 1000
+pr = 50 * u.m
 
-# nrot = 3
-# sign = -1
+actuators = EffelsbergActuator(
+    wavel=7 * u.mm,
+    nrot=1,
+    sign=-1,
+    order=n,
+    sr=3.25 * u.m,
+    pr=pr,
+    resolution=resolution,
+    )
 
-import mpi4py.rc
-mpi4py.rc.threads = False
+# reading data from the pyoof_out
+path_pyoof_out_all = glob.glob(''.join((path_pyoof_out, f'/*{pyoof_run}')))
+tab = pyoof.table_pyoof_out(path_pyoof_out=path_pyoof_out_all, order=n)
 
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
+tab.sort('obs-date')
+tab.add_index('name')
+# tab.pprint_all()
 
-nrot = [0, 1, 2, 3][rank]
+idx_offset = np.zeros((len(tab), ), dtype=bool)
+for i in range(len(tab)):
+    if tab['name'][i].split('-')[-1] == 'offset':
+        idx_offset[i] = True
 
-for sign in [1, -1]:
+section = (
+    (tab['phase-rms'] < 1. * u.rad) & (tab['beam-snr'] > 200.) & ~idx_offset
+    )
+tab_section = tab[section].copy()
+tab_section.add_index('name')
+tab_section.pprint_all()
 
-    if sign == -1:
-        signl = 'neg'
-    else:
-        signl = 'pos'
+N_K_coeff = (n + 1) * (n + 2) // 2
+K_coeff_obs = np.zeros((len(tab_section), N_K_coeff), dtype=np.float64)
 
-    actuator = EffelsbergActuator(
-        wavel=7 * u.mm,
-        nrot=nrot,
-        sign=sign,
-        order=5,
-        sr=3.25 * u.m,
-        pr=50 * u.m,
-        resolution=1000,
+for j, _name in enumerate(tab_section['name']):
+
+    path_params = os.path.join(
+        path_pyoof_out, f'{_name}-{pyoof_run}', f'fitpar_n{n}.csv'
         )
+    params = Table.read(path_params, format='ascii')
 
-    # reading data from the pyoof_out
-    files = glob.glob(os.path.join(path_pyoof_out, '*-000'))
+    K_coeff_obs[j, :] = params['parfit'][5:]
 
-    alpha_obs = np.zeros((len(files))) << u.deg
-    phase_pr_obs = np.zeros(
-        (len(files), actuator.resolution, actuator.resolution)) << u.rad
-    for k, _f in enumerate(files):
+g_coeff = actuators.fit_grav_deformation(
+    K_coeff_alpha=K_coeff_obs,
+    alpha=tab_section['meanel']
+    )
 
-        with open(os.path.join(_f, 'pyoof_info.yml'), 'r') as inputfile:
-            pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
+# for every elevation angle there is a set of K
+alpha_list = np.linspace(
+    start=tab_section['meanel'].min(),
+    stop=tab_section['meanel'].max(),
+    num=resolution
+    )
 
-        alpha_obs[k] = pyoof_info['meanel'] * u.deg
-        phase_pr_obs[k, :, :] = np.genfromtxt(
-            os.path.join(_f, f'phase_n{actuator.n}.csv')
-            ) * u.rad
+K_coeff_model = np.zeros((alpha_list.size, N_K_coeff))
+for a, _alpha in enumerate(alpha_list):
+    for i in range(N_K_coeff):
+        K_coeff_model[a, i] = actuators.grav_deformation(g_coeff[i, :], _alpha)
 
-    # Generating the G coeff for the look-up table
-    try:
-        path_G_coeff_lookup = os.path.join(
-            path2save, f'G_coeff_lookup_nrot{nrot}_sign{signl}_{actuator.wavel.to_value(u.mm)}mm.npy'
+
+phases_model = actuators.generate_phase_pr(
+    g_coeff=g_coeff,
+    alpha=actuators.alpha_lookup
+    )
+
+fig_phase = actuators.plot(phases_model)
+fig_fem_oof = actuators.plot(actuators.phase_pr_lookup - phases_model)
+
+# list of tuples with (n, l) allowed values
+# nl = [(i, j) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
+# phase_K_coeff_obs = np.zeros_like(K_coeff_obs) << u.rad
+# rho = -0.25
+# theta = -35 * u.deg
+# for j, _nl in enumerate(nl[3:]):
+#     for i, _alpha in enumerate(tab_section['meanel']):
+#         phase_K_coeff_obs[i, j] = (
+#             K_coeff_obs[i, j] * pyoof.zernike.U(*_nl, rho, theta) * 2 * np.pi
+#             ) * u.rad
+
+# removing large amplitude edge effects
+sr = 3.25 * u.m
+x = np.linspace(-sr, sr, resolution)
+xx, yy = np.meshgrid(x, x)
+
+# actuator rings at the active surface
+R = np.array([3250, 2600, 1880, 1210]) * u.mm
+phase_max = 2 * np.pi * u.rad
+
+for k, _R in enumerate(R):
+    if np.abs(phases_model[:, xx ** 2 + yy ** 2 > _R ** 2]).max() > phase_max:
+        phases_model[:, xx ** 2 + yy ** 2 > _R ** 2] = 0. * u.rad
+
+fig_fit, axes = plt.subplots(
+    nrows=6, ncols=3, sharex=True, sharey=True, figsize=(14, 10)
+    )
+ax = axes.flatten()
+for j in range(N_K_coeff - 3):
+    for i, _alpha in enumerate(tab_section['meanel']):
+
+        if tab_section['obs-date'][i] > Time('2020-01-01'):
+            _color = 'b'
+        else:
+            _color = 'k'
+
+        ax[j].scatter(
+            _alpha.to_value(u.deg), K_coeff_obs[i, j + 3],
+            # _alpha.to_value(u.deg), phase_K_coeff_obs[i, j].to_value(u.rad),
+            marker='o',
+            s=tab_section['beam-snr'][i] / 200,
+            color=_color
             )
-        G_coeff_lookup = np.load(path_G_coeff_lookup, allow_pickle=True)
-        # G_coeff.shape = (21, 3)
+        ax[j].plot(alpha_list, K_coeff_model[:, j + 3], 'r')
+        # ax[j].set_ylim(-1.5, 1.5)
+fig_fit.tight_layout()
 
-    except FileNotFoundError:
+fig_phase_modified = actuators.plot(phases_model)
+fig_normal = actuators.plot()
+fig_fem_oof_modified = actuators.plot(actuators.phase_pr_lookup - phases_model)
 
-        if not os.path.exists(path2save):
-            os.makedirs(path2save, exist_ok=True)
+plt.show()
 
-        G_coeff_lookup = actuator.fit_all(
-            phase_pr=actuator.phase_pr_lookup,
-            alpha=actuator.alpha_lookup
-            )[0]
 
-        np.save(
-            file=path_G_coeff_lookup[:-4],
-            arr=G_coeff_lookup
-            )
 
-    # Generating the phase from the original look-up table
-    phase_pr_lookup = actuator.generate_phase_pr(
-        G_coeff=G_coeff_lookup,
-        alpha=alpha_obs
-        )
-
-    # Corrected phase the observed minus the original look-up table
-    phase_pr_real = phase_pr_obs - phase_pr_lookup
-
-    # TODO: not so sure about this minus sign, since the observed phase already has
-    # the correction should we subtract it or add it to the real phase? I guess
-    # it would depend on the true orientation nrot and sign
-
-    # Now we calculate the G coeff for the real case
-    G_coeff_real = actuator.fit_all(
-        phase_pr=phase_pr_real,
-        alpha=alpha_obs
-        )[0]
-
-    # transformation to the phase in the pr to the actuators in the sr
-    # and find values for the look-up table elevations
-
-    # real phase in terms of the lookup table elevation angles
-    phase_pr_real_al = actuator.generate_phase_pr(
-        G_coeff=G_coeff_real,
-        alpha=actuator.alpha_lookup
-        )
-    np.save(
-        file=os.path.join(path2save, f'phase_real_al_nrot{nrot}_sign{signl}'),
-        arr=phase_pr_real_al.to_value(u.rad)
-        )
-
-    actuator_sr_real = actuator.itransform(
-        phase_pr=phase_pr_real_al
-        )
-
-    # Finally write the look-up table in .txt format
-    actuator.write_lookup(
-        fname=os.path.join(
-            path2save, f'lookup_nrot{nrot}_sign{signl}.txt'),
-        actuator_sr=actuator_sr_real
-        )
