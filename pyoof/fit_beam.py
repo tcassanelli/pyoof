@@ -132,7 +132,7 @@ def residual_true(
 
 
 def residual(
-    params, idx, N_K_coeff, beam_data, u_data, v_data, d_z, wavel,
+    params, idx_exclude, N_K_coeff, beam_data, u_data, v_data, d_z, wavel,
     illum_func, telgeo, resolution, box_factor, interp, config_params
         ):
     """
@@ -148,7 +148,7 @@ def residual(
     params : `~numpy.ndarray`
         Two stacked arrays, the illumination and Zernike circle polynomials
         coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
-    idx : `list`
+    idx_exclude : `list`
         List of the positions for the removed parameters for the least squares
         minimization in the ``params`` array.
         on.
@@ -218,14 +218,14 @@ def residual(
 
     Notes
     -----
-    The **idx** key needs an indices list of the parameters to be removed.
+    The **idx_exclude** key needs an indices list of the parameters to be removed.
     The structure of the parameters always follows, ``params = np.hstack([
-    I_coeff, K_coeff])``, a list with ``idx = [0, 1, 2, 4]`` will remove from
+    I_coeff, K_coeff])``, a list with ``idx_exclude = [0, 1, 2, 4]`` will remove from
     the least squares minimization, ``[i_amp, c_dB, x0, y0, K(0, 0)]``.
     """
 
     # Parameters list for the true fit
-    params_res = params_complete(params, idx, N_K_coeff, config_params)
+    params_res = params_complete(params, idx_exclude, N_K_coeff, config_params)
 
     _residual_true = residual_true(
         params=params_res,
@@ -244,7 +244,7 @@ def residual(
     return _residual_true
 
 
-def params_complete(params, idx, N_K_coeff, config_params):
+def params_complete(params, idx_exclude, N_K_coeff, config_params):
     """
     This function fills the missing parameters not used in the lease squares
     minimization, they are required to compute the correct aperture
@@ -260,8 +260,8 @@ def params_complete(params, idx, N_K_coeff, config_params):
         be updated for the correct number of parameters to be used in the
         `~pyoof.residual_true` function. The array should be of the shape,
         ``params = np.hstack([I_coeff, K_coeff])``, missing or not some of the
-        ``idx = [0, 1, 2, 3, 4]`` parameters.
-    idx : `list`
+        ``idx_exclude = [0, 1, 2, 3, 4]`` parameters.
+    idx_exclude : `list`
         List of the positions for the removed parameters for the least squares
         minimization in the ``params`` array.
     N_K_coeff : `int`
@@ -281,13 +281,15 @@ def params_complete(params, idx, N_K_coeff, config_params):
         function.
     """
 
-    # Fixed values for parameters, in case they're excluded, see idx
-    [i_amp_f, c_dB_f, q_f, x0_f, y0_f, K_f] = config_params['fixed']
+    # Fixed values for parameters, in case they're excluded, see idx_exclude
+    [
+        i_amp_f, c_dB_f, q_f, x0_f, y0_f, Knl0_f, Knl1_f, Knl2_f
+        ] = config_params['fixed']
 
     # N_K_coeff number of Zernike circle polynomials coefficients
     if params.size != (5 + N_K_coeff):
         params_updated = params.copy()
-        for i in idx:
+        for i in idx_exclude:
             if i == 0:
                 params_updated = np.insert(params_updated, i, i_amp_f)
             elif i == 1:
@@ -298,8 +300,12 @@ def params_complete(params, idx, N_K_coeff, config_params):
                 params_updated = np.insert(params_updated, i, x0_f)
             elif i == 4:
                 params_updated = np.insert(params_updated, i, y0_f)
-            else:
-                params_updated = np.insert(params_updated, i, K_f)
+            elif i == 5:
+                params_updated = np.insert(params_updated, i, Knl0_f)
+            elif i == 6:
+                params_updated = np.insert(params_updated, i, Knl1_f)
+            elif i == 7:
+                params_updated = np.insert(params_updated, i, Knl2_f)
     else:
         params_updated = params
 
@@ -455,22 +461,23 @@ def fit_zpoly(
             if not verbose == 0:
                 print('Initial params: n={} fit'.format(n - 1))
         else:
-            params_init = config_params['init'] + [0.1] * (N_K_coeff - 1)
+            params_init = config_params['init'] + [0.1] * (N_K_coeff - 3)
             print('Initial parameters: default')
             # i_amp, sigma_r, x0, y0, K(n, l)
             # Giving an initial value of 0.1 for each coeff
 
-        idx = config_params['excluded']  # exclude params from fit
-        # [0, 1, 2, 3, 4] = [i_amp, c_dB, x0, y0, K(0, 0)]
+        idx_exclude = config_params['excluded']  # exclude params from fit
+        # [0, 1, 2, 3, 4, 5, 6, 7] =
+        # [i_amp, c_dB, q, x0, y0, K(0, 0), K(1, 1), K(1, -1)]
         # or 'None' to include all
 
-        params_init_true = np.delete(params_init, idx)
+        params_init_true = np.delete(params_init, idx_exclude)
 
-        bound_min = config_params['bound_min'] + [-5] * (N_K_coeff - 1)
-        bound_max = config_params['bound_max'] + [5] * (N_K_coeff - 1)
+        bound_min = config_params['bound_min'] + [-5] * (N_K_coeff - 3)
+        bound_max = config_params['bound_max'] + [5] * (N_K_coeff - 3)
 
-        bound_min_true = np.delete(bound_min, idx)
-        bound_max_true = np.delete(bound_max, idx)
+        bound_min_true = np.delete(bound_min, idx_exclude)
+        bound_max_true = np.delete(bound_max, idx_exclude)
 
         if not verbose == 0:
             print('Parameters to fit: {}\n'.format(len(params_init_true)))
@@ -480,7 +487,7 @@ def fit_zpoly(
             fun=residual,
             x0=params_init_true,
             args=(               # Conserve this order in arguments!
-                idx,             # Index of parameters to be excluded (params)
+                idx_exclude,     # Index of parameters to be excluded (params)
                 N_K_coeff,       # Total Zernike circle polynomial coeff
                 beam_data,       # Power pattern maps
                 u_data,          # x coordinate beam map
@@ -504,7 +511,7 @@ def fit_zpoly(
         # Solutions from least squared optimization
         params_solution = params_complete(
             params=res_lsq.x,
-            idx=idx,
+            idx_exclude=idx_exclude,
             N_K_coeff=N_K_coeff,
             config_params=config_params
             )
@@ -518,14 +525,17 @@ def fit_zpoly(
             jac=res_lsq.jac,
             n_pars=params_init_true.size        # number of parameters fitted
             )
-        cov_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 5), idx), cov))
-        cor_ptrue = np.vstack((np.delete(np.arange(N_K_coeff + 5), idx), cor))
+        cov_ptrue = np.vstack(
+            (np.delete(np.arange(N_K_coeff + 5), idx_exclude), cov))
+        cor_ptrue = np.vstack(
+            (np.delete(np.arange(N_K_coeff + 5), idx_exclude), cor))
 
         # Final phase from fit in the telescope's primary reflector
         _phase = phase(
             K_coeff=params_solution[5:],
-            tilt=False,
-            pr=telgeo[2]
+            pr=telgeo[2],
+            piston=(5 in not idx_exclude),
+            tilt=((6 in not idx_exclude) and (7 in not idx_exclude))
             )[2].to_value(apu.rad)
 
         # Storing files in directory
