@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Patch
 import astropy
+from astropy import constants
 from astropy import units as apu
 from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
@@ -28,8 +29,8 @@ class EffelsbergActuator():
 
     Parameters
     ----------
-    wavel : `~astropy.units.quantity.Quantity`
-        Wavelength, :math:`\\lambda`, of the observation in meters.
+    frequency : `~astropy.units.quantity.Quantity`
+        Frequency of the observation in Hertz.
     nrot : `int`
         This is a required rotation to apply to the phase maps (obtained
         from `~pyoof.fit_zpoly`) to get the right orientation of the active
@@ -51,11 +52,12 @@ class EffelsbergActuator():
     """
 
     def __init__(
-        self, wavel=7 * apu.mm, nrot=1, sign=-1, order=5, sr=3.25 * apu.m,
-        pr=50 * apu.m, resolution=1000, limits_amplitude=[-5, 5] * apu.mm,
-        path_lookup=None
+        self, frequency=34.75 * u.GHz, nrot=1, sign=-1, order=5,
+        sr=3.25 * apu.m, pr=50 * apu.m, resolution=1000,
+        limits_amplitude=[-5, 5] * apu.mm, path_lookup=None
             ):
-        self.wavel = wavel
+        self.frequency = frequency
+        self.wavel = (constants.c / frequency).to(u.mm)
         self.nrot = nrot
         self.sign = sign
         self.sr = sr
