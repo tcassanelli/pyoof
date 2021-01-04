@@ -52,12 +52,12 @@ class EffelsbergActuator():
     """
 
     def __init__(
-        self, frequency=34.75 * u.GHz, nrot=1, sign=-1, order=5,
+        self, frequency=34.75 * apu.GHz, nrot=1, sign=-1, order=5,
         sr=3.25 * apu.m, pr=50 * apu.m, resolution=1000,
         limits_amplitude=[-5, 5] * apu.mm, path_lookup=None
             ):
         self.frequency = frequency
-        self.wavel = (constants.c / frequency).to(u.mm)
+        self.wavel = (constants.c / frequency).to(apu.mm)
         self.nrot = nrot
         self.sign = sign
         self.sr = sr
@@ -438,7 +438,7 @@ class EffelsbergActuator():
 
         final_time = np.round((time.time() - start_time) / 60, 2)
         print(
-            '\n***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time)
+            '\n ***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time)
             )
 
         return g_coeff

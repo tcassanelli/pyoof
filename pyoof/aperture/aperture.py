@@ -27,8 +27,8 @@ def e_rs(phase, circ=False):
         one of the solutions from the pyoof package). Its amplitude values are
         in radians. The input must be in radians or angle units.
     circ : `bool`
-        If `True` it will take the `phase.shape[0]` as the diameter of a circle
-        and calculate the root-mean-square only in that portion.
+        If `True` it will take the ``phase.shape[0]`` as the diameter of a
+        circle and calculate the root-mean-square only in that portion.
 
     Notes
     -----
@@ -381,7 +381,7 @@ def aperture(x, y, I_coeff, K_coeff, d_z, wavel, illum_func, telgeo):
         Wavelength, :math:`\\lambda`, of the observation in length units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
+        with the key ``I_coeff``. The illumination functions available are
         `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
@@ -463,7 +463,7 @@ def radiation_pattern(
         Wavelength, :math:`\\lambda`, of the observation in length units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
+        with the key ``I_coeff``. The illumination functions available are
         `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference

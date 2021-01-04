@@ -61,7 +61,7 @@ def plot_beam(
         Wavelength, :math:`\\lambda`, of the observation in length units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
+        with the key ``I_coeff``. The illumination functions available are
         `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
@@ -83,7 +83,7 @@ def plot_beam(
         wave-vectors in angle units. The `~astropy.units.quantity.Quantity`
         must be in the following order, ``plim = [umin, umax, vmin, vmax]``.
     angle : `~astropy.units.quantity.Quantity` or `str`
-        Angle unit. Axes for the power pattern.
+        Angle unit. Power pattern axes.
     title : `str`
         Figure title.
 
@@ -235,7 +235,7 @@ def plot_beam_data(
         an out-of-focus property. The radial offset list must be as follows,
         ``d_z = [d_z-, 0., d_z+]`` all of them in length units.
     angle : `~astropy.units.quantity.Quantity` or `str`
-        Angle unit. Axes for the power pattern.
+        Angle unit. Power pattern axes.
     title : `str`
         Figure title.
     res_mode : `bool`
@@ -582,7 +582,8 @@ def plot_variance(matrix, order, diag, cbtitle, title):
 
 
 def plot_fit_path(
-    path_pyoof, order, illum_func, telgeo, angle='deg', plim=None, save=False
+    path_pyoof_out, order, illum_func, telgeo, angle='deg', plim=None,
+    save=False
         ):
     """
     Plot all important figures after a least squares minimization.
@@ -590,20 +591,20 @@ def plot_fit_path(
 
     Parameters
     ----------
-    path_pyoof : `str`
+    path_pyoof_out : `str`
         Path to the pyoof output, ``'pyoof_out/directory'``.
     order : `int`
         Order used for the Zernike circle polynomial, :math:`n`.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
+        with the key ``I_coeff``. The illumination functions available are
         `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
         (OPD) function, and the primary radius (`float`) in meters. The list
         must have the following order, ``telego = [block_dist, opd_func, pr]``.
     angle : `~astropy.units.quantity.Quantity` or `str`
-        Angle unit. Axes for the power pattern.
+        Angle unit. Power pattern axes.
     plim : `~astropy.units.quantity.Quantity`
         Contains the maximum values for the :math:`u` and :math:`v`
         wave-vectors in angle units. The `~astropy.units.quantity.Quantity`
@@ -636,13 +637,13 @@ def plot_fit_path(
     """
 
     try:
-        path_pyoof
+        path_pyoof_out
     except NameError:
-        print('pyoof directory does not exist: ' + path_pyoof)
+        print(f'pyoof directory does not exist: {path_pyoof_out}')
     else:
         pass
 
-    path_plot = os.path.join(path_pyoof, 'plots')
+    path_plot = os.path.join(path_pyoof_out, 'plots')
 
     if not os.path.exists(path_plot):
         os.makedirs(path_plot)
@@ -650,11 +651,11 @@ def plot_fit_path(
     # Reading least squares minimization output
     n = order
     params = Table.read(
-        os.path.join(path_pyoof, f'fitpar_n{n}.csv'), format='ascii'
+        os.path.join(path_pyoof_out, f'fitpar_n{n}.csv'), format='ascii'
         )
 
-    with open(os.path.join(path_pyoof, 'pyoof_info.yml'), 'r') as inputfile:
-        pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
+    with open(os.path.join(path_pyoof_out, 'pyoof_info.yml'), 'r') as infile:
+        pyoof_info = yaml.load(infile, Loader=yaml.Loader)
 
     obs_object = pyoof_info['obs_object']
     meanel = round(pyoof_info['meanel'], 2)
@@ -662,19 +663,23 @@ def plot_fit_path(
     box_factor = pyoof_info['box_factor']
 
     # Beam and residual
-    beam_data = np.genfromtxt(os.path.join(path_pyoof, 'beam_data.csv'))
-    res = np.genfromtxt(os.path.join(path_pyoof, f'res_n{n}.csv'))
+    beam_data = np.genfromtxt(os.path.join(path_pyoof_out, 'beam_data.csv'))
+    res = np.genfromtxt(os.path.join(path_pyoof_out, f'res_n{n}.csv'))
 
-    u_data = np.genfromtxt(os.path.join(path_pyoof, 'u_data.csv')) * apu.rad
-    v_data = np.genfromtxt(os.path.join(path_pyoof, 'v_data.csv')) * apu.rad
+    u_data = np.genfromtxt(
+        os.path.join(path_pyoof_out, 'u_data.csv')) * apu.rad
+    v_data = np.genfromtxt(
+        os.path.join(path_pyoof_out, 'v_data.csv')) * apu.rad
 
     wavel = pyoof_info['wavel'] * apu.m
     d_z = np.array(pyoof_info['d_z']) * apu.m
     pr = pyoof_info['pr'] * apu.m
 
+    K_coeff = params['parfit'][5:]
+
     # Covariance and Correlation matrix
-    cov = np.genfromtxt(os.path.join(path_pyoof, f'cov_n{n}.csv'))
-    corr = np.genfromtxt(os.path.join(path_pyoof, f'corr_n{n}.csv'))
+    cov = np.genfromtxt(os.path.join(path_pyoof_out, f'cov_n{n}.csv'))
+    corr = np.genfromtxt(os.path.join(path_pyoof_out, f'corr_n{n}.csv'))
 
     if n == 1:
         fig_data = plot_beam_data(
@@ -691,7 +696,7 @@ def plot_fit_path(
 
     fig_beam = plot_beam(
         I_coeff=params['parfit'][:5],
-        K_coeff=params['parfit'][5:],
+        K_coeff=K_coeff,
         title='{} fit power pattern  $n={}$ $\\alpha={}$ degrees'.format(
             obs_object, n, meanel
             ),
@@ -706,7 +711,7 @@ def plot_fit_path(
         )
 
     fig_phase = plot_phase(
-        K_coeff=params['parfit'][5:],
+        K_coeff=K_coeff,
         title=(
             '{} phase-error $d_z=\\pm {}$ cm $n={}$ $\\alpha={}$ deg'
             ).format(obs_object, round(d_z[2].to_value(apu.cm), 3), n, meanel),

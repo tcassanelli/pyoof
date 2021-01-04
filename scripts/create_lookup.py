@@ -29,7 +29,7 @@ resolution = 1000
 pr = 50 * u.m
 
 actuators = EffelsbergActuator(
-    wavel=7 * u.mm,
+    frequency=34.75 * u.GHz,
     nrot=1,
     sign=-1,
     order=n,

@@ -21,22 +21,22 @@ with open(config_params_pyoof, 'r') as yaml_config:
 n = 5                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2              # total numb. polynomials
 wavel = 0.00862712109352518 * apu.m
-plus_minus = (2.7 * wavel).to_value(apu.cm)
+plus_minus = (2.2 * wavel).to_value(apu.cm)
 d_z = [plus_minus, 0, -plus_minus] * apu.cm
 
 # illumination parameters
 i_amp = np.random.uniform(.001, 1.1)
 c_dB = np.random.uniform(-21, -10) * apu.dB
 q = np.random.uniform(1, 2)
-x0 = 0 * apu.m
-y0 = 0 * apu.m
+x0 = np.random.uniform(-1, 1) * apu.cm
+y0 = np.random.uniform(-1, 1) * apu.cm
 
 K_coeff = np.random.uniform(-.06, .06, N_K_coeff)
 I_coeff = [i_amp, c_dB, q, x0, y0]
 
 I_coeff_dimensionless = [
-    I_coeff[0], I_coeff[1].value, I_coeff[2],
-    I_coeff[3].value, I_coeff[4].value
+    I_coeff[0], I_coeff[1].to_value(apu.dB), I_coeff[2],
+    I_coeff[3].to_value(apu.m), I_coeff[4].to_value(apu.m)
     ]
 params = np.hstack((I_coeff_dimensionless, K_coeff))
 

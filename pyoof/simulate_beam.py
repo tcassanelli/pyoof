@@ -43,8 +43,8 @@ def simulate_data_pyoof(
         units.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
-        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+        with the key ``I_coeff``. The illumination functions available are
+        `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
         (OPD) function, and the primary radius (`float`) in lenght units. The

@@ -56,9 +56,9 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
     y = x.copy()
     xx, yy = np.meshgrid(x, y)
 
-    I_coeff = [1, -14 * u.dB, 0 * u.m, 0 * u.m]  # [amp, c_dB, x0, y0]
+    I_coeff = [1, -14 * u.dB, 2, 0 * u.m, 0 * u.m]  # [amp, c_dB, q, x0, y0]
 
-    Ea = aperture.illum_pedestal(xx, yy, I_coeff, pr)
+    Ea = aperture.illum_parabolic(xx, yy, I_coeff, pr)
     Ea[(xx ** 2 + yy ** 2 > pr ** 2)] = 0  # circle shape
 
     fig, ax = plt.subplots()
@@ -74,13 +74,17 @@ Using the `~pyoof.aperture` package is really simple, for example the illuminati
 
 The `~pyoof.aperture` only uses standard Python libraries, but what needs special consideration are the Python functions with the parameter ``K_coeff``, coming up.
 
+.. note::
+    The illumination function is set free to the user but in `~pyoof` we have included two `~pyoof.aperture.illum_parabolic` with two degrees of freedom (``c_dB`` and ``q`` in the ``I_coeff`` key) and `~pyoof.aperture.illum_gauss` with a single degree of freedom (``c_dB``).
+    For more see [LoYeun]_ Chapter 15: Reflector Antennas.
+
 Wavefront (aberration) distribution :math:`W(x, y)`
 ---------------------------------------------------
 
 The wavefront (aberration) distribution [Welford]_, :math:`W(x, y)`, is strictly related to the aperture phase distribution (see Jupyter notebook, `zernike.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/zernike.ipynb>`_ on GitHub), and it is the basis of the nonlinear least squares minimization done by the `~pyoof` package.
 
 .. note::
-    The Zernike circle coefficients, given by ``K_coeff`` are the basic structure for the aperture phase distribution. The polynomial order :math:`n` is given by :math:`(n+1)(n+2)/2`, or total number of polynomials. See `~pyoof.zernike`.
+    The Zernike circle polynomial coefficients, given by ``K_coeff`` are the basic structure for the aperture phase distribution. The polynomial order :math:`n` is given by :math:`(n+1)(n+2)/2`, or total number of polynomials. See `~pyoof.zernike`.
 
 One basic example is to plot :math:`W(x, y)` with a random set of Zernike circle polynomial coefficients.
 
@@ -137,15 +141,25 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
     N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
     K_coeff = np.random.normal(0., .1, N_K_coeff)
 
-    x, y, phi_notilt = aperture.phase(K_coeff=K_coeff, tilt=False, pr=pr)
-    phi_tilt = aperture.phase(K_coeff=K_coeff, tilt=True, pr=pr)[2]
+    x, y, phi_notilt_nopiston = aperture.phase(
+        K_coeff=K_coeff,
+        piston=False,
+        tilt=False,
+        pr=pr
+        )
+    phi = aperture.phase(
+        K_coeff=K_coeff,
+        piston=True,
+        tilt=True,
+        pr=pr
+        )[2]
 
     levels = np.linspace(-2, 2, 9)
 
     fig, ax = plt.subplots(ncols=2)
     fig.subplots_adjust(wspace=0.6)
 
-    for i, data in enumerate([phi_notilt.value, phi_tilt.value]):
+    for i, data in enumerate([phi_notilt_nopiston.value, phi.value]):
         ax[i].imshow(
             X=data,
             extent=[-pr.value, pr.value] * 2,
@@ -155,10 +169,10 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
         ax[i].contour(x, y, data, levels=levels, alpha=0.3, colors='k')
         ax[i].set_xlabel('$x$ m')
         ax[i].set_ylabel('$y$ m')
-    ax[0].set_title('$\\varphi(x, y)$ no-tilt')
+    ax[0].set_title('$\\varphi(x, y)$ no-tilt and no-piston')
     ax[1].set_title('$\\varphi(x, y)$')
 
-To study the aberration in the aperture phase distribution it is necessary to remove some telescope effects. These are the *tilt terms* that are related to the telescope's pointing, and become irrelevant. The tilt terms also represent the average slope in the :math:`x` and :math:`y` directions. In the Zernike circle polynomials coefficients, the tilt terms are :math:`K^1_1` and :math:`K^{-1}_1`. To erase their dependence they are set to zero with the option ``tilt = False``.
+To study the aberration in the aperture phase distribution it is necessary to remove some telescope effects. These are the *tilt terms* that are related to the telescope's pointing, and become irrelevant, same as the *piston* or overall amplitude. The tilt terms also represent the average slope in the :math:`x` and :math:`y` directions. In the Zernike circle polynomials coefficients, the tilt terms are :math:`K^1_1` and :math:`K^{-1}_1`. To erase their dependence they are set to zero with the option ``piston = False`` and ``tilt = False``.
 
 Aperture distribution :math:`\underline{E_\text{a}}(x, y)`
 ----------------------------------------------------------
@@ -178,8 +192,10 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
     N_K_coeff = (n + 1) * (n + 2) // 2        # max polynomial number
     K_coeff = np.random.normal(0., .1, N_K_coeff)
 
-    taper = np.random.randint(-20, -8) * u.dB # random illumination taper
-    I_coeff = [1, taper, 0 * u.m, 0 * u.m]
+    c = np.random.randint(-20, -8) * u.dB     # First illumination degree
+    q = 2                                     # Second illumination degree
+
+    I_coeff = [1, c, q, 0 * u.m, 0 * u.m]
 
     # Generating the mesh
     x = np.linspace(-pr, pr, 1000)
@@ -198,7 +214,7 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
                 I_coeff=I_coeff,
                 d_z=d_z,         # radial offset
                 wavel=9 * u.mm,  # observation wavelength
-                illum_func=aperture.illum_pedestal,
+                illum_func=aperture.illum_parabolic,
                 telgeo=telgeo    # see telgeometry sub-package
                 )
             )
@@ -244,8 +260,9 @@ In contrast the voltage reception pattern has the same inputs, except for the `~
     N_K_coeff = (n + 1) * (n + 2) // 2  # max polynomial number
     K_coeff = np.random.normal(0., .1, N_K_coeff)
 
-    taper = np.random.randint(-20, -8) * u.dB  # random illumination taper
-    I_coeff = [1, taper, 0 * u.m, 0 * u.m]
+    c = np.random.randint(-20, -8) * u.dB      # First illumination degree
+    q = 2                                      # Second illumation degree
+    I_coeff = [1, c, q, 0 * u.m, 0 * u.m]
 
     telgeo = [telgeometry.block_effelsberg(), telgeometry.opd_effelsberg, pr]
 
@@ -254,7 +271,7 @@ In contrast the voltage reception pattern has the same inputs, except for the `~
         I_coeff=I_coeff,
         d_z=0 * u.cm,
         wavel=9 * u.mm,
-        illum_func=aperture.illum_pedestal,
+        illum_func=aperture.illum_parabolic,
         telgeo=telgeo,
         resolution=2 ** 8,
         box_factor=5 * pr
@@ -266,6 +283,8 @@ References
 .. [Stutzman] Stutzman, W. and Thiele, G., 1998. Antenna Theory and Design. Second edition. Wiley. 
 
 .. [Welford] Welford, W., 1986. Aberration of Optical Systems. The Adam Hilger Series on Optics and Optoelectronics.
+
+.. [LoYeun] Lo, Yuen T., and S. W. Lee., 2013. Antenna Handbook: theory, applications, and design. Springer Science & Business Media.
 
 See Also
 ========

@@ -55,10 +55,10 @@ It is the truncation or blockage that the telescope structure (or a shade effect
 
 The (field) radiation pattern (or voltage reception pattern) is a complex distribution, it is the direct Fourier Transform (in two dimensions) of the aperture distribution, :math:`F(u, v) = \mathcal{F}[\underline{E_\text{a}}(x, y)]`. Represents the angular variation of the radiation around the antenna.
 
-Illumination function: :math:`E_\text{a}(x, y)` (`~pyoof.aperture.illum_pedestal` or `~pyoof.aperture.illum_gauss`)
+Illumination function: :math:`E_\text{a}(x, y)` (`~pyoof.aperture.illum_parabolic` or `~pyoof.aperture.illum_gauss`)
 ------------------------------------------------------------------------------------------------------------------------------------------------
 
-The illumination function is a characteristic of a receiver and it is used to reduce the level of the beam side lobes. It can be modeled with different types of functions, such as a Gaussian or a cosine. The default one used by the `~pyoof` package is the parabolic taper on a pedestal (order :math:`q=2`),
+The illumination function is a characteristic of a receiver and it is used to reduce the level of the beam side lobes. It can be modeled with different types of functions, such as a Gaussian or a cosine. The default one used by the `~pyoof` package is the parabolic taper on a parabolic (order :math:`1\leq q\leq 2`),
 
 .. math::
     E_\text{a}(\rho') = C + (1 - C)\cdot \left[ 1-\left(\frac{\rho'}{R}\right)^2 \right]^q, \qquad C=10^{\frac{c_\text{dB}}{20}},
@@ -68,11 +68,11 @@ the `~pyoof` package includes the option of introducing a new illumination funct
 Illumination coefficients (``I_coeff``)
 ---------------------------------------
 
-The illumination coefficients correspond to four constants that need to be added to the illumination function, :math:`E_\text{a}`. These coefficients are the illumination amplitude, :math:`A_{E_\text{a}}`, the illumination offset (:math:`x_0, y_0`), and the illumination taper in decibels, :math:`c_\text{dB}`. The coefficients, ``I_coeff``, are organized in the following order:
+The illumination coefficients correspond to four or five constants that need to be added to the illumination function, :math:`E_\text{a}`. These coefficients are the illumination amplitude, :math:`A_{E_\text{a}}`, the illumination offset (:math:`x_0, y_0`), and the illumination taper in decibels, :math:`c_\text{dB}` and the illumination order :math:`q` (which does not exists in the case of a Gaussian illumination). The coefficients, ``I_coeff``, are organized in the following order:
 
 .. math::
 
-    \left[A_{E_\text{a}}, c_\text{dB}, x_0, y_0 \right]^\intercal
+    \left[A_{E_\text{a}}, c_\text{dB}, q, x_0, y_0 \right]^\intercal
 
 From these coefficients the most relevant of them is the illumination taper. It gives a measure of how strong the signal is from the center of the aperture plane with respect to its edges.
 
@@ -299,7 +299,7 @@ The properties of the receiver and the telescope can be found in the sub-package
             ]
         )
 
-Besides this an illumination function must be selected to fulfill the receiver properties. The illumination functions can be found on the `~pyoof.aperture` package. Currently there are two made functions, `pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss` (but you can add your own).
+Besides this an illumination function must be selected to fulfill the receiver properties. The illumination functions can be found on the `~pyoof.aperture` package. Currently there are two made functions, `pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss` (but you can add your own).
 
 .. note::
     The blockage distribution, ``block_dist``, and the OPD function, ``opd_func`` can be manually created or using the standard manual functions, `~pyoof.telgeometry.block_manual` and `~pyoof.telgeometry.opd_manual`.
@@ -315,7 +315,7 @@ After creating the basic structure, the core function, `~pyoof.fit_zpoly` can be
         data_info=data_info,                   # information
         data_obs=[beam_data, u_data, v_data],  # observed beam
         order_max=5,                           # it will fit from 1 to order_max
-        illum_func=illum_pedestal,             # or illum_gauss
+        illum_func=illum_parabolic,            # or illum_gauss
         telescope=telescope['effelsberg'],     # [block_dist, opd_func, pr, name]
         resolution=2**8,                       # standard is 2 ** 8
         box_factor=5,                          # box_size = 5 * pr, pixel resolution

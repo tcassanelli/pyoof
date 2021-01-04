@@ -18,7 +18,7 @@ wavel = 7 * apu.mm
 n = 5
 
 actuator = EffelsbergActuator(
-    wavel=7 * apu.mm,
+    frequency=34.75 * apu.GHz,
     nrot=3,
     sign=-1,
     order=n,

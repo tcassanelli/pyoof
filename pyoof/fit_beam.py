@@ -27,16 +27,16 @@ def residual_true(
         ):
     """
     Computes the true residual ready to use for the `~pyoof.fit_zpoly`
-    function. True means that some of the parameters used will not be fitted.
-    Their selection is done by default or by adding a ``config_params.yml``
-    file to the `~pyoof.fit_zpoly` function.
+    function. True means that some of the parameters used will **not** be
+    fitted. Their selection is done by default or by adding
+    ``config_params.yml`` file to the `~pyoof.fit_zpoly` function.
 
     Parameters
     ----------
     params : `~numpy.ndarray`
         Two stacked arrays, the illumination and Zernike circle polynomials
         coefficients. ``params = np.hstack([I_coeff, K_coeff])``.
-    beam_data : `np.ndarray`
+    beam_data : `~numpy.ndarray`
         The ``beam_data`` is an array with the three observed beam maps,
         :math:`P^\\mathrm{obs}(u, v)`, minus, zero and plus out-of-focus.
     u_data : `~astropy.units.quantity.Quantity`
@@ -58,8 +58,8 @@ def residual_true(
         Wavelength, :math:`\\lambda`, of the observation in meters.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
-        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+        with the key ``I_coeff``. The illumination functions available are
+        `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
         (OPD) function, and the primary radius (`float`) in meters. The list
@@ -152,7 +152,7 @@ def residual(
         Total number of Zernike circle polynomials coefficients to fit. It is
         obtained from the order to be fitted with the formula
         ``N_K_coeff = (n + 1) * (n + 2) // 2.``.
-    beam_data : `np.ndarray`
+    beam_data : `~numpy.ndarray`
         The ``beam_data`` is an array with the three observed beam maps,
         :math:`P^\\mathrm{obs}(u, v)`, minus, zero and plus out-of-focus.
     u_data : `~astropy.units.quantity.Quantity`
@@ -174,8 +174,8 @@ def residual(
         Wavelength, :math:`\\lambda`, of the observation in meters.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
-        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+        with the key ``I_coeff``. The illumination functions available are
+        `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telgeo : `list`
         List that contains the blockage distribution, optical path difference
         (OPD) function, and the primary radius (`float`) in meters. The list
@@ -337,8 +337,8 @@ def fit_zpoly(
         optimization for orders 1, 2 and 3.
     illum_func : `function`
         Illumination function, :math:`E_\\mathrm{a}(x, y)`, to be evaluated
-        with the key **I_coeff**. The illumination functions available are
-        `~pyoof.aperture.illum_pedestal` and `~pyoof.aperture.illum_gauss`.
+        with the key ``I_coeff``. The illumination functions available are
+        `~pyoof.aperture.illum_parabolic` and `~pyoof.aperture.illum_gauss`.
     telescope : `list`
         List that contains the blockage distribution, optical path difference
         (OPD) function, primary radius (`float`) in meters, and telescope name
@@ -523,8 +523,8 @@ def fit_zpoly(
         _phase = phase(
             K_coeff=params_solution[5:],
             pr=telgeo[2],
-            piston=(5 not in idx_exclude),
-            tilt=((6 not in idx_exclude) and (7 not in idx_exclude))
+            piston=False,
+            tilt=False
             )[2].to_value(apu.rad)
 
         # Storing files in directory
@@ -594,7 +594,7 @@ def fit_zpoly(
 
             # Making all relevant plots
             plot_fit_path(
-                path_pyoof=name_dir,
+                path_pyoof_out=name_dir,
                 order=n,
                 telgeo=telgeo,
                 illum_func=illum_func,
@@ -606,4 +606,4 @@ def fit_zpoly(
             plt.close('all')
 
     final_time = np.round((time.time() - start_time) / 60, 2)
-    print('\n***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time))
+    print('\n ***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time))

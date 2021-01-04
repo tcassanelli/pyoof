@@ -12,7 +12,7 @@ __all__ = ['cart2pol', 'co_matrices', 'line_equation', 'rms', 'norm', 'snr']
 def norm(P, axis=None):
     """
     Data normalization. This is a pre-process right before starting the least
-    squares minimization.
+    squares minimization in ``~pyoof.fit_zpoly``.
 
     Parameters
     ----------
