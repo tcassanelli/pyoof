@@ -173,16 +173,18 @@ def str2LaTeX(python_string):
 
 def store_data_csv(name, name_dir, order, save_to_csv):
     """
-    Stores all important information in a csv file after the least squares
-    minimization has finished, `~pyoof.fit_zpoly`. All data will be stores in
-    the ``pyoof_out/name`` directory, with ``name`` the name of the fits file.
+    Stores all important information in a CSV file after the least squares
+    minimization has finished, `~pyoof.fit_zpoly`. All data will be stored in
+    the ``pyoof_out/name-number`` directory, with ``name`` the name of the
+    fits file, and ``number`` the `~pyoof.fit_zpoly` number of code execution,
+    i.e. the output data is never overwritten.
 
     Parameters
     ----------
     name : `str`
         File name of the fits file to be optimized.
     name_dir : `str`
-        Path to store all the csv files. The files will depend on the order of
+        Path to store all the CSV files. The files will depend on the order of
         the Zernike circle polynomial.
     order : `int`
         Order used for the Zernike circle polynomial, :math:`n`.
@@ -221,8 +223,8 @@ def store_data_csv(name, name_dir, order, save_to_csv):
 
 def store_data_ascii(name, name_dir, order, params_solution, params_init):
     """
-    Stores in an ascii format the parameters found by the least squares
-    minimization (see `~pyoof.fit_zpoly`).
+    Stores in an ``~astropy.table.table.Table`` format the parameters found by
+    the least squares minimization (see `~pyoof.fit_zpoly`).
 
     Parameters
     ----------
@@ -230,7 +232,7 @@ def store_data_ascii(name, name_dir, order, params_solution, params_init):
         File name of the fits file to be optimized.
     name_dir : `str`
         Path to store all the csv files. The files will depend on the order of
-        the Zernike circle polynomial.
+        the Zernike circle polynomial (radial) order.
     order : `int`
         Order used for the Zernike circle polynomial, :math:`n`.
     params_solution : `~numpy.ndarray`
@@ -275,9 +277,9 @@ def uv_ratio(u, v):
     Parameters
     ----------
     u : `~astropy.units.quantity.Quantity`
-        Spatial frequencies from the power pattern, usually in degrees.
+        Spatial frequencies from the power pattern in angle units.
     v : `~astropy.units.quantity.Quantity`
-        Spatial frequencies from the power pattern, usually in degrees.
+        Spatial frequencies from the power pattern in angle units.
 
     Returns
     -------
@@ -298,7 +300,7 @@ def uv_ratio(u, v):
 def table_pyoof_out(path_pyoof_out, order):
     """
     Auxiliary function to tabulate all data from a series of observations
-    gathered in a common pyoof_out directory.
+    gathered in a common ``pyoof_out/`` directory.
 
     Parameters
     ----------
@@ -311,8 +313,8 @@ def table_pyoof_out(path_pyoof_out, order):
     Returns
     -------
     qt : `~astropy.table.table.QTable`
-        Table with units of the most important quantities from the `~pyoof`
-        package.
+        `~astropy.table.table.QTable` with units of the most important
+        quantities from the `~pyoof` package.
     """
 
     qt = QTable(
