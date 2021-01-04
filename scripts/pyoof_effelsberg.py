@@ -16,12 +16,12 @@ telescope = dict(
     #     pr,
     #     'effelsberg (20 deg blockage)'
     #     ],
-    effelsberg_10deg=[
-        telgeometry.block_effelsberg(alpha=10 * u.deg),
-        telgeometry.opd_effelsberg,
-        pr,
-        'effelsberg (10 deg blockage)'
-        ],
+    # effelsberg_10deg=[
+    #     telgeometry.block_effelsberg(alpha=10 * u.deg),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (10 deg blockage)'
+    #     ],
     # effelsberg_0deg=[
     #     telgeometry.block_effelsberg(alpha=0 * u.deg),
     #     telgeometry.opd_effelsberg,

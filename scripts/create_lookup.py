@@ -6,6 +6,7 @@ import os
 import glob
 import yaml
 import numpy as np
+from matplotlib.patches import Patch
 import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.time import Time
@@ -21,7 +22,7 @@ Here we isolate the true deformations to apply directly a look-up table to the
 active surface.
 """
 
-pyoof_run = '001'
+pyoof_run = '000'
 path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data/pyoof_out'
 n = 5
 resolution = 1000
@@ -51,7 +52,9 @@ for i in range(len(tab)):
         idx_offset[i] = True
 
 section = (
-    (tab['phase-rms'] < 1. * u.rad) & (tab['beam-snr'] > 200.) & ~idx_offset
+    # (tab['phase-rms'] < 1. * u.rad)
+    (tab['beam-snr'] > 200.)
+    & ~idx_offset
     )
 tab_section = tab[section].copy()
 tab_section.add_index('name')
@@ -114,6 +117,7 @@ xx, yy = np.meshgrid(x, x)
 # actuator rings at the active surface
 R = np.array([3250, 2600, 1880, 1210]) * u.mm
 phase_max = 2 * np.pi * u.rad
+nl = [(i, j) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
 
 for k, _R in enumerate(R):
     if np.abs(phases_model[:, xx ** 2 + yy ** 2 > _R ** 2]).max() > phase_max:
@@ -132,14 +136,19 @@ for j in range(N_K_coeff - 3):
             _color = 'k'
 
         ax[j].scatter(
-            _alpha.to_value(u.deg), K_coeff_obs[i, j + 3],
+            _alpha.to_value(u.deg), K_coeff_obs[i, j + 3] * 2 * np.pi,
             # _alpha.to_value(u.deg), phase_K_coeff_obs[i, j].to_value(u.rad),
             marker='o',
-            s=tab_section['beam-snr'][i] / 200,
-            color=_color
+            s=tab_section['beam-snr'][i] / 100,
+            color=_color,
             )
-        ax[j].plot(alpha_list, K_coeff_model[:, j + 3], 'r')
+        ax[j].plot(alpha_list, K_coeff_model[:, j + 3] * 2 * np.pi, 'r')
         # ax[j].set_ylim(-1.5, 1.5)
+        ax[j].set_xlim(7, 90)
+
+    patch = Patch(label=f"K({nl[j + 3][0]}, {nl[j + 3][1]})")
+    ax[j].legend(handles=[patch], loc='upper right', handlelength=0)
+
 fig_fit.tight_layout()
 
 fig_phase_modified = actuators.plot(phases_model)

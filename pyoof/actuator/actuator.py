@@ -173,7 +173,7 @@ class EffelsbergActuator():
 
         K = (
             g_coeff[0] * np.sin(alpha) + g_coeff[1] * np.cos(alpha) +
-            g_coeff[2] * alpha + g_coeff[3]
+            g_coeff[2]
             )
 
         return K
@@ -422,12 +422,12 @@ class EffelsbergActuator():
             return Knl - Knl_model
 
         # removing tilt and amplitude (K(0, 0)) terms from fit
-        g_coeff = np.zeros((self.N_K_coeff, 4))
+        g_coeff = np.zeros((self.N_K_coeff, 3))
         for N in range(self.N_K_coeff):
 
             res_lsq_g = optimize.least_squares(
                 fun=residual_grav_deformation,
-                x0=[0, 0, 0, 0],
+                x0=[0.1, 0.1, 0.1],
                 args=(K_coeff_alpha[:, N], alpha,),
                 method='trf',
                 tr_solver='exact'

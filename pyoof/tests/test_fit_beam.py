@@ -4,23 +4,55 @@
 # Author: Tomas Cassanelli
 import pytest
 import os
+import yaml
 import numpy as np
 from astropy import units as apu
+from astropy.utils.data import get_pkg_data_filename
 from astropy.table import Table
 from numpy.testing import assert_allclose
 import pyoof
 
 
-# Initial fits file configuration
+# initial configuration params same as the config_params.yml file
+config_params_pyoof = get_pkg_data_filename('../data/config_params.yml')
+with open(config_params_pyoof, 'r') as yaml_config:
+    config_params = yaml.load(yaml_config, Loader=yaml.Loader)
+
 n = 5                                           # initial order
-N_K_coeff = (n + 1) * (n + 2) // 2 - 3          # total numb. polynomials
+N_K_coeff = (n + 1) * (n + 2) // 2              # total numb. polynomials
+wavel = 0.00862712109352518 * apu.m
+plus_minus = (2.7 * wavel).to_value(apu.cm)
+d_z = [plus_minus, 0, -plus_minus] * apu.cm
+
+# illumination parameters
 i_amp = np.random.uniform(.001, 1.1)
 c_dB = np.random.uniform(-21, -10) * apu.dB
 q = np.random.uniform(1, 2)
-wavel = 0.00862712109352518 * apu.m             # wavelength
+x0 = 0 * apu.m
+y0 = 0 * apu.m
 
-plus_minus = np.random.uniform(0.019, 0.025)
-d_z = [plus_minus, 0, -plus_minus] * apu.m      # radial offset
+K_coeff = np.random.uniform(-.06, .06, N_K_coeff)
+I_coeff = [i_amp, c_dB, q, x0, y0]
+
+I_coeff_dimensionless = [
+    I_coeff[0], I_coeff[1].value, I_coeff[2],
+    I_coeff[3].value, I_coeff[4].value
+    ]
+params = np.hstack((I_coeff_dimensionless, K_coeff))
+
+idx_exclude = config_params['excluded']
+params_true = pyoof.params_complete(
+    params=np.delete(params, idx_exclude),
+    N_K_coeff=N_K_coeff,
+    config_params=config_params
+    )
+
+K_coeff_true = params_true[5:]
+I_coeff_true_dimensionless = params_true[:5]
+I_coeff_true = [
+    params_true[0], params_true[1] * apu.dB, params_true[2],
+    params_true[3] * apu.m, params_true[4] * apu.m
+    ]
 
 noise_level = .1                                # noise added to gen data
 
@@ -36,16 +68,6 @@ illum_func = pyoof.aperture.illum_parabolic
 # Least squares minimization
 resolution = 2 ** 8
 box_factor = 5
-
-# True values to be compared at the end
-K_coeff_true = np.hstack((0., 0., 0., np.random.normal(0., .06, N_K_coeff)))
-I_coeff_true = [i_amp, c_dB, q, 0 * apu.m, 0 * apu.m]
-
-I_coeff_true_dimensionless = [
-    I_coeff_true[0], I_coeff_true[1].value, I_coeff_true[2],
-    I_coeff_true[3].value, I_coeff_true[4].value
-    ]
-
 
 # Generating temp file with pyoof fits and pyoof_out
 @pytest.fixture()

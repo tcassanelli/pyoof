@@ -5,9 +5,9 @@ bound_max:
 - 2.      # q
 - 0.01    # x0 (illumination x-axis offset)
 - 0.01    # y0 (illumination y-axis offset)
-- 1.      # K(0, 0) (Piston Zernike circle polynomial coefficient)
-- 1.      # K(1, 1) (Tilt Zernike circle polynomial coefficient)
-- 1.      # K(1, -1) (Tilt Zernike circle polynomial coefficient)
+- 5.      # K(0, 0) (Piston Zernike circle polynomial coefficient)
+- 5.      # K(1, 1) (Tilt Zernike circle polynomial coefficient)
+- 5.      # K(1, -1) (Tilt Zernike circle polynomial coefficient)
 
 bound_min:
 - 0       # i_amp
@@ -15,25 +15,25 @@ bound_min:
 - 1.      # q
 - -0.01   # x0
 - -0.01   # y0
-- -1.     # K(0, 0) (Piston Zernike circle polynomial coefficient)
-- -1.     # K(1, 1) (Tilt Zernike circle polynomial coefficient)
-- -1.     # K(1, -1) (Tilt Zernike circle polynomial coefficient)
+- -5.     # K(0, 0) (Piston Zernike circle polynomial coefficient)
+- -5.     # K(1, 1) (Tilt Zernike circle polynomial coefficient)
+- -5.     # K(1, -1) (Tilt Zernike circle polynomial coefficient)
 
 # commented means included parameter
 excluded:
 # - 0       # i_amp
-# - 1       # c_dB
-# - 2       # q
+- 1       # c_dB
+- 2       # q
 - 3       # x0
 - 4       # y0
 - 5       # K(0, 0)
-- 6       # K(1, 1)
-- 7       # K(1, -1)
+# - 6       # K(1, 1)
+# - 7       # K(1, -1)
 
 fixed:
 - 1.      # i_amp
-- -12.    # c_dB
-- 2       # q
+- -14.5   # c_dB
+- 1.4     # q
 - 0.      # x0
 - 0.      # y0
 - 0.      # K(0, 0)
@@ -46,6 +46,6 @@ init:
 - 1.5     # q
 - 0.      # x0
 - 0.      # y0
-- 0.      # K(0, 0)
-- 0.      # K(0, 1)
-- 0.      # K(0, -1)
+- 0.1     # K(0, 0)
+- 0.1     # K(0, 1)
+- 0.1     # K(0, -1)
