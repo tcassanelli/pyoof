@@ -120,7 +120,7 @@ def plot_beam(
         s_bw = bw * 8                           # size-beamwidth ratio radians
 
         # Finding central point for shifted maps
-        uu, vv = np.meshgrid(_u, _v)
+        uu, vv = np.meshgrid(u[1, :], v[1, :])
         u_offset = uu[power_norm[1, ...] == power_norm[1, ...].max()][0]
         v_offset = vv[power_norm[1, ...] == power_norm[1, ...].max()][0]
 
@@ -371,7 +371,7 @@ def plot_phase(K_coeff, pr, piston, tilt, title):
     """
 
     if (not tilt) and (not piston):
-        cbartitle = ''.join((
+        cbartitle = ' '.join((
             '$\\varphi_{\\scriptsize{\\textrm{no-piston, no-tilt}}}(x,y)$',
             'amplitude rad'
             ))
