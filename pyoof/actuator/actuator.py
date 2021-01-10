@@ -34,7 +34,7 @@ class EffelsbergActuator():
     nrot : `int`
         This is a required rotation to apply to the phase maps (obtained
         from `~pyoof.fit_zpoly`) to get the right orientation of the active
-        surface lookup table in the active surface control system.
+        surface look-up table in the active surface control system.
     sign : `int`
         It is the value of the phase-error amplitude as seen from the active
         surface, same as ``nrot`` is a convention for the Effelsberg telescope.
@@ -46,7 +46,7 @@ class EffelsbergActuator():
             can make in a displacement, for the Effelsberg active surface
             control system is :math:`\\pm5 \\mathrm{mm}`.
     path_lookup : `str`
-        Path for the current look up table that controls the active surface
+        Path for the current look-up table that controls the active surface
         control system. If `None` it will select the default table from the
         FEM model.
     """
@@ -304,7 +304,7 @@ class EffelsbergActuator():
                 )
 
         # after interpolation there may be values that have higher amplitude
-        # than the lookup table maximum, we need to correct this
+        # than the look-up table maximum, we need to correct this
         [min_amplitude, max_amplitude] = self.limits_amplitude.to_value(apu.um)
         lookup_table[lookup_table > max_amplitude] = max_amplitude
         lookup_table[lookup_table < min_amplitude] = min_amplitude
@@ -386,9 +386,7 @@ class EffelsbergActuator():
             K_coeff_alpha = np.insert(K_coeff_alpha, [0] * 3, [0.] * 3, 1)
 
         final_time = np.round((time.time() - start_time) / 60, 2)
-        print(
-            '\n***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time)
-            )
+        print(f'\n ***** PYOOF FIT COMPLETED AT {final_time} mins *****\n')
 
         return K_coeff_alpha
 
@@ -437,9 +435,7 @@ class EffelsbergActuator():
             g_coeff[N, :] = res_lsq_g.x
 
         final_time = np.round((time.time() - start_time) / 60, 2)
-        print(
-            '\n ***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time)
-            )
+        print(f'\n ***** PYOOF FIT COMPLETED AT {final_time} mins *****\n')
 
         return g_coeff
 
@@ -478,7 +474,7 @@ class EffelsbergActuator():
             )
         return g_coeff, K_coeff_alpha
 
-    def generate_phase_pr(self, g_coeff, alpha):
+    def generate_phase_pr(self, g_coeff, alpha, eac):
         """
         Generate a set of phase for the primary reflector ``phase_pr``, given
         the gravitational deformation coefficients ``g_coeff`` for a new set
@@ -494,6 +490,8 @@ class EffelsbergActuator():
             `~pyoof.actuator.EffelsbergActuator.grav_deformation`.
         alpha : `~astropy.units.quantity.Quantity`
             List of new elevation angles.
+        eac : `bool`
+            If `True` it will activate the ellipsoidal actuator correction, described in `~pyoof.actuator.EffelsbergActuator.ellipsoidal_actuator_correction`.
 
         Returns
         -------
@@ -521,14 +519,77 @@ class EffelsbergActuator():
                 pr=self.pr,
                 piston=False,
                 tilt=False,
+                resolution=self.resolution
                 )[2]
+
+            if eac:
+                phases *= self.ellipsoidal_actuator_correction()
 
         return phases
 
-    def plot(self, phases=None, figsize=(16, 5.5)):
+    def ellipsoidal_actuator_correction(
+        self, r=None, a=14.3050 * apu.m, b=7.3872 * apu.m
+            ):
+        """
+        The truncated ellipsoidal in the sub-reflector has its actuators
+        located across all its surface in 4 concentric rings. This correction
+        takes into account the direction of the applied actuator displacement
+        in order to decompose it in a only vertical component with respect to
+        the telescope pointing axis (:math:`z_f`) and not with respect to the
+        sub-reflector normal surface vector.
 
-        if phases is None:
-            phases = self.phase_pr_lookup
+        Parameters
+        ----------
+        r : `~astropy.units.quantity.Quantity`
+            Grid value for the radial variable in length units. If `None` it
+            will use the default configuration.
+        a : `~astropy.units.quantity.Quantity`
+            Major axis ellipse in length units.
+        b : `~astropy.units.quantity.Quantity`
+            Minor axis ellipse in length units.
+
+        Returns
+        -------
+        correction : `~numpy.ndarray`
+            Two dimensional grid correction to be applied to the phase-error.
+            It is just a simply multiplication of the two.
+        """
+
+        if r is None:
+            x = np.linspace(-self.sr, self.sr, self.resolution)
+            y = x.copy()
+            xx, yy = np.meshgrid(x, y)
+            r = np.sqrt(xx ** 2 + yy ** 2)
+
+        # slope of the normal vector to the ellipse (sub-reflector)
+        m = b ** 2 / a * np.sqrt(1 - r ** 2 / b ** 2) / r
+        correction = np.sin(np.arctan(np.abs(m)))
+
+        return correction.value
+
+    def plot(self, phase_pr=None, figsize=(16, 5.5), title=None):
+        """
+        Simple plot function for the 11 FEM look-up tables. If ``phase_pr`` is
+        `None` it will compute the standard FEM look-up table from Effelsberg.
+
+        Parameters
+        ----------
+        phase_pr : `~astropy.units.quantity.Quantity` or `None`
+            Phase-error map for the primary dish. It must have shape
+            ``(alpha.size, resolution, resolution)``.
+        figsize : `list` or `tuple`
+            Width, height in inches.
+        title : `str` or `None`
+            Title name.
+
+        Returns
+        -------
+        fig : `~matplotlib.figure.Figure`
+            FEM look-up table figure.
+        """
+
+        if phase_pr is None:
+            phase_pr = self.phase_pr_lookup
 
         nrow = 2
         ncol = 6
@@ -554,12 +615,12 @@ class EffelsbergActuator():
         y = x.copy()
         levels = np.linspace(-2, 2, 9) * apu.rad
         extent = [-self.pr.to_value(apu.m), self.pr.to_value(apu.m)] * 2
-        vmin, vmax = phases.min(), phases.max()
+        vmin, vmax = phase_pr.min(), phase_pr.max()
 
         for j, _alpha in enumerate(self.alpha_lookup):
 
             im = ax[j].imshow(
-                phases[j, ...].to_value(apu.rad),
+                phase_pr[j, ...].to_value(apu.rad),
                 extent=extent,
                 aspect='auto',
                 vmin=vmin.to_value(apu.rad),
@@ -570,7 +631,7 @@ class EffelsbergActuator():
                 warnings.simplefilter("ignore")
                 ax[j].contour(
                     x.to_value(apu.m), y.to_value(apu.m),
-                    phases[j, ...].to_value(apu.rad),
+                    phase_pr[j, ...].to_value(apu.rad),
                     colors='k',
                     alpha=0.3,
                     levels=levels.to_value(apu.rad)
@@ -588,5 +649,8 @@ class EffelsbergActuator():
         cb = fig.colorbar(im, cax=ax[-1])
         cb.set_label('Phase rad')
         fig.delaxes(ax[-2])
+
+        if title is not None:
+            fig.suptitle(title, fontsize=10)
 
         return fig
