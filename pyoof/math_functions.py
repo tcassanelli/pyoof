@@ -158,7 +158,7 @@ def rms(phase, circ=False):
 
 
 def snr(
-    beam_data, u_data, v_data, centre=0.03 * apu.deg, radius=0.01 * apu.deg
+    beam_data, u_data, v_data, centre=.04 * apu.deg, radius=.01 * apu.deg
         ):
 
     """
