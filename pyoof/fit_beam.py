@@ -408,6 +408,12 @@ def fit_zpoly(
             os.makedirs(name_dir, exist_ok=True)
             break
 
+    _snr = []
+    for i in range(3):
+        _snr.append(
+            np.round(snr(beam_data[i, ...], u_data[i, ...], v_data[i, ...]), 2)
+            )
+
     print(
         f'Maximum order to be fitted: {order_max}',
         f'Telescope name: {tel_name}',
@@ -417,6 +423,8 @@ def fit_zpoly(
         f'Mean elevation {meanel.to(apu.deg)}',
         f'd_z (out-of-focus): {d_z.to(apu.cm)}',
         f'Illumination to be fitted: {illum_func.__qualname__}',
+        f'SNR out-, in-, and out-focus beam: {_snr}',
+        f'Beam data shape: {beam_data.shape}',
         sep='\n',
         end='\n'
         )
@@ -547,11 +555,12 @@ def fit_zpoly(
                 ).pprint_all()
 
         if n == 1:
+            # TODO: yaml doesn't like astropy :(
             pyoof_info = dict(
                 tel_name=tel_name,
-                tel_blockage=telgeo[0].__qualname__,
+                # tel_blockage=telgeo[0].__qualname__,
                 tel_opd=telgeo[1].__qualname__,
-                pr=telgeo[2].to_value(apu.m),
+                pr=float(telgeo[2].to_value(apu.m)),
                 name=name,
                 obs_object=obs_object,
                 obs_date=obs_date,
@@ -562,9 +571,7 @@ def fit_zpoly(
                 meanel=float(meanel.to_value(apu.deg)),
                 fft_resolution=resolution,
                 box_factor=box_factor,
-                snr=float(
-                    snr(beam_data[1, ...], u_data[1, ...], v_data[1, ...])
-                    )
+                snr=list(float(_snr[i]) for i in range(3))
                 )
 
             with open(os.path.join(name_dir, 'pyoof_info.yml'), 'w') as outf:
@@ -606,4 +613,4 @@ def fit_zpoly(
             plt.close('all')
 
     final_time = np.round((time.time() - start_time) / 60, 2)
-    print('\n ***** PYOOF FIT COMPLETED AT {} mins *****\n'.format(final_time))
+    print(f'\n ***** PYOOF FIT COMPLETED AT {final_time} mins *****\n')

@@ -319,13 +319,11 @@ def table_pyoof_out(path_pyoof_out, order):
 
     qt = QTable(
         names=[
-        'name', 'tel_name', 'obs-object', 'meanel', 'beam-snr', 'obs-date',
-        'i_amp', 'c_dB', 'q', 'phase-rms', 'e_rs'
+            'name', 'tel_name', 'obs-object', 'obs-date', 'meanel',
+            'i_amp', 'c_dB', 'q', 'phase-rms', 'e_rs', 'beam-snr-out-l',
+            'beam-snr-in', 'beam-snr-out-r'
             ],
-        dtype=[
-            np.string_, np.string_, np.string_, np.float, np.float, np.string_,
-            np.float, np.float, np.float, np.float, np.float
-            ]
+        dtype=[np.string_] * 4 + [np.float] * 9
         )
 
     for p, pyoof_out in enumerate(path_pyoof_out):
@@ -346,10 +344,10 @@ def table_pyoof_out(path_pyoof_out, order):
 
         qt.add_row([
             pyoof_info['name'], pyoof_info['tel_name'],
-            pyoof_info['obs_object'], pyoof_info['meanel'], pyoof_info['snr'],
-            pyoof_info['obs_date'], I_coeff[0], I_coeff[1], I_coeff[2],
+            pyoof_info['obs_object'], pyoof_info['obs_date'],
+            pyoof_info['meanel'], I_coeff[0], I_coeff[1], I_coeff[2],
             phase_rms, phase_e_rs
-            ])
+            ] + pyoof_info['snr'])
 
     # updating units
     qt['phase-rms'] *= apu.rad
