@@ -259,8 +259,8 @@ class EffelsbergActuator():
         """
         Easy writer for the active surface standard formatting at the
         Effelsberg telescope. The writer admits the actuator sub-reflector
-        perpendicular displacement in the same shape as the `~pyoof` format (
-        with the exact angle list as in ``alpha_lookup`` format), then it
+        perpendicular displacement in the same shape as the `~pyoof` format
+        (with the exact angle list as in ``alpha_lookup`` format), then it
         grids the data to the active surface look-up format.
 
         Parameters

@@ -64,12 +64,10 @@ N_K_coeff = (n + 1) * (n + 2) // 2
 K_coeff_obs = np.zeros((len(tab_section), N_K_coeff), dtype=np.float64)
 
 for j, _name in enumerate(tab_section['name']):
-
     path_params = os.path.join(
         path_pyoof_out, f'{_name}-{pyoof_run}', f'fitpar_n{n}.csv'
         )
     params = Table.read(path_params, format='ascii')
-
     K_coeff_obs[j, :] = params['parfit'][5:]
 
 g_coeff = actuators.fit_grav_deformation(
@@ -84,46 +82,29 @@ alpha_list = np.linspace(
     num=resolution
     )
 
+# gravitational model for the Knl coefficients
 K_coeff_model = np.zeros((alpha_list.size, N_K_coeff))
 for a, _alpha in enumerate(alpha_list):
     for i in range(N_K_coeff):
         K_coeff_model[a, i] = actuators.grav_deformation(g_coeff[i, :], _alpha)
 
 
-phases_model = actuators.generate_phase_pr(
+phases_pr_model = actuators.generate_phase_pr(
     g_coeff=g_coeff,
-    alpha=actuators.alpha_lookup
+    alpha=actuators.alpha_lookup,
+    eac=True
     )
 
-fig_phase = actuators.plot(phases_model)
-fig_fem_oof = actuators.plot(actuators.phase_pr_lookup - phases_model)
+phases_pr_correction = actuators.phase_pr_lookup - phases_pr_model
 
-# list of tuples with (n, l) allowed values
-# nl = [(i, j) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
-# phase_K_coeff_obs = np.zeros_like(K_coeff_obs) << u.rad
-# rho = -0.25
-# theta = -35 * u.deg
-# for j, _nl in enumerate(nl[3:]):
-#     for i, _alpha in enumerate(tab_section['meanel']):
-#         phase_K_coeff_obs[i, j] = (
-#             K_coeff_obs[i, j] * pyoof.zernike.U(*_nl, rho, theta) * 2 * np.pi
-#             ) * u.rad
+fig_phase_pr_model = actuators.plot(
+    phase_ps=phases_pr_model,
+    title="Phase-error model"
+    )
 
-# removing large amplitude edge effects
-sr = 3.25 * u.m
-x = np.linspace(-sr, sr, resolution)
-xx, yy = np.meshgrid(x, x)
-
-# actuator rings at the active surface
-R = np.array([3250, 2600, 1880, 1210]) * u.mm
-phase_max = 2 * np.pi * u.rad
+fig_phase_pr_lookup = actuators.plot(title="Phase-error look-up table")
 nl = [(i, j) for i in range(0, n + 1) for j in range(-i, i + 1, 2)]
-
-for k, _R in enumerate(R):
-    if np.abs(phases_model[:, xx ** 2 + yy ** 2 > _R ** 2]).max() > phase_max:
-        phases_model[:, xx ** 2 + yy ** 2 > _R ** 2] = 0. * u.rad
-
-fig_fit, axes = plt.subplots(
+fig_gravfit, axes = plt.subplots(
     nrows=6, ncols=3, sharex=True, sharey=True, figsize=(14, 10)
     )
 ax = axes.flatten()
@@ -146,16 +127,44 @@ for j in range(N_K_coeff - 3):
         # ax[j].set_ylim(-1.5, 1.5)
         ax[j].set_xlim(7, 90)
 
+        if j % 3 == 0: 
+            ax[j].set_ylabel("Phase rad")
+
+        if j > 14:
+            ax[j].set_xlabel("Elevation angle ($\\alpha$) deg")
+
     patch = Patch(label=f"K({nl[j + 3][0]}, {nl[j + 3][1]})")
     ax[j].legend(handles=[patch], loc='upper right', handlelength=0)
 
-fig_fit.tight_layout()
+fig_gravfit.tight_layout()
+# fig_gravfit.suptitle(
+#     "Gravitational fit for $K_{n\\ell}$ coefficients", fontsize=10
+#     )
 
-fig_phase_modified = actuators.plot(phases_model)
-fig_normal = actuators.plot()
-fig_fem_oof_modified = actuators.plot(actuators.phase_pr_lookup - phases_model)
+# creating lookup table
+fname_fem_oof_table = os.path.join(
+        "grav_deformation",
+        f"FEM_OOF_Table_{Time.now().strftime('%y%m%d')}.dat"
+        )
+
+# adjusting large errors at the edges
+phases_pr_correction[np.abs(phases_pr_correction) > 4. * u.rad] = 0. * u.rad
+
+actuators.write_lookup(
+    fname=fname_fem_oof_table,
+    actuator_sr=actuators.itransform(phases_pr_correction)
+    )
+
+actuators_fem_oof = EffelsbergActuator(
+    frequency=34.75 * u.GHz,
+    nrot=1,
+    sign=-1,
+    order=n,
+    sr=3.25 * u.m,
+    pr=pr,
+    resolution=resolution,
+    path_lookup=fname_fem_oof_table
+    )
+fig_phases_pr_correction = actuators_fem_oof.plot(title="Phase-error look-up table minus phase-error model (FEM + OOF corrections)")
 
 plt.show()
-
-
-
