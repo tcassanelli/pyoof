@@ -67,6 +67,19 @@ class EffelsbergActuator():
         self.resolution = resolution
         self.limits_amplitude = limits_amplitude
 
+        # angular and radial actuators' position
+        theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg
+        R = np.array([3250, 2600, 1880, 1210]) * apu.mm
+        # R = np.array([3245, 2600, 1880, 1210]) * apu.mm
+
+        # (x, y) position of actuators
+        self.act_x = np.outer(R, np.cos(theta)).reshape(-1)
+        self.act_y = np.outer(R, np.sin(theta)).reshape(-1)
+
+        if astropy.__version__ < '4':
+            self.act_x *= R.unit
+            self.act_y *= R.unit
+
         if path_lookup is None:
             self.path_lookup = get_pkg_data_filename(
                 '../data/lookup_effelsberg.data'
@@ -74,12 +87,17 @@ class EffelsbergActuator():
         else:
             self.path_lookup = path_lookup
 
-        self.alpha_lookup, self.actuator_sr_lookup = self.read_lookup()
+        self.alpha_lookup, self.actuator_sr_lookup = self.read_lookup(True)
         self.phase_pr_lookup = self.transform(self.actuator_sr_lookup)
 
-    def read_lookup(self):
+    def read_lookup(self, interp):
         """
         Simple reader for the Effelsberg active surface look-up table.
+
+        Parameters
+        ----------
+        interp : `bool`
+            If `True` it will compute the interpolated maps.
 
         Returns
         -------
@@ -107,44 +125,39 @@ class EffelsbergActuator():
         for n in names[3:]:
             lookup_table[n] = lookup_table[n] * apu.um
 
-        # Generating the mesh from technical drawings
-        theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg
-        R = np.array([3250, 2600, 1880, 1210]) * apu.mm
+        if interp:
+            # Generating new grid same as pyoof output
+            x_ng = np.linspace(-self.sr, self.sr, self.resolution)
+            y_ng = x_ng.copy()
+            xx, yy = np.meshgrid(x_ng, y_ng)
+            circ = [(xx ** 2 + yy ** 2) >= (self.sr) ** 2]
 
-        # Actuator positions
-        act_x = np.outer(R, np.cos(theta)).reshape(-1)
-        act_y = np.outer(R, np.sin(theta)).reshape(-1)
-        # np.outer may not preserve units in some astropy version
+            # actuators displacement in the new grid
+            actuator_sr_lookup = np.zeros(
+                shape=(alpha_lookup.size, self.resolution, self.resolution)
+                ) << apu.um
 
-        # workaround units and the new astropy version
-        if astropy.__version__ < '4':
-            act_x *= R.unit
-            act_y *= R.unit
+            for j, _alpha in enumerate(names[3:]):
+                actuator_sr_lookup[j, :, :] = interpolate.griddata(
+                    # coordinates of grid points to interpolate from
+                    points=(
+                        self.act_x.to_value(apu.m),
+                        self.act_y.to_value(apu.m)
+                        ),
+                    values=lookup_table[_alpha].to_value(apu.um),
+                    # coordinates of grid points to interpolate to
+                    xi=tuple(
+                        np.meshgrid(x_ng.to_value(apu.m), y_ng.to_value(apu.m))
+                        ),
+                    method='cubic'
+                    ) * apu.um
+                actuator_sr_lookup = np.nan_to_num(actuator_sr_lookup)
+                actuator_sr_lookup[j, :, :][tuple(circ)] = 0
 
-        # Generating new grid same as pyoof output
-        x_ng = np.linspace(-self.sr, self.sr, self.resolution)
-        y_ng = x_ng.copy()
-        xx, yy = np.meshgrid(x_ng, y_ng)
-        circ = [(xx ** 2 + yy ** 2) >= (self.sr) ** 2]
-
-        # actuators displacement in the new grid
-        actuator_sr_lookup = np.zeros(
-            shape=(alpha_lookup.size, self.resolution, self.resolution)
-            ) << apu.um
-
-        for j, _alpha in enumerate(names[3:]):
-            actuator_sr_lookup[j, :, :] = interpolate.griddata(
-                # coordinates of grid points to interpolate from
-                points=(act_x.to_value(apu.m), act_y.to_value(apu.m)),
-                values=lookup_table[_alpha].to_value(apu.um),
-                # coordinates of grid points to interpolate to
-                xi=tuple(
-                    np.meshgrid(x_ng.to_value(apu.m), y_ng.to_value(apu.m))
-                    ),
-                method='cubic'
-                ) * apu.um
-            actuator_sr_lookup = np.nan_to_num(actuator_sr_lookup)
-            actuator_sr_lookup[j, :, :][tuple(circ)] = 0
+        else:
+            actuator_sr_lookup = np.zeros(shape=(11, 96), dtype=int) << apu.um
+            for j, _alpha in enumerate(names[3:]):
+                actuator_sr_lookup[j, :] = lookup_table[_alpha]
 
         return alpha_lookup, actuator_sr_lookup
 
@@ -188,9 +201,10 @@ class EffelsbergActuator():
         Parameters
         ----------
         actuator_sr : `~astropy.units.quantity.Quantity`
-            Two dimensional array, in the `~pyoof` format, for the actuators
-            displacement in the sub-reflector. It must have shape
-            ``(alpha.size, resolution, resolution)``.
+            Two or three dimensional array, in the `~pyoof` format, for the
+            actuators displacement in the sub-reflector. It must have shape
+            ``(alpha.size, resolution)`` or ``(alpha.size, resolution,
+            resolution)``.
 
         Returns
         -------
@@ -230,9 +244,10 @@ class EffelsbergActuator():
         Returns
         -------
         actuator_sr : `~astropy.units.quantity.Quantity`
-            Two dimensional array, in the `~pyoof` format, for the actuators
-            displacement in the sub-reflector. It must have shape
-            ``(alpha.size, resolution, resolution)``.
+            Two or three dimensional array, in the `~pyoof` format, for the
+            actuators displacement in the sub-reflector. It must have shape
+            ``(alpha.size, resolution)`` or ``(alpha.size, resolution,
+            resolution)``.
         """
 
         if phase_pr.ndim == 3:
@@ -255,6 +270,49 @@ class EffelsbergActuator():
 
         return actuator_sr
 
+    def interp_surface2rings(self, actuator_sr):
+        """
+        Bivariate spline approximation over a rectangular mesh. It
+        interpolates from a two dimensional array to a one dimensional set of
+        concentric rings. Result is in the same format as in the default
+        look-up table, and it is ready to be written.
+
+        Parameters
+        ----------
+        actuator_sr : `~astropy.units.quantity.Quantity`
+            Three dimensional array, in the `~pyoof` format, for the
+            actuators displacement in the sub-reflector. It must have shape
+            ``(alpha.size, resolution, resolution)``.
+
+        Returns
+        -------
+        lookup_table : `~astropy.units.quantity.Quantity`
+            Array with shape ``lookup_table.shape = (11, 96)``, in the same
+            format as in the standard look-up table at Effelsberg telescope.
+        """
+
+        # Generating new grid same as pyoof output
+        x = np.linspace(-self.sr, self.sr, self.resolution)
+        y = x.copy()
+
+        lookup_table = np.zeros((11, 96)) << apu.to(u.um)
+        for j in range(11):
+
+            intrp = interpolate.RectBivariateSpline(
+                x.to_value(apu.mm), y.to_value(apu.mm),
+                z=actuator_sr.to_value(apu.um)[j, :, :].T,
+                kx=5,
+                ky=5
+                )
+
+            lookup_table[j, :] = intrp(
+                self.act_x.to_value(apu.mm),
+                self.act_y.to_value(apu.mm),
+                grid=False
+                ) * apu.to(u.um)
+
+        return lookup_table
+
     def write_lookup(self, fname, actuator_sr):
         """
         Easy writer for the active surface standard formatting at the
@@ -268,46 +326,21 @@ class EffelsbergActuator():
         fname : `str`
             String to the name and path for the look-up table to be stored.
         actuator_sr : `~astropy.units.quantity.Quantity`
-            Two dimensional array, in the `~pyoof` format, for the actuators
-            displacement in the sub-reflector. It must have shape
-            ``(alpha.size, resolution, resolution)``. The angles must be same
-            as ``alpha_lookup``.
+            Two or three dimensional array, in the `~pyoof` format, for the
+            actuators displacement in the sub-reflector. It must have shape
+            ``(11, 96)`` or ``(11, resolution, resolution)``. The angles must
+            be same as ``alpha_lookup`` (``alpha_lookup.size = 11``).
         """
 
-        # Generating the mesh from technical drawings
-        theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg
+        if actuator_sr.ndim == 3:
+            lookup_table = self.interp_surface2rings(actuator_sr=actuator_sr)
+        else:
+            lookup_table = actuator_sr.copy()
 
-        # slightly different at the edge
-        R = np.array([3245, 2600, 1880, 1210]) * apu.mm
-
-        # Actuator positions
-        act_x = np.outer(R, np.cos(theta)).reshape(-1)
-        act_y = np.outer(R, np.sin(theta)).reshape(-1)
-
-        # Generating new grid same as pyoof output
-        x = np.linspace(-self.sr, self.sr, self.resolution)
-        y = x.copy()
-
-        lookup_table = np.zeros((11, 96))
-        for j in range(11):
-
-            intrp = interpolate.RectBivariateSpline(
-                x.to_value(apu.mm), y.to_value(apu.mm),
-                z=actuator_sr.to_value(apu.um)[j, :, :].T,
-                kx=5, ky=5
-                )
-
-            lookup_table[j, :] = intrp(
-                act_x.to_value(apu.mm),
-                act_y.to_value(apu.mm),
-                grid=False
-                )
-
-        # after interpolation there may be values that have higher amplitude
-        # than the look-up table maximum, we need to correct this
-        [min_amplitude, max_amplitude] = self.limits_amplitude.to_value(apu.um)
+        [min_amplitude, max_amplitude] = self.limits_amplitude
         lookup_table[lookup_table > max_amplitude] = max_amplitude
         lookup_table[lookup_table < min_amplitude] = min_amplitude
+        lookup_table = lookup_table.to_value(apu.um)
 
         # writing the file row per row in specific format
         with open(fname, 'w') as file:
@@ -567,16 +600,18 @@ class EffelsbergActuator():
 
         return correction.value
 
-    def plot(self, phase_pr=None, figsize=(16, 5.5), title=None):
+    def plot(self, data_r=None, figsize=(16, 5.5), title=None):
         """
-        Simple plot function for the 11 FEM look-up tables. If ``phase_pr`` is
+        Simple plot function for the 11 FEM look-up tables. If ``data_r`` is
         `None` it will compute the standard FEM look-up table from Effelsberg.
 
         Parameters
         ----------
-        phase_pr : `~astropy.units.quantity.Quantity` or `None`
-            Phase-error map for the primary dish. It must have shape
-            ``(alpha.size, resolution, resolution)``.
+        data_r : `~astropy.units.quantity.Quantity` or `None`
+            Phase-error map for the primary dish or actuator displacement
+            sub-reflector. It must have shape ``(alpha.size, resolution,
+            resolution)``. The array ``data_r`` can be in units of radians or
+            length.
         figsize : `list` or `tuple`
             Width, height in inches.
         title : `str` or `None`
@@ -588,8 +623,21 @@ class EffelsbergActuator():
             FEM look-up table figure.
         """
 
-        if phase_pr is None:
-            phase_pr = self.phase_pr_lookup
+        if data_r is None:
+            data_r = self.phase_pr_lookup.copy()
+
+        levels = np.linspace(-2, 2, 9) * apu.rad
+
+        if data_r.decompose().unit == apu.rad:
+            _unit = apu.rad
+            radius = self.pr.copy()
+            cb_title = 'Actuator phase-error rad'
+        else:
+            _unit = apu.um
+            radius = self.sr.copy()
+            cb_title = 'Actuator displacement $\\mu$s'
+            factor = self.wavel / (self.sign * 4 * np.pi * apu.rad)
+            levels = np.sort(levels * factor).to(_unit)
 
         nrow = 2
         ncol = 6
@@ -611,30 +659,30 @@ class EffelsbergActuator():
                 ax.append(fig.add_subplot(gs[i, j]))
         ax.append(fig.add_subplot(gs[:, ncol]))
 
-        x = np.linspace(-self.pr, self.pr, self.resolution)
+        x = np.linspace(-radius, radius, self.resolution)
         y = x.copy()
-        levels = np.linspace(-2, 2, 9) * apu.rad
-        extent = [-self.pr.to_value(apu.m), self.pr.to_value(apu.m)] * 2
-        vmin, vmax = phase_pr.min(), phase_pr.max()
+
+        extent = [-radius.to_value(apu.m), radius.to_value(apu.m)] * 2
+        vmin, vmax = data_r.min(), data_r.max()
 
         for j, _alpha in enumerate(self.alpha_lookup):
 
             im = ax[j].imshow(
-                phase_pr[j, ...].to_value(apu.rad),
+                data_r[j, ...].to_value(_unit),
                 extent=extent,
                 aspect='auto',
-                vmin=vmin.to_value(apu.rad),
-                vmax=vmax.to_value(apu.rad),
+                vmin=vmin.to_value(_unit),
+                vmax=vmax.to_value(_unit),
                 )
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 ax[j].contour(
                     x.to_value(apu.m), y.to_value(apu.m),
-                    phase_pr[j, ...].to_value(apu.rad),
+                    data_r[j, ...].to_value(_unit),
                     colors='k',
                     alpha=0.3,
-                    levels=levels.to_value(apu.rad)
+                    levels=levels.to_value(_unit)
                     )
 
             patch = Patch(label=f'$\\alpha={_alpha.to_value(apu.deg)}$ deg')
@@ -647,7 +695,7 @@ class EffelsbergActuator():
             ax[j].yaxis.set_ticks_position('none')
 
         cb = fig.colorbar(im, cax=ax[-1])
-        cb.set_label('Phase rad')
+        cb.set_label(cb_title)
         fig.delaxes(ax[-2])
 
         if title is not None:

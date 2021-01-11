@@ -19,7 +19,7 @@ n = 5
 
 actuator = EffelsbergActuator(
     frequency=34.75 * apu.GHz,
-    nrot=3,
+    nrot=1,
     sign=-1,
     order=n,
     sr=3.25 * apu.m,
