@@ -23,6 +23,7 @@ active surface.
 """
 
 pyoof_run = '000'
+path_to_save = 'grav_deformation'
 path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data/pyoof_out'
 n = 5
 resolution = 1000
@@ -51,11 +52,7 @@ for i in range(len(tab)):
     if tab['name'][i].split('-')[-1] == 'offset':
         idx_offset[i] = True
 
-section = (
-    # (tab['phase-rms'] < 1. * u.rad)
-    (tab['beam-snr'] > 200.)
-    & ~idx_offset
-    )
+section = ((tab['beam-snr-in'] > 200.) & ~idx_offset)
 tab_section = tab[section].copy()
 tab_section.add_index('name')
 tab_section.pprint_all()
@@ -88,17 +85,14 @@ for a, _alpha in enumerate(alpha_list):
     for i in range(N_K_coeff):
         K_coeff_model[a, i] = actuators.grav_deformation(g_coeff[i, :], _alpha)
 
-
 phases_pr_model = actuators.generate_phase_pr(
     g_coeff=g_coeff,
     alpha=actuators.alpha_lookup,
     eac=True
     )
 
-phases_pr_correction = actuators.phase_pr_lookup - phases_pr_model
-
 fig_phase_pr_model = actuators.plot(
-    phase_ps=phases_pr_model,
+    data_r=phases_pr_model,
     title="Phase-error model"
     )
 
@@ -120,7 +114,7 @@ for j in range(N_K_coeff - 3):
             _alpha.to_value(u.deg), K_coeff_obs[i, j + 3] * 2 * np.pi,
             # _alpha.to_value(u.deg), phase_K_coeff_obs[i, j].to_value(u.rad),
             marker='o',
-            s=tab_section['beam-snr'][i] / 100,
+            s=tab_section['beam-snr-in'][i] / 100,
             color=_color,
             )
         ax[j].plot(alpha_list, K_coeff_model[:, j + 3] * 2 * np.pi, 'r')
@@ -141,18 +135,23 @@ fig_gravfit.tight_layout()
 #     "Gravitational fit for $K_{n\\ell}$ coefficients", fontsize=10
 #     )
 
+if not os.path.isdir(path_to_save):
+    os.makedirs(path_to_save, exist_ok=True)
+
 # creating lookup table
 fname_fem_oof_table = os.path.join(
         "grav_deformation",
         f"FEM_OOF_Table_{Time.now().strftime('%y%m%d')}.dat"
         )
 
-# adjusting large errors at the edges
-phases_pr_correction[np.abs(phases_pr_correction) > 4. * u.rad] = 0. * u.rad
+alpha_lookup, atuator_sr_lookup = actuators.read_lookup(False)
+actuator_sr_model = actuators.interp_surface2rings(
+    actuator_sr=actuators.itransform(phases_pr_model)
+    )
 
 actuators.write_lookup(
     fname=fname_fem_oof_table,
-    actuator_sr=actuators.itransform(phases_pr_correction)
+    actuator_sr=atuator_sr_lookup - actuator_sr_model
     )
 
 actuators_fem_oof = EffelsbergActuator(

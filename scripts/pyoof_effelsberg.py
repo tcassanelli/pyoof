@@ -16,25 +16,25 @@ telescope = dict(
     #     pr,
     #     'effelsberg (20 deg blockage)'
     #     ],
-    # effelsberg_10deg=[
-    #     telgeometry.block_effelsberg(alpha=10 * u.deg),
-    #     telgeometry.opd_effelsberg,
-    #     pr,
-    #     'effelsberg (10 deg blockage)'
-    #     ],
+    effelsberg_10deg=[
+        telgeometry.block_effelsberg(alpha=10 * u.deg),
+        telgeometry.opd_effelsberg,
+        pr,
+        'effelsberg (10 deg blockage)'
+        ],
     # effelsberg_0deg=[
     #     telgeometry.block_effelsberg(alpha=0 * u.deg),
     #     telgeometry.opd_effelsberg,
     #     pr,
     #     'effelsberg (0 deg blockage)'
     #     ],
-    effelsberg_sr_only=[
-        telgeometry.block_manual(
-            pr=pr, sr=3.25 * u.m, a=0 * u.m, L=0 * u.m),
-        telgeometry.opd_effelsberg,
-        pr,
-        'effelsberg (sub-reflector only blockage)'
-        ],
+    # effelsberg_sr_only=[
+    #     telgeometry.block_manual(
+    #         pr=pr, sr=3.25 * u.m, a=0 * u.m, L=0 * u.m),
+    #     telgeometry.opd_effelsberg,
+    #     pr,
+    #     'effelsberg (sub-reflector only blockage)'
+    #     ],
     # effelsberg_empty=[
     #     telgeometry.block_manual(
     #         pr=pr, sr=0 * u.m, a=0 * u.m, L=0 * u.m),
@@ -72,13 +72,10 @@ def compute_phase_error(pathfits, order_max):
             work_dir='/Users/tomascassanelli/MPIfR/OOF/data'
             )
 
-# pth2data = [
-    # '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_66deg_5425-5443_LB-offset.fits',
-    # '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/3C84_51deg_5547-5554_L-offset.fits'
-    # ]
-# files = pth2data
+pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/*.fits'
 
-pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/Dec*/*.fits'
+# pth2data = '/Users/tomascassanelli/MPIfR/OOF/data_old/S9mm_FEM/*.fits'
+
 files = glob.glob(pth2data)
 
 for _f in files:
