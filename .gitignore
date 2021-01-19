@@ -29,3 +29,6 @@ htmlcov/
 
 # testing with miniconda
 mpy3_test.sh
+
+# sublime
+*.sublime-project
