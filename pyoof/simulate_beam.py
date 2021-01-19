@@ -77,6 +77,11 @@ def simulate_data_pyoof(
         package.
     """
 
+    if (d_z[0] > 0) or (d_z[1] != 0) or (d_z[2] < 0):
+        raise ValueError(
+            "Radial offset must match: [d_z-, 0., d_z+] convention"
+            )
+
     if work_dir is None:
         work_dir = os.getcwd()
 

@@ -21,8 +21,8 @@ with open(config_params_pyoof, 'r') as yaml_config:
 n = 5                                           # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2              # total numb. polynomials
 wavel = 0.00862712109352518 * apu.m
-plus_minus = (2.2 * wavel).to_value(apu.cm)
-d_z = [plus_minus, 0, -plus_minus] * apu.cm
+plus_minus = (2.6 * wavel).to_value(apu.cm)
+d_z = [-plus_minus, 0, plus_minus] * apu.cm
 
 # illumination parameters
 i_amp = np.random.uniform(.001, 1.1)
@@ -54,7 +54,7 @@ I_coeff_true = [
     params_true[3] * apu.m, params_true[4] * apu.m
     ]
 
-noise_level = .1                                # noise added to gen data
+noise_level = 0                                # noise added to gen data
 
 effelsberg_telescope = [
     pyoof.telgeometry.block_effelsberg(alpha=10 * apu.deg),  # blockage
@@ -64,10 +64,6 @@ effelsberg_telescope = [
     ]
 
 illum_func = pyoof.aperture.illum_parabolic
-
-# Least squares minimization
-resolution = 2 ** 8
-box_factor = 5
 
 # Generating temp file with pyoof fits and pyoof_out
 @pytest.fixture()
@@ -83,8 +79,8 @@ def oof_work_dir(tmpdir_factory):
         telgeo=effelsberg_telescope[:-1],
         illum_func=illum_func,
         noise=noise_level,
-        resolution=resolution,
-        box_factor=box_factor,
+        resolution=2 ** 9,
+        box_factor=6.5,
         work_dir=tdir
         )
 
@@ -94,13 +90,6 @@ def oof_work_dir(tmpdir_factory):
     pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
     data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
 
-    snr = pyoof.snr(
-        beam_data=data_obs[0][1, ...],
-        u_data=data_obs[1][1, ...],
-        v_data=data_obs[2][1, ...],
-        )
-    print('snr:', snr)
-
     pyoof.fit_zpoly(
         data_info=data_info,
         data_obs=data_obs,
@@ -108,8 +97,8 @@ def oof_work_dir(tmpdir_factory):
         illum_func=illum_func,
         telescope=effelsberg_telescope,
         fit_previous=True,
-        resolution=resolution,
-        box_factor=box_factor,
+        resolution=2 ** 8,
+        box_factor=5,
         config_params_file=None,
         make_plots=False,
         verbose=0,
@@ -130,5 +119,8 @@ def test_fit_beam(oof_work_dir):
         )
 
     params = Table.read(fit_pars, format='ascii')['parfit']
-    assert_allclose(params[5:], K_coeff_true, rtol=1e-8, atol=1e-1)
-    assert_allclose(params[:5], I_coeff_true_dimensionless, rtol=1e-7, atol=0)
+    assert_allclose(params[5:], K_coeff_true, rtol=1e-2, atol=1e-1)
+    assert_allclose(
+        params[:5], I_coeff_true_dimensionless, rtol=1e-2, atol=1
+        )
+
