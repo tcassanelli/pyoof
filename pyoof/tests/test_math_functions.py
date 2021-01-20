@@ -12,6 +12,28 @@ from numpy.testing import assert_allclose, assert_equal
 import pyoof
 
 
+def test_norm():
+
+    P_norm_true = np.array([
+        [1.25356787e-03, 2.08338746e-03, 2.59757042e-03,
+        1.17263570e-03, 1.53579470e-03, 1.95269845e-03],
+        [3.90828654e-06, 7.74897035e-06, 1.10233095e-05,
+        2.67764717e-05, 2.45369101e-05, 1.83909979e-05],
+        [7.22095836e-04, 9.35678603e-04, 1.07243832e-03,
+        1.62301958e-03, 1.22317078e-03, 6.73963455e-04]
+        ])
+    data_info, data_obs = pyoof.extract_data_pyoof(
+        get_pkg_data_filename('data/data_simulated.fits')
+        )
+    [beam_data, _, _] = data_obs
+
+    P_norm = pyoof.norm(beam_data, axis=1)
+
+    print(P_norm)
+    assert_allclose(P_norm[:, :3], P_norm_true[:, :3])
+    assert_allclose(P_norm[:, -3:], P_norm_true[:, -3:])
+
+
 def test_cart2pol():
 
     with NumpyRNGContext(0):
@@ -93,3 +115,23 @@ def test_rms():
     assert_equal(rms1, rms1_true)
     assert_equal(rms2, rms2_true)
     assert_quantity_allclose(rms3, rms3_true)
+
+def test_snr():
+
+    snr_list_true = np.array([149.859673, 15563.025383, 235.739288])
+    data_info, data_obs = pyoof.extract_data_pyoof(
+        get_pkg_data_filename('data/data_simulated.fits')
+        )
+    [beam_data, u_data, v_data] = data_obs
+
+    snr_list = np.zeros((3, ), dtype=np.float64)
+    for i in range(3):
+        snr_list[i] = pyoof.snr(
+            beam_data=beam_data[i],
+            u_data=u_data[i],
+            v_data=v_data[i],
+            centre=.04 * apu.deg,
+            radius=.01 * apu.deg
+            )
+
+    assert_allclose(snr_list, snr_list_true)
