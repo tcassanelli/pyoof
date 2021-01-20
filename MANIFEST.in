@@ -49,7 +49,7 @@ include pyoof/data/lookup_effelsberg.data         # lookup table Effelsberg
 
 # Data for pytest
 include pyoof/tests/data/*.npy
-include pyoof/tests/data/beam_simulated.fits
+include pyoof/tests/data/data_simulated.fits
 include pyoof/aperture/tests/data/*.npy
 include pyoof/aperture/tests/data/*.npz
 
