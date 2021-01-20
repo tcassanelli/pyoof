@@ -14,7 +14,7 @@ import pyoof
 # Initial fits file configuration
 n = 5                                         # initial order
 N_K_coeff = (n + 1) * (n + 2) // 2            # total number of polynomials
-c_dB = -14 * apu.dB                           # illumination taper
+c_dB = -14.5 * apu.dB                         # illumination taper
 I_coeff = [1, c_dB, 2, 0 * apu.m, 0 * apu.m]  # illumination coefficients
 K_coeff = np.array([0.1] * N_K_coeff)         # random Zernike circle coeff.
 wavel = 0.0093685143125 * apu.m               # wavelenght
@@ -22,10 +22,10 @@ d_z = [-2.2, 0, 2.2] * apu.cm                 # radial offset
 
 # Making example for the Effelsberg telescope
 effelsberg_telescope = [
-    pyoof.telgeometry.block_effelsberg(alpha=20 * apu.deg),  # blockage
-    pyoof.telgeometry.opd_effelsberg,    # OPD function
-    50. * apu.m,                         # primary reflector radius
-    'effelsberg'                         # telescope name
+    pyoof.telgeometry.block_effelsberg(alpha=10 * apu.deg),  # blockage
+    pyoof.telgeometry.opd_effelsberg,         # OPD function
+    50. * apu.m,                              # primary reflector radius
+    'effelsberg'                              # telescope name
     ]
 
 
