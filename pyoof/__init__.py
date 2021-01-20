@@ -29,17 +29,17 @@ if not _ASTROPY_SETUP_:   # noqa
     # For egg_info test builds to pass, put package imports here.
     from .aux_functions import *
     from .math_functions import *
-    from .fit_beam import *
+    from .core import *
     from .plot_routines import *
-    from .simulate_beam import *
+    from .simulate_data import *
 
     # comment so they don't apper in docs
     # __all__ += aux_functions.__all__
     # __all__ += math_functions.__all__
     # __all__ += plot_routines.__all__
 
-    __all__ += fit_beam.__all__
-    __all__ += simulate_beam.__all__
+    __all__ += core.__all__
+    __all__ += simulate_data.__all__
 
     from . import aperture
     from . import telgeometry
