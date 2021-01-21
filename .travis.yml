@@ -98,10 +98,12 @@ matrix:
             - SETUP_CMD='build_docs'
             # - UPLOAD_DOCS=YES
 
-        # Now try Astropy dev with the latest 3.x.
+        # Now try Astropy dev with the latest 4.x.
         - os: linux
-          env: ASTROPY_VERSION=development
+          env: PYTHON_VERSION>=3.7
+               ASTROPY_VERSION=development
                EVENT_TYPE='pull_request push cron'
+
 
         # Try all python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different
