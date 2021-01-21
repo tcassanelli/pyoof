@@ -100,7 +100,7 @@ matrix:
 
         # Now try Astropy dev with the latest 4.x.
         - os: linux
-          env: PYTHON_VERSION>=3.7
+          env: PYTHON_VERSION=3.7
                ASTROPY_VERSION=development
                EVENT_TYPE='pull_request push cron'
 
