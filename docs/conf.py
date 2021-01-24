@@ -122,7 +122,7 @@ html_logo = 'pyoof_logo.png'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'pyoof_logo.ico'
+# html_favicon = 'pyoof_logo.ico'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

@@ -57,6 +57,9 @@ def extract_data_pyoof(pathfits):
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
     """
 
+    if os.path.splitext(pathfits)[1] != '.fits':
+        raise ValueError('File must be a FITS file.')
+
     hdulist = fits.open(pathfits)  # open fits file, pyoof format
     # path or directory where the fits file is located
     pthto = os.path.split(pathfits)[0]
@@ -116,6 +119,9 @@ def extract_data_effelsberg(pathfits):
         observations, minus, zero and plus out-of-focus, in a flat array.
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
     """
+
+    if os.path.splitext(pathfits)[1] != '.fits':
+        raise ValueError('File must be a FITS file.')
 
     pos = [3, 1, 2]  # Positions for OOF holography observations at Effelsberg
     hdulist = fits.open(pathfits)  # main fits file OOF holography format
@@ -291,8 +297,11 @@ def uv_ratio(u, v):
 
     ratio = (u.max() - u.min()) / (v.max() - v.min())
 
+    if type(ratio) == apu.Quantity:
+        ratio = ratio.decompose().value
+
     height = 5
-    width = ratio * 2.25 * height
+    width = (ratio * 2.25 * height)
 
     return width, height
 
