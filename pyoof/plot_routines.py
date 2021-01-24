@@ -22,11 +22,8 @@ __all__ = [
     'plot_variance', 'plot_fit_path'
     ]
 
-# Plot style added from relative path
-plt.style.use(get_pkg_data_filename('data/pyoof.mplstyle'))
+
 # TODO: Generalize this functions for multiple d_z
-
-
 def plot_beam(
     I_coeff, K_coeff, d_z, wavel, illum_func, telgeo, resolution, box_factor,
     plim, angle, title

@@ -10,7 +10,11 @@ from ._astropy_init import *   # noqa
 # Enforce Python version check during package import.
 # This is the same check as the one at the top of setup.py
 import sys
+import warnings
+from astropy.utils.data import get_pkg_data_filename
+from distutils.spawn import find_executable
 from distutils.version import LooseVersion
+import matplotlib.pyplot as plt
 
 __minimum_python_version__ = "3.6"
 
@@ -45,3 +49,9 @@ if not _ASTROPY_SETUP_:   # noqa
     from . import telgeometry
     from . import zernike
     from . import actuator
+
+# removing LaTeX dependency from plots
+if find_executable('latex'):
+    plt.style.use(get_pkg_data_filename('data/pyoof.mplstyle'))
+else:
+    warnings.warn("For the standard pyoof plot library install LaTeX")
