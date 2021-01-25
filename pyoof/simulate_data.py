@@ -4,6 +4,7 @@
 # Author: Tomas Cassanelli
 import numpy as np
 import os
+from astropy.time import Time
 from astropy import units as apu
 from astropy.constants import c as light_speed
 from astropy.io import fits
@@ -181,7 +182,7 @@ def simulate_data_pyoof(
             prihdr['WAVEL'] = wavel.to_value(apu.m)
             prihdr['MEANEL'] = 0
             prihdr['OBJECT'] = f'test{j}'
-            prihdr['DATE_OBS'] = f'test{j}'
+            prihdr['DATE_OBS'] = Time.now().isot
             prihdr['COMMENT'] = 'Generated data pyoof package'
             prihdr['AUTHOR'] = 'Tomas Cassanelli'
             prihdu = fits.PrimaryHDU(header=prihdr)

@@ -313,9 +313,9 @@ def table_pyoof_out(path_pyoof_out, order):
 
     Parameters
     ----------
-    path_pyoof_out : `str`
-        Path to the directory ``pyoof_out/`` or where the output from the
-        `~pyoof` package is located.
+    path_pyoof_out : `list`
+        set of paths to the directory ``pyoof_out/`` or where the output from
+        the `~pyoof` package is located.
     order : `int`
         Order used for the Zernike circle polynomial, :math:`n`.
 
@@ -336,7 +336,6 @@ def table_pyoof_out(path_pyoof_out, order):
         )
 
     for p, pyoof_out in enumerate(path_pyoof_out):
-
         with open(os.path.join(pyoof_out, 'pyoof_info.yml'), 'r') as inputfile:
             pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
 

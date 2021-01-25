@@ -9,7 +9,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import interpolate
 from astropy.table import Table
 from astropy import units as apu
-from astropy.utils.data import get_pkg_data_filename
 import warnings
 import os
 import yaml

@@ -12,7 +12,6 @@ from astropy.table import Table
 from numpy.testing import assert_allclose
 import pyoof
 
-
 # initial configuration params same as the config_params.yml file
 config_params_pyoof = get_pkg_data_filename('../data/config_params.yml')
 with open(config_params_pyoof, 'r') as yaml_config:
@@ -67,9 +66,9 @@ illum_func = pyoof.aperture.illum_parabolic
 
 # Generating temp file with pyoof fits and pyoof_out
 @pytest.fixture()
-def oof_work_dir(tmpdir_factory):
+def pyoof_tmp_dir(tmpdir_factory):
 
-    tdir = str(tmpdir_factory.mktemp('pyoof'))
+    tdir = str(tmpdir_factory.mktemp('fit_zpoly'))
 
     pyoof.simulate_data_pyoof(
         K_coeff=K_coeff_true,
@@ -108,16 +107,29 @@ def oof_work_dir(tmpdir_factory):
     return tdir
 
 
-def test_fit_beam(oof_work_dir):
+def test_fit_zpoly(pyoof_tmp_dir):
 
     # To see if we are in the right temp directory
-    print('temp directory: ', os.listdir(oof_work_dir))
+    print('temp directory:', os.listdir(pyoof_tmp_dir))
 
     # lets compare the params from the last order
-    fit_pars = os.path.join(
-        oof_work_dir, 'pyoof_out', 'test000-000', f'fitpar_n{n}.csv'
+    path_fitpars = os.path.join(
+        pyoof_tmp_dir, 'pyoof_out', 'test000-000', f'fitpar_n{n}.csv'
         )
 
-    params = Table.read(fit_pars, format='ascii')['parfit']
+    params = Table.read(path_fitpars, format='ascii')['parfit']
     assert_allclose(params[5:], K_coeff_true, rtol=1, atol=1e-1)
     assert_allclose(params[:5], I_coeff_true_dimensionless, rtol=1, atol=1)
+
+    # checking the output directory and info/general data
+    path_pyoof_out = [os.path.join(pyoof_tmp_dir, 'pyoof_out', 'test000-000')]
+    qt = pyoof.table_pyoof_out(path_pyoof_out, order=n)
+
+    # checking element by element
+    assert qt['name'][0] == 'test000'
+    assert qt['tel_name'][0] == effelsberg_telescope[-1]
+    assert qt['obs-object'][0] == 'test000'
+    assert qt['meanel'][0] == 0 * apu.deg
+    assert_allclose(qt['i_amp'][0], i_amp, rtol=1, atol=1)
+    assert_allclose(qt['c_dB'][0], c_dB, rtol=1, atol=1)
+    assert_allclose(qt['q'][0], q, rtol=1, atol=1)

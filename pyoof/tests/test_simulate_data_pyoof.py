@@ -69,8 +69,6 @@ def test_simulate_data_pyoof(oof_work_dir):
     assert_quantity_allclose(u_data, u_data_true)
     assert_quantity_allclose(v_data, v_data_true)
 
-    for i in range(4, 7):
+    assert data_info[2] == data_info_true[2]
+    for i in range(4, 8):
         assert_quantity_allclose(data_info[i], data_info_true[i])
-
-    assert data_info[2:4] == data_info_true[2:4]
-    assert data_info[7] == data_info_true[7]
