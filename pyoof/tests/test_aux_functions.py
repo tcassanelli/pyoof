@@ -27,4 +27,3 @@ def test_uv_ratio():
 
     assert_allclose(width, width_true)
     assert_allclose(height, height_true)
-
