@@ -321,7 +321,7 @@ def fit_zpoly(
         It contains all extra data besides the beam map. The output
         corresponds to a list,
         ``[name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel]``.
-        These are, name of the fits file, paht of the fits file, observed
+        These are, name of the FITS file, paht of the FITS file, observed
         object, observation date, frequency, wavelength, radial offset and
         mean elevation, respectively.
     data_obs : `list`
@@ -371,7 +371,7 @@ def fit_zpoly(
         {0, 1, 2} Level of algorithm verbosity. 0 work silent, 1 display
         termination report, 2, display progress during iteration (default).
     work_dir : `str`
-        Default is `None`, it will store the ``pyoof_out/`` folder in the fits
+        Default is `None`, it will store the ``pyoof_out/`` folder in the FITS
         file current directory, for other provide the desired path.
     """
 

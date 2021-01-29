@@ -19,7 +19,7 @@ def simulate_data_pyoof(
         ):
     """
     Routine to generate data and test the pyoof package algorithm. It has the
-    default setting for the pyoof fits file input.
+    default setting for the pyoof FITS file input.
 
     Parameters
     ----------
@@ -66,7 +66,7 @@ def simulate_data_pyoof(
         pr, 5 * pr, resolution)``, an array to be used in the FFT2
         (`~numpy.fft.fft2`).
     work_dir : `str`
-        Default is `None`, it will store the fits file in the current
+        Default is `None`, it will store the FITS file in the current
         directory, for other provide the desired path.
 
     Returns
@@ -76,6 +76,12 @@ def simulate_data_pyoof(
         Every time the function is executed a new file will be stored (with
         increased numbering). The file is ready to use for the `~pyoof`
         package.
+
+    Raises
+    ------
+    `ValueError`
+        If the known a priori radial offset ``d_z`` is different than:
+        ``[d_z-, 0., d_z+]``, negative, zero, and positive float.
     """
 
     if (d_z[0] > 0) or (d_z[1] != 0) or (d_z[2] < 0):

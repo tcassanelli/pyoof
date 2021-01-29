@@ -93,7 +93,7 @@ For future versions dependencies will be reduced.
 
 Usage
 =====
-To use the pyoof package is straight forward. First define your observational data in the established fits file format and then execute!
+To use the pyoof package is straight forward. First define your observational data in the established FITS file format and then execute!
 
 .. code-block:: python
 
@@ -101,7 +101,7 @@ To use the pyoof package is straight forward. First define your observational da
     from astropy import units as u
 
     # Extracting observation data and important information
-    oofh_data = 'path/to/file.fits'  # fits file with special format
+    oofh_data = 'path/to/file.fits'  # FITS file with special format
     data_info, data_obs = pyoof.extract_data_pyoof(oofh_data)
 
     # Effelsberg telescope definition

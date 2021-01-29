@@ -218,10 +218,10 @@ Where ``U`` and ``V`` are the dimensions of the :math:`x`- and :math:`y`-axis, a
     >>> hdulist.close()
 
 .. warning::
-    Always remember to close the fits file after use, ``hdulist.close()``.
+    Always remember to close the FITS file after use, ``hdulist.close()``.
 
 .. note::
-    The fits format can also be avoided. If the correct arguments are added to the `~pyoof.fit_zpoly` function, then the `~pyoof` package will also work. Although, it is recommended to use the fits format, for ease and clean storage of the data.
+    The FITS format can also be avoided. If the correct arguments are added to the `~pyoof.fit_zpoly` function, then the `~pyoof` package will also work. Although, it is recommended to use the FITS format, for ease and clean storage of the data.
 
 It is also possible to try the `~pyoof` by generating your own data, with the build-in function `~pyoof.simulate_data_pyoof`. The Jupyter notebook `oof_holography.ipynb <http://nbviewer.jupyter.org/github/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_  has an example of generated data plus noise, and runs it over the `~pyoof` package.
 
@@ -328,7 +328,7 @@ After creating the basic structure, the core function, `~pyoof.fit_zpoly` can be
 
 After execution the command line will show first the observation properties and the progress of the least squares minimization.The key ``order_max`` is the maximum Zernike circle polynomial coefficients order to be fitted in the process. It starts from the polynomial order one until order ``order_max``. If ``fit_previous=True``, then the algorithm will use coefficients from the previous order (:math:`n`) as the initial coefficients for the next order (:math:`n+1`), this feature is **strongly** recommended. The key ``verbose`` prints relevant information about the least squares minimization package (`~scipy.optimize.least_squares`). The ``box_factor`` and ``resolution`` are necessary to perform a good FFT2 (more information about this will be updated).
 
-The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, where `name` is the name of the fits file used. The directory will contain:
+The `~pyoof` package will generate a directory called `pyoof_out/name-000/`, where `name` is the name of the FITS file used. The directory will contain:
 
 * `beam_data.csv`: Corresponds to the observed power pattern as a flat array.
 * `corr_n#.csv`: Correlation matrix evaluated at the last residual from the least squares minimization, order `#`.

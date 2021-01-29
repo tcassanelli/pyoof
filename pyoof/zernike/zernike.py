@@ -113,6 +113,12 @@ def U(n, l, rho, theta):
         U^\\ell_n(\\varrho, \\vartheta) = R^m_n(\\varrho) \\cdot \\sin
         m\\vartheta \\qquad \\ell < 0.
 
+    Raises
+    ------
+    `TypeError`
+        If the angle component ``l`` is not an integer or when the (radial)
+        order ``n`` is not a positive integer.
+
     Examples
     --------
     Same as the radial polynomials, just start with the package and then apply

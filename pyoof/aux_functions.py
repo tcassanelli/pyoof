@@ -21,9 +21,9 @@ __all__ = [
 
 def extract_data_pyoof(pathfits):
     """
-    Extracts data from the `~pyoof` default fits file OOF holography
+    Extracts data from the `~pyoof` default FITS file OOF holography
     observations, ready to use for the least squares minimization (see
-    `~pyoof.fit_zpoly`). The fits file has to have the following keys on its
+    `~pyoof.fit_zpoly`). The FITS file has to have the following keys on its
     PrimaryHDU header: ``'FREQ'``, ``'WAVEL'``, ``'MEANEL'``, ``'OBJECT'`` and
     ``'DATE_OBS'``. Besides this three BinTableHDU are required for the data
     itself; ``MINUS OOF``, ``ZERO OOF`` and ``PLUS OOF``. The BinTableHDU
@@ -35,7 +35,7 @@ def extract_data_pyoof(pathfits):
     Parameters
     ----------
     pathfits : `str`
-        Path to the fits file that contains the three beam maps pre-calibrated,
+        Path to the FITS file that contains the three beam maps pre-calibrated,
         using the correct PrimaryHDU and the three BinTableHDU (``MINUS OOF``,
         ``ZERO OOF`` and ``PLUS OOF``).
 
@@ -45,7 +45,7 @@ def extract_data_pyoof(pathfits):
         It contains all extra data besides the beam map. The output
         corresponds to a list,
         ``[name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel]``.
-        These are, name of the fits file, paht of the fits file, observed
+        These are, name of the FITS file, paht of the FITS file, observed
         object, observation date, frequency, wavelength, radial offset and
         mean elevation, respectively.
     data_obs : `list`
@@ -55,13 +55,20 @@ def extract_data_pyoof(pathfits):
         ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
         observations, minus, zero and plus out-of-focus, in a flat array.
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
+
+    Raises
+    ------
+    `ValueError`
+        If the input file ``pathfits`` is not a FITS file, or if one or more
+        of the header keys are missing in the FITS file:
+        ``['FREQ', 'WAVEL', 'MEANEL', 'OBJECT', 'DATE_OBS']``.
     """
 
     if os.path.splitext(pathfits)[1] != '.fits':
         raise ValueError('File must be a FITS file.')
 
-    hdulist = fits.open(pathfits)  # open fits file, pyoof format
-    # path or directory where the fits file is located
+    hdulist = fits.open(pathfits)  # open FITS file, pyoof format
+    # path or directory where the FITS file is located
     pthto = os.path.split(pathfits)[0]
     # name of the fit file to fit
     name = os.path.split(pathfits)[1][:-5]
@@ -70,7 +77,7 @@ def extract_data_pyoof(pathfits):
             k in hdulist[0].header
             for k in ['FREQ', 'WAVEL', 'MEANEL', 'OBJECT', 'DATE_OBS']
             ):
-        raise TypeError('Not all necessary keys found in FITS header.')
+        raise ValueError('Not all necessary keys found in FITS header.')
 
     freq = hdulist[0].header['FREQ'] * apu.Hz
     wavel = hdulist[0].header['WAVEL'] * apu.m
@@ -99,7 +106,7 @@ def extract_data_effelsberg(pathfits):
     Parameters
     ----------
     pathfits : `str`
-        Path to the fits file that contains the three beam maps pre-calibrated,
+        Path to the FITS file that contains the three beam maps pre-calibrated,
         from the Effelsberg telescope.
 
     Returns
@@ -108,7 +115,7 @@ def extract_data_effelsberg(pathfits):
         It contains all extra data besides the beam map. The output
         corresponds to a list,
         ``[name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel]``.
-        These are, name of the fits file, paht of the fits file, observed
+        These are, name of the FITS file, paht of the FITS file, observed
         object, observation date, frequency, wavelength, radial offset and
         mean elevation, respectively.
     data_obs : `list`
@@ -118,13 +125,18 @@ def extract_data_effelsberg(pathfits):
         ``[beam_data, u_data, v_data]``. ``beam_data`` is the three beam
         observations, minus, zero and plus out-of-focus, in a flat array.
         ``u_data`` and ``v_data`` are the beam axes in a flat array.
+
+    Raises
+    ------
+    `ValueError`
+        If the input file ``pathfits`` is not a FITS file.
     """
 
     if os.path.splitext(pathfits)[1] != '.fits':
         raise ValueError('File must be a FITS file.')
 
     pos = [3, 1, 2]  # Positions for OOF holography observations at Effelsberg
-    hdulist = fits.open(pathfits)  # main fits file OOF holography format
+    hdulist = fits.open(pathfits)  # main FITS file OOF holography format
 
     # Observation frequency
     freq = hdulist[0].header['FREQ'] * apu.Hz
@@ -140,7 +152,7 @@ def extract_data_effelsberg(pathfits):
     u_data = np.array([hdulist[i].data['DX'] for i in pos]) * apu.rad
     v_data = np.array([hdulist[i].data['DY'] for i in pos]) * apu.rad
 
-    # path or directory where the fits file is located
+    # path or directory where the FITS file is located
     pthto = os.path.split(pathfits)[0]
     # name of the fit file to fit
     name = os.path.split(pathfits)[1][:-5]
@@ -182,13 +194,13 @@ def store_data_csv(name, name_dir, order, save_to_csv):
     Stores all important information in a CSV file after the least squares
     minimization has finished, `~pyoof.fit_zpoly`. All data will be stored in
     the ``pyoof_out/name-number`` directory, with ``name`` the name of the
-    fits file, and ``number`` the `~pyoof.fit_zpoly` number of code execution,
+    FITS file, and ``number`` the `~pyoof.fit_zpoly` number of code execution,
     i.e. the output data is never overwritten.
 
     Parameters
     ----------
     name : `str`
-        File name of the fits file to be optimized.
+        File name of the FITS file to be optimized.
     name_dir : `str`
         Path to store all the CSV files. The files will depend on the order of
         the Zernike circle polynomial.
@@ -235,7 +247,7 @@ def store_data_ascii(name, name_dir, order, params_solution, params_init):
     Parameters
     ----------
     name : `str`
-        File name of the fits file to be optimized.
+        File name of the FITS file to be optimized.
     name_dir : `str`
         Path to store all the csv files. The files will depend on the order of
         the Zernike circle polynomial (radial) order.
@@ -363,8 +375,6 @@ def table_pyoof_out(path_pyoof_out, order):
     qt['obs-date'] = Time(qt['obs-date'], format='isot', scale='utc')
     qt['c_dB'] *= apu.dB
 
-    qt.meta = {
-    'order': order
-        }
+    qt.meta = {'order': order}
 
     return qt
