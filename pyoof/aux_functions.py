@@ -77,7 +77,7 @@ def extract_data_pyoof(pathfits):
             k in hdulist[0].header
             for k in ['FREQ', 'WAVEL', 'MEANEL', 'OBJECT', 'DATE_OBS']
             ):
-        raise ValueError('Not all necessary keys found in FITS header.')
+        raise ValueError('Not all needed keys found in FITS header.')
 
     freq = hdulist[0].header['FREQ'] * apu.Hz
     wavel = hdulist[0].header['WAVEL'] * apu.m

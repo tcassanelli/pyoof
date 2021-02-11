@@ -3,6 +3,7 @@
 
 # Author: Tomas Cassanelli
 import pytest
+from scipy import interpolate
 import numpy as np
 from astropy import units as apu
 from astropy.tests.helper import assert_quantity_allclose
@@ -14,24 +15,40 @@ import pyoof
 
 def test_norm():
 
-    P_norm_true = np.array([
+    P_norm_a0_true = np.array([
+        [1., 1., 1.],
+        [0., 0., 0.],
+        [0.6007134, 0.4391492, 0.38555163]
+        ], dtype=np.float32
+        )
+
+    P_norm_a1_true = np.array([
         [1.25356787e-03, 2.08338746e-03, 2.59757042e-03,
         1.17263570e-03, 1.53579470e-03, 1.95269845e-03],
         [3.90828654e-06, 7.74897035e-06, 1.10233095e-05,
         2.67764717e-05, 2.45369101e-05, 1.83909979e-05],
         [7.22095836e-04, 9.35678603e-04, 1.07243832e-03,
         1.62301958e-03, 1.22317078e-03, 6.73963455e-04]
-        ])
+        ], dtype=np.float32
+        )
     data_info, data_obs = pyoof.extract_data_pyoof(
         get_pkg_data_filename('data/data_simulated.fits')
         )
     [beam_data, _, _] = data_obs
 
-    P_norm = pyoof.norm(beam_data, axis=1)
+    P_norm_a0 = pyoof.norm(beam_data, axis=0)
+    P_norm_a1 = pyoof.norm(beam_data, axis=1)
+    P_norm_aNone = pyoof.norm(beam_data[0, ...], axis=None)
 
-    print(P_norm)
-    assert_allclose(P_norm[:, :3], P_norm_true[:, :3])
-    assert_allclose(P_norm[:, -3:], P_norm_true[:, -3:])
+    # axis = 0
+    assert_allclose(P_norm_a0[:, :3], P_norm_a0_true)
+
+    # axis = 1
+    assert_allclose(P_norm_a1[:, :3], P_norm_a1_true[:, :3])
+    assert_allclose(P_norm_a1[:, -3:], P_norm_a1_true[:, -3:])
+
+    # axis = None
+    assert_allclose(P_norm_aNone[:3], P_norm_a1_true[0, :3])
 
 
 def test_cart2pol():
@@ -118,15 +135,16 @@ def test_rms():
 
 def test_snr():
 
-    snr_list_true = np.array([149.859673, 15563.025383, 235.739288])
+    # ndim = 1
+    snr_list_1dim_true = np.array([149.859673, 15563.025383, 235.739288])
     data_info, data_obs = pyoof.extract_data_pyoof(
         get_pkg_data_filename('data/data_simulated.fits')
         )
     [beam_data, u_data, v_data] = data_obs
 
-    snr_list = np.zeros((3, ), dtype=np.float64)
+    snr_list_1dim = np.zeros((3, ), dtype=np.float64)
     for i in range(3):
-        snr_list[i] = pyoof.snr(
+        snr_list_1dim[i] = pyoof.snr(
             beam_data=beam_data[i],
             u_data=u_data[i],
             v_data=v_data[i],
@@ -134,4 +152,27 @@ def test_snr():
             radius=.01 * apu.deg
             )
 
-    assert_allclose(snr_list, snr_list_true)
+    assert_allclose(snr_list_1dim, snr_list_1dim_true)
+
+    # ndim != 1
+    snr_list_ndim = np.zeros((3, ), dtype=np.float64)
+    for k in range(beam_data.shape[0]):
+        u_ng = np.linspace(u_data[k, :].min(), u_data[k, :].max(), 300)
+        v_ng = np.linspace(v_data[k, :].min(), v_data[k, :].max(), 300)
+
+        beam_ng = interpolate.griddata(
+            points=(u_data[k, :], v_data[k, :]),
+            values=beam_data[k, :],
+            xi=tuple(np.meshgrid(u_ng, v_ng)),
+            method='cubic'
+            )
+
+        snr_list_ndim[k] = pyoof.snr(
+            beam_data=beam_ng,
+            u_data=u_ng,
+            v_data=v_ng,
+            centre=.04 * apu.deg,
+            radius=.01 * apu.deg
+            )
+
+    assert_allclose(snr_list_ndim, snr_list_1dim_true)

@@ -32,3 +32,6 @@ mpy3_test.sh
 
 # sublime
 *.sublime*
+
+# notes
+notes.txt

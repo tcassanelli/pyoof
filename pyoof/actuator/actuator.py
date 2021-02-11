@@ -27,7 +27,7 @@ class EffelsbergActuator():
     `~pyoof` routines, to an equivalent actuator perpendicular displacement to
     correct those effects seen in the main phase-error maps.
 
-    Parameters
+    Attributes
     ----------
     frequency : `~astropy.units.quantity.Quantity`
         Frequency of the observation in Hertz.

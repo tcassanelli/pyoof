@@ -52,11 +52,22 @@ def test_illum_parabolic():
         pr=pr
         )
 
+    _illum_parabolic_dimensionless = pyoof.aperture.illum_parabolic(
+        x=xx,
+        y=yy,
+        I_coeff=[
+            I_coeff[0], I_coeff[1].to_value(apu.dB), I_coeff[2],
+            I_coeff[3].to_value(apu.m), I_coeff[4].to_value(apu.m)
+            ],
+        pr=pr
+        )
+
     illum_parabolic_true = np.load(
         get_pkg_data_filename('data/illum_parabolic.npy')
         )
 
     assert_allclose(_illum_parabolic, illum_parabolic_true)
+    assert_allclose(_illum_parabolic_dimensionless, illum_parabolic_true)
 
 
 def test_illum_gauss():

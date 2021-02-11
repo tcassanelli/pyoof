@@ -99,8 +99,8 @@ def pyoof_tmp_dir(tmpdir_factory):
         resolution=2 ** 8,
         box_factor=5,
         config_params_file=None,
-        make_plots=False,
         verbose=0,
+        make_plots=False,
         work_dir=tdir
         )
 
@@ -116,7 +116,6 @@ def test_fit_zpoly(pyoof_tmp_dir):
     path_fitpars = os.path.join(
         pyoof_tmp_dir, 'pyoof_out', 'test000-000', f'fitpar_n{n}.csv'
         )
-
     params = Table.read(path_fitpars, format='ascii')['parfit']
     assert_allclose(params[5:], K_coeff_true, rtol=1, atol=1e-1)
     assert_allclose(params[:5], I_coeff_true_dimensionless, rtol=1, atol=1)
