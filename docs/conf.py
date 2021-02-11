@@ -154,7 +154,7 @@ plot_rcparams = {
     # 'figure.subplot.top': 0.85,
     'figure.subplot.wspace': 0.1,
     # 'figure.constrained_layout.use': True,
-    'figure.figsize': (11.32, 7),
+    'figure.figsize': (8.09, 5),
     'text.usetex': True
     }
 matplotlib.rcParams.update(plot_rcparams)
