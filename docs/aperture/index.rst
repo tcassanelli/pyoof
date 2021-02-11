@@ -222,8 +222,7 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
     extent = [-pr.value, pr.value] * 2
 
     fig, axes = plt.subplots(ncols=3, nrows=2)
-    fig.subplots_adjust(hspace=0.05, wspace=0.8)
-
+    fig.subplots_adjust(hspace=0.1, wspace=0)
     ax = axes.flat
 
     for i in range(3):
@@ -234,15 +233,15 @@ To compute the aperture distribution, two extra functions from the `~pyoof.telge
         ax[i].contour(xx, yy, Ea[i].real, cmap='viridis')
         ax[i + 3].contour(xx, yy, Ea[i].imag, cmap='viridis')
 
-    for j, label in enumerate(['real', 'imag']):
-        ax[0 + j * 3].set_title('Aperture {} $d_z^-$'.format(label))
-        ax[1 + j * 3].set_title('Aperture {} $d_z$'.format(label))
-        ax[2 + j * 3].set_title('Aperture {} $d_z^+$'.format(label))
+    ax[0].set_title('Aperture $d_z^-$')
+    ax[1].set_title('Aperture $d_z$')
+    ax[2].set_title('Aperture $d_z^+$')
 
     for _ax in ax:
-        _ax.set_yticklabels([])
         _ax.set_xticklabels([])
-
+        _ax.set_yticklabels([])
+        _ax.xaxis.set_ticks_position('none') 
+        _ax.yaxis.set_ticks_position('none') 
 
 As mentioned before the aperture distribution is complex, and depends on the radial offset added to defocus the telescope. Depending on that its shape in  real and imaginary parts will change. In general, the aperture distribution will not be used for the OOF holography study, only the power pattern and phase-error will be used for visual inspection.
 
