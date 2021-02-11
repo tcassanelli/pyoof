@@ -156,8 +156,8 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
 
     levels = np.linspace(-2, 2, 9)
 
-    fig, ax = plt.subplots(ncols=2)
-    fig.subplots_adjust(wspace=0.6)
+    fig, ax = plt.subplots(ncols=2, sharey=True)
+    fig.subplots_adjust(wspace=0.1)
 
     for i, data in enumerate([phi_notilt_nopiston.value, phi.value]):
         ax[i].imshow(
@@ -168,7 +168,8 @@ The calculation of the aperture phase distribution, `~pyoof.aperture.phase`, fol
             )
         ax[i].contour(x, y, data, levels=levels, alpha=0.3, colors='k')
         ax[i].set_xlabel('$x$ m')
-        ax[i].set_ylabel('$y$ m')
+    
+    ax[0].set_ylabel('$y$ m')
     ax[0].set_title('$\\varphi(x, y)$ no-tilt and no-piston')
     ax[1].set_title('$\\varphi(x, y)$')
 
