@@ -1,8 +1,10 @@
+version: 2
+
+sphinx:
+   configuration: docs/conf.py
+
 conda:
   file: .rtd-environment.yml
-
-formats:
-  - pdf
 
 python:
   version: 3.6
