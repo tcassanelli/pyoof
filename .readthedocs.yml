@@ -10,4 +10,4 @@ python:
   version: 3.6
   install:
     - method: setuptools
-      path: pyoof
+      path: .
