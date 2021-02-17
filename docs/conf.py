@@ -139,7 +139,7 @@ htmlhelp_basename = project + 'doc'
 plot_include_source = True
 import matplotlib
 
-font_size = 12  # 13 px
+font_size = 14  # 13 px
 plot_rcparams = {
     'font.size': font_size,
     'axes.titlesize': font_size,
@@ -154,7 +154,7 @@ plot_rcparams = {
     # 'figure.subplot.top': 0.85,
     'figure.subplot.wspace': 0.1,
     'figure.constrained_layout.use': True,
-    'figure.figsize': (5.66, 3.5),
+    'figure.figsize': (9.7, 6),
     'text.usetex': True
     }
 matplotlib.rcParams.update(plot_rcparams)
