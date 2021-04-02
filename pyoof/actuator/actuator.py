@@ -295,7 +295,7 @@ class EffelsbergActuator():
         x = np.linspace(-self.sr, self.sr, self.resolution)
         y = x.copy()
 
-        lookup_table = np.zeros((11, 96)) << apu.to(u.um)
+        lookup_table = np.zeros((11, 96)) << apu.um
         for j in range(11):
 
             intrp = interpolate.RectBivariateSpline(
