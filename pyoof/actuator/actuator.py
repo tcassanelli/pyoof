@@ -309,7 +309,7 @@ class EffelsbergActuator():
                 self.act_x.to_value(apu.mm),
                 self.act_y.to_value(apu.mm),
                 grid=False
-                ) * apu.to(u.um)
+                ) * apu.um
 
         return lookup_table
 
