@@ -13,6 +13,6 @@ dependencies:
   - pyyaml
   - sphinx-astropy
   # - pytest_astropy_header # if added docs won't compile
-  - pip:
-    - sphinx-gallery>=0.7
+  # - pip:
+    # - sphinx-gallery>=0.7
   #   - jplephem

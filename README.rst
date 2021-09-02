@@ -15,6 +15,10 @@ pyoof
     :target: https://opensource.org/licenses/BSD-3-Clause
     :alt: License
 
+.. image:: http://img.shields.io/badge/arXiv-2109.00006-blue.svg
+    :target: https://arxiv.org/abs/2109.00006
+    :alt: Publication
+
 pyoof is a Python package that contains all needed tools to perform out-of-focus (OOF) holography on astronomical beam maps for single-dish radio telescopes. It is based on the original OOF holography papers,
 
 * `Out-of-focus holography at the Green Bank Telescope <https://www.aanda.org/articles/aa/ps/2007/14/aa5765-06.ps.gz>`_
@@ -143,3 +147,27 @@ Contact
 If you have any questions about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
 
 - tcassanelli  *at*  protonmail.com
+
+Preferred citation method
+=========================
+
+To cite the code used in pyoof as well as the method please see `Acknowledgments and references <https://pyoof.readthedocs.io/en/latest/#acknowledgments-and-references>`_.
+
+Please cite the paper Out-of-focus at the Effelsberg telescope (submitted to A&A) if you used the method and code:
+
+.. code-block:: latex
+    @ARTICLE{2021arXiv210900006C,
+           author = {{Cassanelli}, T. and {Bach}, U. and {Winkel}, B. and {Kraus}, A.},
+            title = "{Out-of-focus holography at the Effelsberg telescope}",
+          journal = {arXiv e-prints},
+         keywords = {Astrophysics - Instrumentation and Methods for Astrophysics, Physics - Optics},
+             year = 2021,
+            month = aug,
+              eid = {arXiv:2109.00006},
+            pages = {arXiv:2109.00006},
+    archivePrefix = {arXiv},
+           eprint = {2109.00006},
+     primaryClass = {astro-ph.IM},
+           adsurl = {https://ui.adsabs.harvard.edu/abs/2021arXiv210900006C},
+          adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+    }

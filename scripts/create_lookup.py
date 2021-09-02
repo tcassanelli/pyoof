@@ -43,7 +43,12 @@ actuators = EffelsbergActuator(
 path_pyoof_out_all = glob.glob(''.join((path_pyoof_out, f'/*{pyoof_run}')))
 tab = pyoof.table_pyoof_out(path_pyoof_out=path_pyoof_out_all, order=n)
 
-tab.sort('obs-date')
+try:
+    # AttributeError: 'Time' object has no attribute 'view'
+    tab.sort('obs-date')
+except AttributeError:
+    tab[tab['obs-date'].argsort()]
+
 tab.add_index('name')
 # tab.pprint_all()
 
@@ -121,7 +126,7 @@ for j in range(N_K_coeff - 3):
         # ax[j].set_ylim(-1.5, 1.5)
         ax[j].set_xlim(7, 90)
 
-        if j % 3 == 0: 
+        if j % 3 == 0:
             ax[j].set_ylabel("Phase rad")
 
         if j > 14:

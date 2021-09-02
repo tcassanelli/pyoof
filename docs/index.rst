@@ -345,9 +345,6 @@ Finally if the key ``make_plots=True``, then `~pyoof.fit_zpoly` will create a su
 
 See Also
 ========
-
-* `Out-of-focus holography at the Green Bank Telescope <https://www.aanda.org/articles/aa/ps/2007/14/aa5765-06.ps.gz>`_
-* `Measurement of antenna surfaces from in- and out-of-focus beam maps using astronomical sources <https://www.aanda.org/articles/aa/ps/2007/14/aa5603-06.ps.gz>`_
 * `Zernike circle polynomials <https://en.wikipedia.org/wiki/Zernike_polynomials>`_
 * `Effelsberg 100-m radio telescope <https://en.wikipedia.org/wiki/Effelsberg_100-m_Radio_Telescope>`_
 * `Essential Radio Astronomy <http://www.cv.nrao.edu/course/astr534/ERA_old.shtml>`_
@@ -379,12 +376,29 @@ Project details
 
     license
 
-Acknowledgments
-===============
+Acknowledgments and references
+==============================
 
-This code makes use of the excellent work provided by the
-`Astropy <http://www.astropy.org/>`__ community. `~pyoof` uses the Astropy package and also the
-`Astropy Package Template <https://github.com/astropy/package-template>`__
-for the packaging.
+Thanks to `bwinkel <https://github.com/bwinkel>`_ for his support and help during the development of `~pyoof`.
 
-As well `bwinkel <https://github.com/bwinkel>`_ for his support and help during the development of `~pyoof`.
+Code
+----
+
+This code makes use of the excellent work provided by
+`astropy.org <http://www.astropy.org/>`_. `~pyoof` uses the Astropy package and also the
+`Astropy Package Template <https://github.com/astropy/package-template>`_
+for packaging. The python software follows:
+
+- `The Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package <https://ui.adsabs.harvard.edu/abs/2018AJ....156..123A>`_
+- `Array Programming with NumPy <https://ui.adsabs.harvard.edu/abs/2020arXiv200610256H>`_
+- `SciPy 1.0: fundamental algorithms for scientific computing in Python <https://ui.adsabs.harvard.edu/abs/2020NatMe..17..261V>`_
+- `Matplotlib: A 2D Graphics Environment <https://ui.adsabs.harvard.edu/abs/2007CSE.....9...90H>`_
+
+Method
+------
+
+To cite the OOF holography method please cite the original papers from B. Nikolic and the recent study at the Effelsberg 100-m telescope by T. Cassanelli
+
+- `Ouf-of-focus holography at the Effelsberg telescope <https://ui.adsabs.harvard.edu/abs/2021arXiv210900006C/abstract>`_
+- `Out-of-focus holography at the Green Bank telescope <https://ui.adsabs.harvard.edu/abs/2007A%26A...465..685N/abstract>`_
+- `Measurement of antenna surfaces from in- and out-of-focus beam maps using astronomical sources <https://ui.adsabs.harvard.edu/abs/2007A%26A...465..679N/abstract>`_
