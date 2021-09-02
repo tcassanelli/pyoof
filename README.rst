@@ -156,6 +156,7 @@ To cite the code used in pyoof as well as the method please see `Acknowledgments
 Please cite the paper Out-of-focus at the Effelsberg telescope (submitted to A&A) if you used the method and code:
 
 .. code-block:: latex
+
     @ARTICLE{2021arXiv210900006C,
            author = {{Cassanelli}, T. and {Bach}, U. and {Winkel}, B. and {Kraus}, A.},
             title = "{Out-of-focus holography at the Effelsberg telescope}",
