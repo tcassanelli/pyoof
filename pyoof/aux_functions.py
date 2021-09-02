@@ -11,7 +11,7 @@ from astropy.table import Table, QTable
 from astropy import units as apu
 from astropy.constants import c as light_speed
 from .math_functions import rms
-from .aperture import e_rs
+from .aperture import e_rs, phase
 
 __all__ = [
     'extract_data_pyoof', 'extract_data_effelsberg', 'str2LaTeX',
@@ -323,6 +323,10 @@ def table_pyoof_out(path_pyoof_out, order):
     Auxiliary function to tabulate all data from a series of observations
     gathered in a common ``pyoof_out/`` directory.
 
+    Note: Piston and tilt are not used in error calculations, the phase
+    calculations will only be included if these are manually changed in
+    ``core.py``.
+
     Parameters
     ----------
     path_pyoof_out : `list`
@@ -341,8 +345,8 @@ def table_pyoof_out(path_pyoof_out, order):
     qt = QTable(
         names=[
             'name', 'tel_name', 'obs-object', 'obs-date', 'meanel',
-            'i_amp', 'c_dB', 'q', 'phase-rms', 'e_rs', 'beam-snr-out-l',
-            'beam-snr-in', 'beam-snr-out-r'
+            'i_amp', 'c_dB', 'q', 'phase-rms', 'e_rs',
+            'beam-snr-out-l', 'beam-snr-in', 'beam-snr-out-r'
             ],
         dtype=[np.string_] * 4 + [np.float] * 9
         )
@@ -351,15 +355,20 @@ def table_pyoof_out(path_pyoof_out, order):
         with open(os.path.join(pyoof_out, 'pyoof_info.yml'), 'r') as inputfile:
             pyoof_info = yaml.load(inputfile, Loader=yaml.Loader)
 
-        phase = np.genfromtxt(os.path.join(pyoof_out, f'phase_n{order}.csv'))
-        phase_rms = rms(phase, circ=True)
-        phase_e_rs = e_rs(phase, circ=True)
+        _phase = np.genfromtxt(
+            os.path.join(pyoof_out, f'phase_n{order}.csv')
+            ) * apu.rad
+        phase_rms = rms(_phase, circ=True)
+        phase_e_rs = e_rs(_phase, circ=True)
+
+        # random-surface-error efficiency error
+        # cov = np.genfromtxt(os.path.join(pyoof_out, f'cov_n{order}.csv'))
+        # idx = np.argwhere(cov[0, :].astype(int) > 5)
 
         params = Table.read(
             os.path.join(pyoof_out, f'fitpar_n{order}.csv'),
             format='ascii'
             )
-
         I_coeff = params['parfit'][:5]
 
         qt.add_row([

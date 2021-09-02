@@ -56,7 +56,7 @@ def compute_phase_error(pathfits, order_max):
     [beam_data, u_data, v_data] = data_obs
 
     for configuration in telescope.keys():
- 
+
         fit_zpoly(
             data_info=data_info,
             data_obs=[beam_data, u_data, v_data],
@@ -72,7 +72,7 @@ def compute_phase_error(pathfits, order_max):
             work_dir='/Users/tomascassanelli/MPIfR/OOF/data'
             )
 
-pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/Dec2020/*.fits'
+pth2data = '/Users/tomascassanelli/MPIfR/OOF/data/Feb2021/*.fits'
 
 # pth2data = '/Users/tomascassanelli/MPIfR/OOF/data_old/S9mm_FEM/*.fits'
 

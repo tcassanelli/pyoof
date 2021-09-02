@@ -42,6 +42,10 @@ def e_rs(phase, circ=False):
     Where :math:`\\delta_\\mathrm{rms}` corresponds to the root-mean-squared
     deviation. The Python function uses the key **phase** because the term
     :math:`4\\pi\\delta_\\mathrm{rms}/\\lambda` corresponds to the phase-error.
+    Notice that this equation only works for a parabolic reflector and with a
+    Cassegrain geometry, the term :math:`2\\pi/\\lamda` converts the surface
+    errors to phase and the additional :math:`2` accounts for the two-way path
+    of the reflected rays.
 
     Examples
     --------
@@ -321,7 +325,7 @@ def phase(K_coeff, pr, piston, tilt, resolution=1000):
 
     # Erasing tilt dependence
     if not piston:
-        _K_coeff[1] = 0.  # For coefficient K(0, 0) = 0
+        _K_coeff[0] = 0.  # For coefficient K(0, 0) = 0
 
     if not tilt:
         _K_coeff[1] = 0.  # For coefficient K(-1, 1) = 0
