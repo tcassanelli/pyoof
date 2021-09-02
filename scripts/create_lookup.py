@@ -23,7 +23,7 @@ active surface.
 """
 
 pyoof_run = '000'
-path_to_save = 'grav_deformation'
+path2save = 'grav_deformation'
 path_pyoof_out = '/Users/tomascassanelli/MPIfR/OOF/data/pyoof_out'
 n = 5
 resolution = 1000
@@ -61,6 +61,8 @@ section = ((tab['beam-snr-in'] > 200.) & ~idx_offset)
 tab_section = tab[section].copy()
 tab_section.add_index('name')
 tab_section.pprint_all()
+
+print("\ntotal number of OOF holography observations:", len(tab_section))
 
 N_K_coeff = (n + 1) * (n + 2) // 2
 K_coeff_obs = np.zeros((len(tab_section), N_K_coeff), dtype=np.float64)
@@ -110,17 +112,17 @@ ax = axes.flatten()
 for j in range(N_K_coeff - 3):
     for i, _alpha in enumerate(tab_section['meanel']):
 
-        if tab_section['obs-date'][i] > Time('2020-01-01'):
-            _color = 'b'
-        else:
-            _color = 'k'
+        # if tab_section['obs-date'][i] > Time('2020-01-01'):
+        #     _color = 'b'
+        # else:
+        #     _color = 'k'
 
         ax[j].scatter(
             _alpha.to_value(u.deg), K_coeff_obs[i, j + 3] * 2 * np.pi,
             # _alpha.to_value(u.deg), phase_K_coeff_obs[i, j].to_value(u.rad),
             marker='o',
             s=tab_section['beam-snr-in'][i] / 100,
-            color=_color,
+            color='k',
             )
         ax[j].plot(alpha_list, K_coeff_model[:, j + 3] * 2 * np.pi, 'r')
         # ax[j].set_ylim(-1.5, 1.5)
@@ -134,19 +136,14 @@ for j in range(N_K_coeff - 3):
 
     patch = Patch(label=f"K({nl[j + 3][0]}, {nl[j + 3][1]})")
     ax[j].legend(handles=[patch], loc='upper right', handlelength=0)
-
 fig_gravfit.tight_layout()
-# fig_gravfit.suptitle(
-#     "Gravitational fit for $K_{n\\ell}$ coefficients", fontsize=10
-#     )
 
-if not os.path.isdir(path_to_save):
-    os.makedirs(path_to_save, exist_ok=True)
+if not os.path.isdir(path2save):
+    os.makedirs(path2save, exist_ok=True)
 
 # creating lookup table
 fname_fem_oof_table = os.path.join(
-        "grav_deformation",
-        f"FEM_OOF_Table_{Time.now().strftime('%y%m%d')}.dat"
+        path2save, f"FEM_OOF_Table_{Time.now().strftime('%y%m%d')}.dat"
         )
 
 alpha_lookup, atuator_sr_lookup = actuators.read_lookup(False)
@@ -169,6 +166,19 @@ actuators_fem_oof = EffelsbergActuator(
     resolution=resolution,
     path_lookup=fname_fem_oof_table
     )
-fig_phases_pr_correction = actuators_fem_oof.plot(title="Phase-error look-up table minus phase-error model (FEM + OOF corrections)")
+fig_phases_pr_correction = actuators_fem_oof.plot(
+    title="Phase-error look-up table minus phase-error model (FEM + OOF corrections)"
+    )
 
-plt.show()
+# plt.show()
+fig_phase_pr_model.savefig(os.path.join(
+    path2save, f"phase_pr_model_{Time.now().strftime('%y%m%d')}.pdf"
+    ))
+fig_phase_pr_lookup.savefig(os.path.join(path2save, f"phase_pr_lookup.pdf"))
+fig_phases_pr_correction.savefig(os.path.join(
+    path2save, f"phases_pr_correction_{Time.now().strftime('%y%m%d')}.pdf"
+    ))
+fig_gravfit.savefig(os.path.join(
+    path2save, f"gravfit_{Time.now().strftime('%y%m%d')}.pdf"
+    ))
+

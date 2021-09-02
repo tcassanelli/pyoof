@@ -49,12 +49,16 @@ class EffelsbergActuator():
         Path for the current look-up table that controls the active surface
         control system. If `None` it will select the default table from the
         FEM model.
+    self.n_reflections : `int`
+        Number of reflections in the transformation factor `tfactor` from
+        amplitude in actuators to aperture phase distribution.
     """
 
     def __init__(
         self, frequency=34.75 * apu.GHz, nrot=1, sign=-1, order=5,
         sr=3.25 * apu.m, pr=50 * apu.m, resolution=1000,
-        limits_amplitude=[-5, 5] * apu.mm, path_lookup=None
+        limits_amplitude=[-5, 5] * apu.mm, path_lookup=None,
+        n_reflections=2
             ):
         self.frequency = frequency
         self.wavel = (constants.c / frequency).to(apu.mm)
@@ -66,6 +70,11 @@ class EffelsbergActuator():
         self.N_K_coeff = (self.n + 1) * (self.n + 2) // 2
         self.resolution = resolution
         self.limits_amplitude = limits_amplitude
+        self.n_reflections = n_reflections
+
+        self.tfactor = (
+            self.sign * 2 * self.n_reflections * np.pi * apu.rad / self.wavel
+            )
 
         # angular and radial actuators' position
         theta = np.linspace(7.5, 360 - 7.5, 24) * apu.deg
@@ -218,10 +227,8 @@ class EffelsbergActuator():
         else:
             axes = (0, 1)
 
-        factor = self.sign * 4 * np.pi * apu.rad / self.wavel
-
         phase_pr = (
-            factor * np.rot90(
+            self.tfactor * np.rot90(
                 m=actuator_sr,
                 axes=axes,
                 k=self.nrot
@@ -255,10 +262,8 @@ class EffelsbergActuator():
         else:
             axes = (0, 1)
 
-        factor = self.wavel / (self.sign * 4 * np.pi * apu.rad)
-
         actuator_sr = np.rot90(
-            m=(phase_pr * factor).to(apu.um),
+            m=(phase_pr / self.tfactor).to(apu.um),
             axes=axes,
             k=-self.nrot
             )
