@@ -5,7 +5,7 @@
 import numpy as np
 import glob
 from astropy import units as u
-from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
+from srtoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 
 import mpi4py.rc
 mpi4py.rc.threads = False

@@ -9,7 +9,7 @@ from astropy.units import Quantity
 from astropy.tests.helper import assert_quantity_allclose
 from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_allclose
-import pyoof
+import srtoof
 
 
 # Basic data for the telescope
@@ -28,7 +28,7 @@ L = pr - sr
 
 def test_opd_effelsberg():
 
-    _opd_effelsberg = pyoof.telgeometry.opd_effelsberg(x=xx, y=yy, d_z=d_z)
+    _opd_effelsberg = srtoof.telgeometry.opd_effelsberg(x=xx, y=yy, d_z=d_z)
 
     opd_effelsberg_true = np.load(
         get_pkg_data_filename('data/opd_effelsberg.npy')
@@ -40,14 +40,14 @@ def test_opd_effelsberg():
 
 
 def test_opd_manual():
-    _opd_manual = pyoof.telgeometry.opd_manual(Fp=Fp, F=F)(x=xx, y=yy, d_z=d_z)
+    _opd_manual = srtoof.telgeometry.opd_manual(Fp=Fp, F=F)(x=xx, y=yy, d_z=d_z)
     opd_manual_true = np.load(get_pkg_data_filename('data/opd_manual.npy'))
     assert_quantity_allclose(_opd_manual, Quantity(opd_manual_true, apu.m))
 
 
 def test_block_effelsberg():
 
-    _block_effelsberg = pyoof.telgeometry.block_effelsberg(
+    _block_effelsberg = srtoof.telgeometry.block_effelsberg(
         alpha=20 * apu.deg)(x=xx, y=yy)
 
     block_effelsberg_true = np.load(
@@ -59,7 +59,7 @@ def test_block_effelsberg():
 
 def test_block_manual():
 
-    _block_manual = pyoof.telgeometry.block_manual(
+    _block_manual = srtoof.telgeometry.block_manual(
         pr=pr, sr=sr, a=a, L=L
         )(x=xx, y=yy)
 

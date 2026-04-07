@@ -4,7 +4,7 @@
 # Author: Tomas Cassanelli
 import glob
 from astropy import units as u
-from pyoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
+from srtoof import aperture, telgeometry, fit_zpoly, extract_data_effelsberg
 
 
 # telescope = [blockage, delta, pr, name]

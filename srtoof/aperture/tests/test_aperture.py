@@ -10,7 +10,7 @@ from astropy.tests.helper import assert_quantity_allclose
 from astropy.utils.data import get_pkg_data_filename
 from astropy.utils.misc import NumpyRNGContext
 from numpy.testing import assert_allclose
-import pyoof
+import srtoof
 
 
 # Basic data for the telescope
@@ -18,7 +18,7 @@ pr = 50. * apu.m
 x = np.linspace(-pr, pr, 1000)
 xx, yy = np.meshgrid(x, x)
 
-r, t = pyoof.cart2pol(xx, yy)
+r, t = srtoof.cart2pol(xx, yy)
 r_norm = r / r.max()
 
 I_coeff = [1, -14 * apu.dB, 2, 0 * apu.m, 0 * apu.m]
@@ -27,8 +27,8 @@ d_z = 0.022 * apu.m
 wavel = 0.0093685143125 * apu.m
 
 telgeo = [
-    pyoof.telgeometry.block_effelsberg(alpha=20 * apu.deg),
-    pyoof.telgeometry.opd_effelsberg,
+    srtoof.telgeometry.block_effelsberg(alpha=20 * apu.deg),
+    srtoof.telgeometry.opd_effelsberg,
     pr
     ]
 
@@ -38,21 +38,21 @@ def test_e_rs():
     with NumpyRNGContext(0):
         phase = np.sort(np.random.uniform(-2.5, 2.5, (5, 5))) * apu.rad
 
-    e_rs = pyoof.aperture.e_rs(phase=phase, circ=True)
+    e_rs = srtoof.aperture.e_rs(phase=phase, circ=True)
 
     assert_quantity_allclose(e_rs, 0.12678749)
 
 
 def test_illum_parabolic():
 
-    _illum_parabolic = pyoof.aperture.illum_parabolic(
+    _illum_parabolic = srtoof.aperture.illum_parabolic(
         x=xx,
         y=yy,
         I_coeff=I_coeff,
         pr=pr
         )
 
-    _illum_parabolic_dimensionless = pyoof.aperture.illum_parabolic(
+    _illum_parabolic_dimensionless = srtoof.aperture.illum_parabolic(
         x=xx,
         y=yy,
         I_coeff=[
@@ -72,7 +72,7 @@ def test_illum_parabolic():
 
 def test_illum_gauss():
 
-    _illum_gauss = pyoof.aperture.illum_gauss(
+    _illum_gauss = srtoof.aperture.illum_gauss(
         x=xx,
         y=yy,
         I_coeff=I_coeff,
@@ -85,7 +85,7 @@ def test_illum_gauss():
 
 def test_phase():
 
-    _x, _y, _phase = pyoof.aperture.phase(
+    _x, _y, _phase = srtoof.aperture.phase(
         K_coeff=K_coeff, piston=True, tilt=False, pr=pr, resolution=1000
         )
 
@@ -101,7 +101,7 @@ def test_phase():
 
 def test_wavefront():
 
-    _wavefront = pyoof.aperture.wavefront(rho=r_norm, theta=t, K_coeff=K_coeff)
+    _wavefront = srtoof.aperture.wavefront(rho=r_norm, theta=t, K_coeff=K_coeff)
     wavefront_true = np.load(get_pkg_data_filename('data/wavefront.npy'))
 
     assert_quantity_allclose(_wavefront, wavefront_true)
@@ -109,14 +109,14 @@ def test_wavefront():
 
 def test_aperture():
 
-    _aperture = pyoof.aperture.aperture(
+    _aperture = srtoof.aperture.aperture(
         x=xx,
         y=yy,
         K_coeff=K_coeff,
         I_coeff=I_coeff,
         d_z=d_z,
         wavel=wavel,
-        illum_func=pyoof.aperture.illum_parabolic,
+        illum_func=srtoof.aperture.illum_parabolic,
         telgeo=telgeo
         )
 
@@ -127,12 +127,12 @@ def test_aperture():
 
 def test_radiation_pattern():
 
-    _u, _v, _radiation_pattern = pyoof.aperture.radiation_pattern(
+    _u, _v, _radiation_pattern = srtoof.aperture.radiation_pattern(
         K_coeff=K_coeff,
         I_coeff=I_coeff,
         d_z=d_z,
         wavel=wavel,
-        illum_func=pyoof.aperture.illum_parabolic,
+        illum_func=srtoof.aperture.illum_parabolic,
         telgeo=telgeo,
         resolution=2 ** 8,
         box_factor=5

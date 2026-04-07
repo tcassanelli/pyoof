@@ -11,7 +11,7 @@ from astropy.tests.helper import assert_quantity_allclose
 from astropy.utils.data import get_pkg_data_filename
 from astropy.utils.misc import NumpyRNGContext
 from numpy.testing import assert_allclose
-from pyoof.actuator import EffelsbergActuator
+from srtoof.actuator import EffelsbergActuator
 
 # Basic data for the telescope
 resolution = 1000

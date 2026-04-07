@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.time import Time
 from astropy.table import Table
-import pyoof
-from pyoof.actuator import EffelsbergActuator
+import srtoof
+from srtoof.actuator import EffelsbergActuator
 
 """
 The purpose of this script is to create a lookup table given a set of phase
@@ -41,7 +41,7 @@ actuators = EffelsbergActuator(
 
 # reading data from the pyoof_out
 path_pyoof_out_all = glob.glob(''.join((path_pyoof_out, f'/*{pyoof_run}')))
-tab = pyoof.table_pyoof_out(path_pyoof_out=path_pyoof_out_all, order=n)
+tab = srtoof.table_pyoof_out(path_pyoof_out=path_pyoof_out_all, order=n)
 
 try:
     # AttributeError: 'Time' object has no attribute 'view'

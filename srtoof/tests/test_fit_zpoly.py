@@ -10,7 +10,7 @@ from astropy import units as apu
 from astropy.utils.data import get_pkg_data_filename
 from astropy.table import Table
 from numpy.testing import assert_allclose
-import pyoof
+import srtoof
 
 # initial configuration params same as the config_params.yml file
 config_params_pyoof = get_pkg_data_filename('../data/config_params.yml')
@@ -40,7 +40,7 @@ I_coeff_dimensionless = [
 params = np.hstack((I_coeff_dimensionless, K_coeff))
 
 idx_exclude = config_params['excluded']
-params_true = pyoof.params_complete(
+params_true = srtoof.params_complete(
     params=np.delete(params, idx_exclude),
     N_K_coeff=N_K_coeff,
     config_params=config_params
@@ -56,13 +56,13 @@ I_coeff_true = [
 noise_level = 0                                # noise added to gen data
 
 effelsberg_telescope = [
-    pyoof.telgeometry.block_effelsberg(alpha=10 * apu.deg),  # blockage
-    pyoof.telgeometry.opd_effelsberg,           # OPD function
+    srtoof.telgeometry.block_effelsberg(alpha=10 * apu.deg),  # blockage
+    srtoof.telgeometry.opd_effelsberg,           # OPD function
     50. * apu.m,                                # primary reflector radius m
     'effelsberg'                                # telescope name
     ]
 
-illum_func = pyoof.aperture.illum_parabolic
+illum_func = srtoof.aperture.illum_parabolic
 
 # Generating temp file with pyoof fits and pyoof_out
 @pytest.fixture()
@@ -70,7 +70,7 @@ def pyoof_tmp_dir(tmpdir_factory):
 
     tdir = str(tmpdir_factory.mktemp('fit_zpoly'))
 
-    pyoof.simulate_data_pyoof(
+    srtoof.simulate_data_pyoof(
         K_coeff=K_coeff_true,
         I_coeff=I_coeff_true,
         wavel=wavel,
@@ -87,9 +87,9 @@ def pyoof_tmp_dir(tmpdir_factory):
 
     # Reading the generated data
     pathfits = os.path.join(tdir, 'data_generated', 'test000.fits')
-    data_info, data_obs = pyoof.extract_data_pyoof(pathfits)
+    data_info, data_obs = srtoof.extract_data_pyoof(pathfits)
 
-    pyoof.fit_zpoly(
+    srtoof.fit_zpoly(
         data_info=data_info,
         data_obs=data_obs,
         order_max=n,
@@ -122,7 +122,7 @@ def test_fit_zpoly(pyoof_tmp_dir):
 
     # checking the output directory and info/general data
     path_pyoof_out = [os.path.join(pyoof_tmp_dir, 'pyoof_out', 'test000-000')]
-    qt = pyoof.table_pyoof_out(path_pyoof_out, order=n)
+    qt = srtoof.table_pyoof_out(path_pyoof_out, order=n)
 
     # checking element by element
     assert qt['name'][0] == 'test000'

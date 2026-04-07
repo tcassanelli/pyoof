@@ -5,7 +5,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
-import pyoof
+import srtoof
 
 # Initial fits file configuration
 n = 5                                       # initial order
@@ -18,19 +18,19 @@ d_z = [-2.2, 0, 2.2] * u.cm                 # radial offset
 
 # Making example for the Effelsberg telescope
 effelsberg_telescope = [
-    pyoof.telgeometry.block_effelsberg(alpha=10 * u.deg),
-    pyoof.telgeometry.opd_effelsberg,       # OPD function
+    srtoof.telgeometry.block_effelsberg(alpha=10 * u.deg),
+    srtoof.telgeometry.opd_effelsberg,       # OPD function
     50. * u.m,                              # primary reflector radius
     'effelsberg'                            # telescope name
     ]
 
 # simulte data
-pyoof.simulate_data_pyoof(
+srtoof.simulate_data_pyoof(
     I_coeff=I_coeff,
     K_coeff=K_coeff,
     wavel=wavel,
     d_z=d_z,
-    illum_func=pyoof.aperture.illum_parabolic,
+    illum_func=srtoof.aperture.illum_parabolic,
     telgeo=effelsberg_telescope[:-1],
     noise=0,
     resolution=2 ** 8,
@@ -38,7 +38,7 @@ pyoof.simulate_data_pyoof(
     work_dir=None
     )
 
-data_info, data_obs = pyoof.extract_data_pyoof('data_generated/test000.fits')
+data_info, data_obs = srtoof.extract_data_pyoof('data_generated/test000.fits')
 [name, pthto, obs_object, obs_date, freq, wavel, d_z, meanel] = data_info
 [beam_data, u_data, v_data] = data_obs
 
@@ -46,7 +46,7 @@ data_info, data_obs = pyoof.extract_data_pyoof('data_generated/test000.fits')
 # print('u_data.shape', u_data.shape)
 # print('v_data.shape', v_data.shape)
 
-fig = pyoof.plot_beam_data(
+fig = srtoof.plot_beam_data(
     u_data=u_data,
     v_data=v_data,
     beam_data=beam_data,

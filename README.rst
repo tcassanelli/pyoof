@@ -1,23 +1,11 @@
 *****
-pyoof
+srtoof
 *****
 
-- *Version: 0.3*
-- *Author: Tomas Cassanelli*
+- *Version: 0.1*
+- *Author: Tomas Cassanelli, *
 - *User manual:* `stable <http://pyoof.readthedocs.io/en/stable/>`__ |
   `developer <http://pyoof.readthedocs.io/en/latest/>`__
-
-.. image:: https://img.shields.io/pypi/v/pyoof.svg
-    :target: https://pypi.python.org/pypi/pyoof
-    :alt: PyPI tag
-
-.. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
-    :target: https://opensource.org/licenses/BSD-3-Clause
-    :alt: License
-
-.. image:: http://img.shields.io/badge/arXiv-2109.00006-blue.svg
-    :target: https://arxiv.org/abs/2109.00006
-    :alt: Publication
 
 pyoof is a Python package that contains all needed tools to perform out-of-focus (OOF) holography on astronomical beam maps for single-dish radio telescopes. It is based on the original OOF holography papers,
 
@@ -71,11 +59,9 @@ Unfortunately, a windows version of the package is currently not available.
 
 Dependencies
 ============
-So far the pyoof package uses the common Python packages, it is recommended to install the `anaconda <https://www.anaconda.com>`_ distribution first, although using `pip` is also fine.
+`srtoof` has the following strict requirements:
 
-pyoof has the following strict requirements:
-
-- `Python <http://www.python.org/>`__ 3.6 or later.
+- `Python <http://www.python.org/>`__ 3.11 or later.
 
 - `setuptools <https://pypi.python.org/pypi/setuptools>`__: Used for the
   package installation.
@@ -127,48 +113,3 @@ To use the pyoof package is straight forward. First define your observational da
         )
 
 For the impatient :hushed: , see the Jupyter notebook example, `oof_holography.ipynb <https://github.com/tcassanelli/pyoof/blob/master/notebooks/oof_holography.ipynb>`_.
-
-License
-=======
-pyoof is licensed under a 3-clause BSD style license - see the `LICENSE <https://github.com/tcassanelli/pyoof/blob/master/LICENSE.rst>`_ file.
-
-Improvements future versions
-============================
-- Include plot routines tests
-- Inlcude actuators module tests
-- Reduce the size of the test files
-- Integrate Astropy units :white_check_mark:
-- Include automatic setup for the FFT resolution ``pyoof.fit_zpoly(resolution)``
-- Add actuator correction (sub-package) and its translation from phase-error (specific for Effelsberg) :white_check_mark:
-- Add option for 2 or more beam maps (option for multiple ``d_z``)
-
-Contact
-=======
-If you have any questions about the code or theory sections, do not hesitate and raise an issue. You can also send me an email directly:
-
-- tcassanelli  *at*  protonmail.com
-
-Preferred citation method
-=========================
-
-To cite the code used in pyoof as well as the method please see `Acknowledgments and references <https://pyoof.readthedocs.io/en/latest/#acknowledgments-and-references>`_.
-
-Please cite the paper Out-of-focus at the Effelsberg telescope (submitted to A&A) if you used the method and code:
-
-.. code-block:: latex
-
-    @ARTICLE{2021arXiv210900006C,
-           author = {{Cassanelli}, T. and {Bach}, U. and {Winkel}, B. and {Kraus}, A.},
-            title = "{Out-of-focus holography at the Effelsberg telescope}",
-          journal = {arXiv e-prints},
-         keywords = {Astrophysics - Instrumentation and Methods for Astrophysics, Physics - Optics},
-             year = 2021,
-            month = aug,
-              eid = {arXiv:2109.00006},
-            pages = {arXiv:2109.00006},
-    archivePrefix = {arXiv},
-           eprint = {2109.00006},
-     primaryClass = {astro-ph.IM},
-           adsurl = {https://ui.adsabs.harvard.edu/abs/2021arXiv210900006C},
-          adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-    }

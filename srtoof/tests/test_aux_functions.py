@@ -8,11 +8,11 @@ from numpy.testing import assert_allclose
 from astropy.tests.helper import assert_quantity_allclose
 from astropy.utils.misc import NumpyRNGContext
 from astropy import units as apu
-import pyoof
+import srtoof
 
 
 def test_str2LaTeX():
-    LaTeX_string = pyoof.str2LaTeX('1_2_3_4_5')
+    LaTeX_string = srtoof.str2LaTeX('1_2_3_4_5')
     assert LaTeX_string == '1\\_2\\_3\\_4\\_5'
 
 
@@ -23,7 +23,7 @@ def test_uv_ratio():
         u = np.random.uniform(-1, 1, 5) * apu.deg
         v = np.random.uniform(-1, 1, 5) * apu.deg
 
-    width, height = pyoof.uv_ratio(u, v)
+    width, height = srtoof.uv_ratio(u, v)
 
     assert_allclose(width, width_true)
     assert_allclose(height, height_true)
